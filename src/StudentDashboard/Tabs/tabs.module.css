@@ -1,0 +1,9 @@
+.systemCheck {
+    text-align: center;
+    padding: 25px;
+  }
+  .systemCheck ul li {
+    display: inline-block;
+    font-size: 30px;
+    padding: 0px 10px;
+  }
