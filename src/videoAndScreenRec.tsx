@@ -359,7 +359,7 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen">
+    <div className="flex flex-col items-center justify-center">
       <div id="xmedia" className="flex flex-row"></div>
       <div className="container text-center flex justify-center gap-8">
         <button

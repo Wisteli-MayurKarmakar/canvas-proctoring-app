@@ -84,7 +84,7 @@ const Quzzies: React.FC<Props> = (props) => {
 
   if (quizzes) {
     return (
-      <div className="flex flex-col gap-5 justify-center items-center mx-auto mt-5 text-center container text-lg ">
+      <div className="flex flex-col gap-5 justify-center items-center h-screen mx-auto mt-5 text-center container text-lg ">
         <div className="flex flex-row gap-10">
           {quizzes.map((quiz: any, index) => {
             return (
@@ -114,23 +114,6 @@ const Quzzies: React.FC<Props> = (props) => {
             );
           })}
         </div>
-        <iframe
-          src="https://canvas.examd.online/courses/16/quizzes/16/take?preview=1/embed"
-          frameBorder="0"
-          name="tool_content"
-          id="tool_content"
-          className="tool_launch"
-          //X-frame-options allow from same origin
-
-          // allowFullScreen="allowfullscreen"
-          // webkitallowfullscreen="true"
-          // mozallowfullscreen="true"
-          tabIndex={0}
-          title="Tool Content"
-          // style="height:100%;width:100%;"
-          allow="geolocation *; microphone *; camera *; midi *; encrypted-media *; autoplay *"
-          data-lti-launch="true"
-        ></iframe>
         <VideoAndScreenRec
           quiz={selectedQuiz}
           username={props.username}

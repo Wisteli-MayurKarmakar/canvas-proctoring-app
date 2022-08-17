@@ -577,6 +577,10 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
   };
 
   const handleCheckboxChange = (e: any, idx: number, optionName: string) => {
+    if (!selectedQuiz) {
+      alert("Please select a quiz");
+      return;
+    }
     if (e.target.checked) {
       let settings: any = { ...defaultProcSettings[idx].settings };
       resetOtherDefaultCheckedOptions(optionName);
@@ -642,30 +646,34 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
           </div>
         )}
       </div>
-      <div className="grid grid-cols-4 gap-10 align-middle box-border h-16 w-full p-4 border-4 border-blue-400 rounded">
-        {defaultSettingsOptionsChecked &&
-          defaultProcSettings.map((setting: any, index: number) => {
-            return (
-              <label
-                htmlFor={setting.name}
-                className="inline-flex relative items-center mr-5 cursor-pointer"
-                key={index}
-              >
-                <input
-                  type="checkbox"
-                  value=""
-                  id={setting.name}
-                  className="sr-only peer ml-2"
-                  onChange={(e) => handleCheckboxChange(e, index, setting.name)}
-                  checked={defaultSettingsOptionsChecked[setting.name]}
-                />
-                <div className="w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-focus:ring-4   peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-600"></div>
-                <span className="ml-3 h-6 font-semibold text-gray-900 dark:text-black">
-                  {setting.name}
-                </span>
-              </label>
-            );
-          })}
+      <div className="flex flex-row gap-10 h-24 w-full items-center justify-center">
+        <div className="flex items-center justify-center box-border h-full w-full border-4 border-blue-400 rounded">
+          {defaultSettingsOptionsChecked &&
+            defaultProcSettings.map((setting: any, index: number) => {
+              return (
+                <label
+                  htmlFor={setting.name}
+                  className="inline-flex relative items-center mr-5 cursor-pointer"
+                  key={index}
+                >
+                  <input
+                    type="checkbox"
+                    value=""
+                    id={setting.name}
+                    className="sr-only peer ml-2"
+                    onChange={(e) =>
+                      handleCheckboxChange(e, index, setting.name)
+                    }
+                    checked={defaultSettingsOptionsChecked[setting.name]}
+                  />
+                  <div className="w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-focus:ring-4   peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-600"></div>
+                  <span className="ml-3 h-6 font-semibold text-gray-900 dark:text-black">
+                    {setting.name}
+                  </span>
+                </label>
+              );
+            })}
+        </div>
       </div>
       <div className="container mx-auto pt-2">
         <p className="font-bold font-serif text-xl underline">
