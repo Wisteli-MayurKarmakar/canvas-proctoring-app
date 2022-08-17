@@ -200,7 +200,7 @@ const AuthenticateUser: React.FC<Props> = (props): JSX.Element => {
           <Col span={12}>
             <p className="font-semibold text-xl">Student Name</p>
           </Col>
-          <Col span={12}>
+          <Col span={6}>
             {/* <p className="text-xl">{props.userName}</p> */}
             <p className="text-xl">{props.selectedRow.user.name}</p>
           </Col>
