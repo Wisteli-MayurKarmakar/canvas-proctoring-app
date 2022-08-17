@@ -110,14 +110,14 @@ function App() {
     setToolConsumerGuid(toolConsumerGuid);
     setId(loginId);
     // setId(getUuid(userId));
-    // setId(getUuid('1470923eea43f6bcab4326fee7047884cf84f374'));
-    setId(userId);
+    setId(getUuid('1470923eea43f6bcab4326fee7047884cf84f374'));
+    // setId(userId);
     setCourseId(courseId as string);
     if (loadInstructorPage === "Y") {
       setLoadFlag("Instructor");
     } else {
-      setLoadFlag("Student");
-      // setLoadFlag("Instructor");
+      // setLoadFlag("Student");
+      setLoadFlag("Instructor");
     }
   };
 

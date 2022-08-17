@@ -26,6 +26,7 @@ import {
 import ExamdLogo from "./ExamdLogo.png";
 import axios from "axios";
 import InfoModal from "./infoModal";
+import { defaultProcSettings } from "./CommonUtilites/ProctorSettingDefaults";
 
 interface Props {
   auth: Object | any;
@@ -91,7 +92,7 @@ const abbrs = {
   "Lock Down Options": {
     disableCopyPaste: false,
     disablePrinting: false,
-    lockDownBrowser: false,
+    lockdownBrowser: false,
   },
   "Violation Options": {
     multiplePerson: false,
@@ -171,7 +172,7 @@ const settingOptions: settingStruct = {
       fullName: "Disable Printing",
       icon: <PrinterOutlined />,
     },
-    lockDownBrowser: {
+    lockdownBrowser: {
       fullName: "Lock Down Browser",
       icon: <ChromeOutlined />,
     },
@@ -226,6 +227,8 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
   let [applySettings, setApplySettings] = React.useState<boolean>(false);
   const [quizzes, setQuizzes] = React.useState<any>(null);
   const [selectedQuiz, setSelectedQuiz] = React.useState<any>(null);
+  let [defaultSettingsOptionsChecked, setDefaultSettingsOptionsChecked] =
+    React.useState<any>(null);
 
   const borderColorOnSelect = "#12b0ff";
   const defaultBorderColor = "#949799";
@@ -335,6 +338,10 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
   }
 
   const handleSubmit = () => {
+    if (!selectedQuiz) {
+      alert("Please select a quiz");
+      return;
+    }
     let flag = true;
     let option = null;
     let optionsEnabled: string[] = [];
@@ -528,11 +535,21 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
       });
   };
 
+  const prepareDefaultSettingsOptionsChecked = (): void => {
+    let optionsChecked: any = {};
+
+    defaultProcSettings.forEach((option: any) => {
+      optionsChecked[option.name] = false;
+    });
+    setDefaultSettingsOptionsChecked(optionsChecked);
+  };
+
   useEffect(() => {
     getQuizzesByCourseId(props.courseId);
     setOptionsEnableSwitchStatus();
     setDefaultCheckedStatus();
     getUserSettings("");
+    prepareDefaultSettingsOptionsChecked();
   }, []);
 
   const handleSelectQuiz = (quiz: any) => {
@@ -546,6 +563,32 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
     quizStat[quiz.title] = true;
     setQuizzesStat(quizStat);
     getUserSettings(quiz.id);
+  };
+
+  const resetOtherDefaultCheckedOptions = (optionName: string) => {
+    let optionsChecked: any = { ...defaultSettingsOptionsChecked };
+    optionsChecked[optionName] = true;
+    Object.keys(optionsChecked).forEach((key: string) => {
+      if (key !== optionName) {
+        optionsChecked[key] = false;
+      }
+    });
+    setDefaultSettingsOptionsChecked(optionsChecked);
+  };
+
+  const handleCheckboxChange = (e: any, idx: number, optionName: string) => {
+    if (e.target.checked) {
+      let settings: any = { ...defaultProcSettings[idx].settings };
+      resetOtherDefaultCheckedOptions(optionName);
+      applyUserSettings(settings);
+    } else {
+      setDefaultSettingsOptionsChecked({
+        ...defaultSettingsOptionsChecked,
+        [optionName]: false,
+      });
+      setOptionsEnableSwitchStatus();
+      setDefaultCheckedStatus();
+    }
   };
 
   return (
@@ -598,6 +641,31 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
             </div>
           </div>
         )}
+      </div>
+      <div className="grid grid-cols-4 gap-10 align-middle box-border h-16 w-full p-4 border-4 border-blue-400 rounded">
+        {defaultSettingsOptionsChecked &&
+          defaultProcSettings.map((setting: any, index: number) => {
+            return (
+              <label
+                htmlFor={setting.name}
+                className="inline-flex relative items-center mr-5 cursor-pointer"
+                key={index}
+              >
+                <input
+                  type="checkbox"
+                  value=""
+                  id={setting.name}
+                  className="sr-only peer ml-2"
+                  onChange={(e) => handleCheckboxChange(e, index, setting.name)}
+                  checked={defaultSettingsOptionsChecked[setting.name]}
+                />
+                <div className="w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-focus:ring-4   peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-600"></div>
+                <span className="ml-3 h-6 font-semibold text-gray-900 dark:text-black">
+                  {setting.name}
+                </span>
+              </label>
+            );
+          })}
       </div>
       <div className="container mx-auto pt-2">
         <p className="font-bold font-serif text-xl underline">
