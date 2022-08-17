@@ -150,27 +150,11 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
       msgType: msgType,
       msg: data,
     };
-    console.log("rm_" + props.courseId + "_" + props.quiz.id + "rtc");
     socket.emit("chat", {
       evt: "chat",
       room: "rm_" + props.courseId + "_" + props.quiz.id + "rtc",
       text: JSON.stringify(payload),
     });
-  };
-
-  const call = (data: any) => {
-    console.log("call data", data);
-    if (data.evt === "message") {
-      if ("violationId" in data.payload) {
-        if (
-          window.ExamdAutoProctorJS.randomExamId === data.payload.violationId
-        ) {
-          let violation = JSON.parse(data.payload.violationMsg);
-          console.log("violation", violation);
-          sendMsgViaSocket("violation", violation);
-        }
-      }
-    }
   };
 
   const startProctoring = async () => {
@@ -212,7 +196,6 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
       (msg: any) => {
         // call(msg)
         // window.ExamdAutoProctorJS.xsock.on("message", (data: any) => {
-        //   sendMsgViaSocket("chat", "Hello")
         // })
       },
       (msg: any) => {
@@ -298,7 +281,7 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
     sendMsgViaSocket("answer", answer);
   };
 
-  const connectSocket = (room: string): void => {
+  const connectSocket = (): void => {
     if (!socket.connected) {
       socket.connect();
       socket.emit("validate", {
@@ -312,6 +295,10 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
       stuId: props.id,
       quizId: props.quiz.id,
       courseId: props.courseId,
+    });
+
+    socket.on("connect", () => {
+      console.log("client sid", socket.id);
     });
 
     socket.on("chat", (data: any) => {
@@ -336,15 +323,18 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
   };
 
   useEffect(() => {
+    if (room) {
+      connectSocket();
+    }
+  }, [room]);
+
+  useEffect(() => {
     if (props.quiz) {
-      connectSocket("rm_" + props.courseId + "_" + props.quiz.id + "rtc");
       setRoom("rm_" + props.courseId + "_" + props.quiz.id + "rtc");
     }
   }, [props.quiz]);
 
-  useEffect(() => {
-
-  }, []);
+  useEffect(() => {}, []);
 
   const handleOpenQuizInNewTab = () => {
     // localStorage.setItem("selectedQuiz", JSON.stringify(props.quiz));
@@ -442,8 +432,3 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
 };
 
 export default VideoAndScreenRec;
-
-
-
-
-
