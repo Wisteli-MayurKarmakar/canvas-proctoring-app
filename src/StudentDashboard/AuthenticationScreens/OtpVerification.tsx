@@ -2,7 +2,7 @@ import React from "react";
 
 const OtpVerification: React.FC = () => {
   return (
-    <div className="flex flex-col items-center justify-center">
+    <div className="flex flex-col justify-center">
       <p className="text-xl">Enter OTP</p>
       <div className="flex flex-row gap-4">
         <input

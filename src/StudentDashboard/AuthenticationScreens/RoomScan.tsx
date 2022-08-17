@@ -72,14 +72,20 @@ const RoomScan: React.FC = () => {
   return (
     <div className="flex flex-row items-center justify-center gap-10">
       <div className="flex flex-col">
-        <div className="box-border h-56 w-64 p-1 border-2 rounded">
-          <video ref={liveCapSource} autoPlay playsInline muted></video>
-        </div>
+        <video
+          ref={liveCapSource}
+          autoPlay
+          playsInline
+          muted
+          className="h-56 w-64 bg-black rounded"
+        ></video>
       </div>
       <div className="flex flex-col">
-        <div className="box-border h-56 w-64 p-1 border-2 rounded">
-          <video ref={recordedCapSource} controls></video>
-        </div>
+        <video
+          ref={recordedCapSource}
+          controls
+          className="h-56 w-64 bg-black rounded"
+        ></video>
       </div>
       <div className="flex space-x-2 justify-center">
         <button

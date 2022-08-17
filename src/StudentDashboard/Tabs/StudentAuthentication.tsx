@@ -57,18 +57,40 @@ const StudentAuthentication: React.FC<Props> = (props): JSX.Element => {
     setAuthSteps(steps);
   };
 
+  const handleNextStep = () => {
+    if (currentStep < stepsLength - 1) {
+      setCurrentStep((prevState: any) => prevState + 1);
+    }
+  };
+
+  const startWebCam = () => {
+    // navigator.mediaDevices.getUserMedia
+  }
+
   useEffect(() => {
     console.log("props", props.authConfigs);
+    startWebCam();
     prepareAuthSteps();
   }, []);
   return (
-    <div className="flex flex-row gap-40 mt-24 items-center justify-center">
+    <div className="flex flex-col gap-16 mt-12 items-center justify-center">
       {authSteps && (
         <div>
-          <p className="text-center">{authSteps[currentStep].name}</p>
+          <p className="text-center text-xl font-bold">
+            {authSteps[currentStep].name}
+          </p>
           {authSteps[currentStep].component}
         </div>
       )}
+      <div className="flex space-x-2 justify-center">
+        <button
+          onClick={handleNextStep}
+          type="button"
+          className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
+        >
+          Next
+        </button>
+      </div>
     </div>
   );
 };

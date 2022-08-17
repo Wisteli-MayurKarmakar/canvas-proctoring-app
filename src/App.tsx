@@ -96,7 +96,7 @@ function App() {
     // console.log("userId recieved", userId);
 
     //Test params
-    // let loginId = "ncghosh@gmail.com"
+    let loginId = "ncghosh@gmail.com"
     let courseId = "16"
     let userId = "12"
     let toolConsumerGuid = "Examd"
@@ -108,7 +108,7 @@ function App() {
       `userId=, courseId=${courseId}, flag=${loadInstructorPage}, toolConsumerGuid=${toolConsumerGuid}, newTab=${newTab}, isNewTab=${isNewTab}`
     );
     setToolConsumerGuid(toolConsumerGuid);
-    // setId(loginId);
+    setId(loginId);
     // setId(getUuid(userId));
     // setId(getUuid('1470923eea43f6bcab4326fee7047884cf84f374'));
     setId(userId);
