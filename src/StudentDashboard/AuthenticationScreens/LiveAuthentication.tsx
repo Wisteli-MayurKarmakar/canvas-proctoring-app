@@ -6,6 +6,7 @@ interface Props {
   quizId: string;
   userId: string;
   authConfigs: any;
+  mediaStream: any;
 }
 
 const LiveAuthentication: React.FC<Props> = (props): JSX.Element => {
@@ -43,6 +44,7 @@ const LiveAuthentication: React.FC<Props> = (props): JSX.Element => {
     });
 
     videoSrc.current.srcObject = stream;
+    props.mediaStream(stream);
     setVdoStmSource(stream);
   };
 

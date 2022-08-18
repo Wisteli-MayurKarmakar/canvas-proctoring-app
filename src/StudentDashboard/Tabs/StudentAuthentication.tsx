@@ -11,6 +11,7 @@ interface Props {
   userId: string;
   courseId: string;
   quizId: string;
+  mediaStream: any;
   // socket: any;
 }
 
@@ -18,6 +19,10 @@ const StudentAuthentication: React.FC<Props> = (props): JSX.Element => {
   let [authSteps, setAuthSteps] = React.useState<any>(null);
   let [stepsLength, setStepsLength] = React.useState<any>(null);
   let [currentStep, setCurrentStep] = React.useState<number>(0);
+
+  const handleMediaStream = (stream: any) => {
+    props.mediaStream(stream);
+  }
 
   const prepareAuthSteps = () => {
     let steps: any = [];
@@ -30,6 +35,7 @@ const StudentAuthentication: React.FC<Props> = (props): JSX.Element => {
             quizId={props.quizId}
             userId={props.userId}
             authConfigs={props.authConfigs}
+            mediaStream={handleMediaStream}
           />
         ),
       });
