@@ -103,7 +103,7 @@ const Quzzies: React.FC<Props> = (props) => {
                 className={`block p-6 max-w-sm bg-white rounded-lg border ${
                   quizObj[quiz.id]
                     ? "border-blue-600 border-4"
-                    : "border-gray-200"
+                    : "border-gray-200 border-2"
                 } hover:bg-gray-100 dark:${
                   quizObj[quiz.id] ? "border-blue-600" : "border-gray-700"
                 } dark:hover:bg-gray-300`}

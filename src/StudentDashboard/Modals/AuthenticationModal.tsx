@@ -55,8 +55,6 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
     }
   }, [stepNo]);
 
-  
-
   const sendStatus = (status: any) => {
     socketInstance.emit("chat", {
       evt: "chat",
@@ -186,31 +184,18 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
     }
   }, []);
 
-  const handleNext = () => {
-    // if(stepNo === 2) {
-    //   props.getStuAuthStatus({ status: "AUTHED", stuId: props.userId });
-    //   setStuAuthenticated(true);
-    //   close(false)
-    //   return
-    // }
-    console.log("steps", steps)
-    if (
-      !props.quizConfig.studentPicture &&
-      !props.quizConfig.studentIdDl &&
-      !props.quizConfig.roomScan &&
-      !props.quizConfig.otp &&
-      !props.quizConfig.examdLiveLaunch
-    ) {
+  useEffect(() => {
+    if (stepNo === quizSteps.length - 1) {
       setStuAuthenticated(true);
-    }
-    if (stepNo === 3) {
-      close(false);
-      message.success("Please start the quiz");
+      props.authComplete();
       return;
     }
+  }, [stepNo]);
+
+  const handleNext = () => {
     sendStatus(quizSteps[stepNo + 1].name);
     setStepName(quizSteps[stepNo + 1].name);
-    setStepNo(stepNo + 1);
+    setStepNo((prevState: any) => prevState + 1);
     setButtonDisabled(true);
   };
 
@@ -255,7 +240,7 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
                   closeMediaResources();
                   close(false);
                 }}
-                disabled={!stuAuthenticated ? true : false}
+                disabled={stuAuthenticated ? false : true}
               >
                 Close
               </Button>,
@@ -265,7 +250,7 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
       destroyOnClose={true}
       maskClosable={false}
     >
-      {quizSteps.length > 0 &&  quizSteps[stepNo].component}
+      {quizSteps.length > 0 && quizSteps[stepNo].component}
     </Modal>
   );
 };

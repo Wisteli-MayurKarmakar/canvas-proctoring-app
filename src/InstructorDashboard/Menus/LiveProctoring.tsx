@@ -77,36 +77,31 @@ const LiveProctoring: React.FC<Props> = (props): JSX.Element => {
   };
 
   const connectSocket = () => {
-    let room = "rm_" + props.courseId + "_" + selectedQuiz.id + "rtc";
-    let user = "chat_" + props.userId;
-    if (!socket.connected) {
-      socket.connect();
-      socket.emit("validate", {
-        evt: "chat",
-        room: room,
-        user: user,
-      });
-    }
+    socket.connect();
+    socket.emit("validate", {
+      evt: "chat",
+      room: socketRoom,
+      user: socketUser,
+    });
 
     socket.on("chat", (data: any) => {
       console.log("chat data", data);
     });
-    socket.on("rtcdata", (data: any) => {
-      console.log("rtc data", data);
-    })
   };
 
   useEffect(() => {
-    if (socket.connected) {
-      socket.disconnect();
-    }
-    if (selectedQuiz) {
+    if (socketRoom) {
       connectSocket();
+    }
+  }, [socketRoom]);
+
+  useEffect(() => {
+    if (selectedQuiz) {
+      setSocketRoom("rm_" + props.courseId + "_" + selectedQuiz.id + "rtc");
     }
   }, [selectedQuiz]);
 
   const handleQuizClick = (quizz: any) => {
-    setSocketRoom("rm_" + props.courseId + "_" + quizz.id);
     setSelectedQuiz(quizz);
     let temp = { ...qzSelectTrack };
     Object.keys(temp).forEach((key) => {
@@ -135,8 +130,8 @@ const LiveProctoring: React.FC<Props> = (props): JSX.Element => {
               <div
                 className={
                   qzSelectTrack[quizz.id]
-                    ? `box-border h-32 w-44  p-4 border-4 rounded hover:bg-slate-300 border-blue-800`
-                    : `box-border h-32 w-44  p-4 border-4 rounded hover:bg-slate-300 border-slate-300`
+                    ? `box-border h-32 w-48  p-4 border-4 rounded hover:bg-slate-300 border-blue-800`
+                    : `box-border h-32 w-48  p-4 border-4 rounded hover:bg-slate-300 border-slate-300`
                 }
                 key={index}
                 style={{ cursor: "pointer" }}
