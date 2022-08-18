@@ -209,6 +209,16 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
     }
   };
 
+  const closeWebCamResources = async () => {
+    //close webcam resources;
+    let device = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    if (device.active) {
+      device.getTracks().forEach((track: any) => {
+        track.stop();
+      });
+    }
+  }
+
   return (
     <Modal
       title={
@@ -220,6 +230,7 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
       visible={view}
       bodyStyle={{ maxHeight: "50%", height: 600, overflowY: "scroll" }}
       onCancel={() => {
+        closeWebCamResources();
         window.location.reload();
         close(false);
       }}
@@ -237,6 +248,7 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
               <Button
                 key="close"
                 onClick={() => {
+                  closeWebCamResources();
                   closeMediaResources();
                   close(false);
                 }}
