@@ -27,6 +27,7 @@ import ExamdLogo from "./ExamdLogo.png";
 import axios from "axios";
 import InfoModal from "./infoModal";
 import { defaultProcSettings } from "./CommonUtilites/ProctorSettingDefaults";
+import "./configuration.css";
 
 interface Props {
   auth: Object | any;
@@ -647,29 +648,35 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
         )}
       </div>
       <div className="flex flex-row gap-10 h-24 w-full items-center justify-center">
-        <div className="flex items-center justify-center box-border h-full w-full border-4 border-blue-400 rounded">
+        <div className="flex lg:flex-row md:flex-row sm:flex-col items-center justify-center box-border h-full w-full border-4 border-blue-400 rounded">
           {defaultSettingsOptionsChecked &&
             defaultProcSettings.map((setting: any, index: number) => {
               return (
                 <label
                   htmlFor={setting.name}
-                  className="inline-flex relative items-center mr-5 cursor-pointer"
+                  className="flex items-center cursor-pointer"
                   key={index}
                 >
-                  <input
-                    type="checkbox"
-                    value=""
-                    id={setting.name}
-                    className="sr-only peer ml-2"
-                    onChange={(e) =>
-                      handleCheckboxChange(e, index, setting.name)
-                    }
-                    checked={defaultSettingsOptionsChecked[setting.name]}
-                  />
-                  <div className="w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-focus:ring-4   peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-600"></div>
-                  <span className="ml-3 h-6 font-semibold text-gray-900 dark:text-black">
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      value=""
+                      id={setting.name}
+                      className="sr-only"
+                      onChange={(e) =>
+                        handleCheckboxChange(e, index, setting.name)
+                      }
+                      checked={defaultSettingsOptionsChecked[setting.name]}
+                    />
+                    <div className="w-10 h-4 bg-gray-400 rounded-full shadow-inner"></div>
+                    <div
+                      className="dot absolute w-6 h-6 bg-white rounded-full shadow -left-1 -top-1 transition border-2 border-gray-400"
+                    ></div>
+                  </div>
+                  {/* <div className="w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-focus:ring-4   peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-600"></div> */}
+                  <div className="ml-3 mr-5 text-gray-700 font-medium">
                     {setting.name}
-                  </span>
+                  </div>
                 </label>
               );
             })}

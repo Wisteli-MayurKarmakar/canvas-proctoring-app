@@ -411,6 +411,7 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
           className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 border border-blue-700 rounded mt-4"
           onClick={handleStartExam}
           disabled={!props.quiz}
+          style={{ cursor: props.quiz ? "pointer" : "not-allowed" }}
         >
           Start Proctoring
         </button>
