@@ -6,7 +6,6 @@ interface Props {
   quizId: string;
   userId: string;
   authConfigs: any;
-  mediaStream: any;
 }
 
 const LiveAuthentication: React.FC<Props> = (props): JSX.Element => {
@@ -17,6 +16,7 @@ const LiveAuthentication: React.FC<Props> = (props): JSX.Element => {
   var offer: any = null;
   const user = "chat_" + props.userId + "_" + "stu";
   var peerConnection: any = null;
+  var vStream: any = null;
 
   const TURN_SERVER_URL = "turn:examd.us:3478?transport=tcp";
   const TURN_SERVER_USERNAME = "webRtcUser";
@@ -44,7 +44,7 @@ const LiveAuthentication: React.FC<Props> = (props): JSX.Element => {
     });
 
     videoSrc.current.srcObject = stream;
-    props.mediaStream(stream);
+    vStream = stream;
     setVdoStmSource(stream);
   };
 
@@ -58,6 +58,7 @@ const LiveAuthentication: React.FC<Props> = (props): JSX.Element => {
       });
       videoSrc.current.srcObject = localStream;
       setVdoStmSource(localStream);
+      vStream = localStream;
     }
     if (vdoStmSource) {
       vdoStmSource.getTracks().forEach((track: any) => {
@@ -123,6 +124,7 @@ const LiveAuthentication: React.FC<Props> = (props): JSX.Element => {
     });
 
     socket.on("chat", (data: any) => {
+      console.log("chat", data);
       if (data.type === "chat") {
         let msg = JSON.parse(data.message);
         if (msg.msgType === "offer") {
@@ -134,6 +136,16 @@ const LiveAuthentication: React.FC<Props> = (props): JSX.Element => {
         }
         if (msg.msgType === "AUTH_APPROVED") {
           console.log("AUTH_APPROVED");
+        }
+        if (msg.msgType === "END_AUTH") {
+          if (msg.msg.stuId === props.userId) {
+            //get tracks from videoSrc and stop the stream
+            if (vStream) {
+              vStream.getTracks().forEach((track: any) => {
+                track.stop();
+              });
+            }
+          }
         }
       }
     });

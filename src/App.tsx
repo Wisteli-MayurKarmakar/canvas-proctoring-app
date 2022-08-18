@@ -116,8 +116,8 @@ function App() {
     if (loadInstructorPage === "Y") {
       setLoadFlag("Instructor");
     } else {
-      // setLoadFlag("Student");
-      setLoadFlag("Instructor");
+      setLoadFlag("Student");
+      // setLoadFlag("Instructor");
     }
   };
 

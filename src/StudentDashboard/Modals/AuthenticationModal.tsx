@@ -150,9 +150,6 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
     // },
   ];
 
-  const getMediaStream = (stream: any) => {
-    setMediaStream(stream);
-  };
 
   useEffect(() => {
     if (props.quizConfig) {
@@ -179,7 +176,6 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
               userId={props.userId}
               courseId={props.courseId}
               quizId={props.quizId}
-              mediaStream={getMediaStream}
               // socket={socketInstance}
             />
           ),
@@ -205,30 +201,17 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
     setButtonDisabled(true);
   };
 
-  const closeMediaResources = async () => {
-    //close media resources;
-    let device = await navigator.mediaDevices.getUserMedia({ video: true });
-    if (device.active) {
-      device.getTracks().forEach((track: any) => {
-        track.stop();
-      });
-    }
-  };
-
-  const closeWebCamResources = async () => {
+  const closeWebCamResources = () => {
     //enumerate devices and if any active close it
-    if (mediaStream) {
-      mediaStream.getTracks().forEach((track: any) => {
-        track.stop();
-      });
-    }
-    //close webcam resources;
-    // let device = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-    // if (device.active) {
-    //   device.getTracks().forEach((track: any) => {
-    //     track.stop();
-    //   });
-    // }
+    //close mediaStream
+    socketInstance.emit("chat", {
+      evt: "chat",
+      room: room,
+      text: JSON.stringify({
+        msgType: "END_AUTH",
+        msg: { stuId: props.userId },
+      }),
+    });
   };
 
   return (
@@ -261,7 +244,6 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
                 key="close"
                 onClick={() => {
                   closeWebCamResources();
-                  // closeMediaResources();
                   close(false);
                 }}
                 disabled={stuAuthenticated ? false : true}
