@@ -70,6 +70,14 @@ const LiveAuthentication: React.FC<Props> = (props): JSX.Element => {
       });
     }
 
+    peerConnection.ondatachannel = (event: any) => {
+      let recieveChannel = event.channel;
+      recieveChannel.onmessage = (msg: any) => {
+        console.log("message recieved", msg)
+
+      }
+    }
+
     peerConnection.onicecandidate = async (event: any) => {
       if (event.candidate) {
         sendMsgViaSocket("candidate", event.candidate);
