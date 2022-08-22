@@ -11,6 +11,7 @@ interface Props {
   childTableActions: any;
   mainTableActions: any;
   expandedRow: (row: any) => void;
+  enableAuth: any;
 }
 
 const Grid: React.FunctionComponent<Props> = (props): JSX.Element => {
@@ -24,10 +25,18 @@ const Grid: React.FunctionComponent<Props> = (props): JSX.Element => {
       props.nestedTableColumns.forEach((col: any) => {
         if (col.key === "action") {
           col.render = (row: any) => {
+            console.log("row", row);
+            console.log("props id", props.enableAuth);
             return (
               <Button
                 type="link"
                 key={row.id}
+                disabled={
+                  props.enableAuth.step === "Authentication" &&
+                  props.enableAuth.studId === row.user.id
+                    ? false
+                    : true
+                }
                 onClick={() =>
                   props.childTableActions["Authenticate"](
                     row,

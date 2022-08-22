@@ -160,6 +160,7 @@ const AuthenticateUser: React.FC<Props> = (props): JSX.Element => {
     }
 
     socket.on("chat", (data: any) => {
+      console.log("authuser msg", data)
       if (data.type === "chat") {
         let msg = JSON.parse(data.message);
         if (msg.msgType === "answer") {
@@ -173,11 +174,11 @@ const AuthenticateUser: React.FC<Props> = (props): JSX.Element => {
           }
         }
 
-        if (msg.msgType === "STU_LIVE_REP") {
-          if (msg.msg.stuId === props.selectedRow.user.id) {
-            message.success("Please start authentication");
-          }
-        }
+        // if (msg.msgType === "STU_LIVE_REP") {
+        //   if (msg.msg.stuId === props.selectedRow.user.id) {
+        //     message.success("Please start authentication");
+        //   }
+        // }
       }
     });
   };

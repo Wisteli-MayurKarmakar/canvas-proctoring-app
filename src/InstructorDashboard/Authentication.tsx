@@ -20,6 +20,7 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
   const [showAuthModal, setShowAuthModal] = React.useState<boolean>(false);
   const [quizId, setQuizId] = React.useState<string | null>(null);
   const [selectedRow, setSelectedRow] = React.useState<any>(null);
+  let [doAuth, setDoAuth] = React.useState<any>(null);
   let [stuLiveStatusObj, setStuLiveStatusObj] = React.useState<any>(null);
   const [selectedQuizTitle, setSelectedQuizTitle] = React.useState<
     string | null
@@ -184,6 +185,7 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
     }
 
     socket.on("chat", (data: any) => {
+      console.log("stat msg", data)
       if (data.type === "chat") {
         let msg = JSON.parse(data.message);
         if (msg.msgType === "STU_LIVE_REP") {
@@ -192,6 +194,17 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
           let temp = { ...stuLiveStatusObj };
           temp[stuId] = stage;
           setStuLiveStatusObj(temp);
+        }
+        if (msg.msgType === "STU_AUTH_STEP") {
+          let stuId = msg.msg.stuId;
+          let step = msg.msg.stepName;
+          let temp = { ...stuLiveStatusObj };
+          temp[stuId] = step;
+          setStuLiveStatusObj(temp);
+
+          if (step === "Authentication") {
+            setDoAuth({step: step, studId: stuId})
+          }
         }
       }
     });
@@ -213,6 +226,7 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
         <Grid
           data={quizzes}
           nestedTable={true}
+          enableAuth={doAuth}
           nestedTableData={enrollments}
           pagination={true}
           mainTableColumns={quizzesColumns}
@@ -251,6 +265,7 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
             quizId={quizId}
             selectedRow={selectedRow}
             userId={props.userId}
+            
           />
         </Modal>
       )}
