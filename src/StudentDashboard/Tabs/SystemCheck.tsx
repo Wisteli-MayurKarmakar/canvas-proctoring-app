@@ -12,11 +12,11 @@ import { AiOutlineFundView } from "react-icons/ai";
 import classes from "./tabs.module.scss";
 
 interface Props {
-  quizId: string;
-  stuName: string;
-  stuId: string;
+  quizId: any;
+  stuName: any;
+  stuId: any;
   systemCheckStatus: (status: boolean) => void;
-  courseId: string;
+  courseId: any;
   getSocketConnection: any;
 }
 
@@ -119,7 +119,11 @@ const SystemCheck: React.FC<Props> = (props): JSX.Element => {
   };
 
   useEffect(() => {
-    connectSocket(props.stuId as string);
+    if (!props.courseId && !props.quizId && !props.stuId) {
+      return;
+    } else {
+      connectSocket(props.stuId as string);
+    }
   }, []);
   return (
     <div className="text-center w-full">
@@ -215,7 +219,7 @@ const SystemCheck: React.FC<Props> = (props): JSX.Element => {
               type="button"
               className="flex flex-row px-12 py-2.5 items-center gap-2 bg-blue-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
             >
-              <FcAssistant /> 
+              <FcAssistant />
               Test Computer
             </button>
           </div>

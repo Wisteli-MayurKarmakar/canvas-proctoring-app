@@ -7,7 +7,7 @@ import StudentIdDlVerification from "../AuthenticationScreens/StudentIdDlVerific
 
 interface Props {
   authConfigs: any;
-  quizTitle: string;
+  quizTitle: any;
   userId: string;
   courseId: string;
   quizId: string;
@@ -18,7 +18,7 @@ const StudentAuthentication: React.FC<Props> = (props): JSX.Element => {
   let [authSteps, setAuthSteps] = React.useState<any>(null);
   let [stepsLength, setStepsLength] = React.useState<any>(null);
   let [currentStep, setCurrentStep] = React.useState<number>(0);
-
+  let [quizTitle, setQuizTitle] = React.useState<any>(null);
 
   const prepareAuthSteps = () => {
     let steps: any = [];
@@ -66,13 +66,13 @@ const StudentAuthentication: React.FC<Props> = (props): JSX.Element => {
 
   const startWebCam = () => {
     // navigator.mediaDevices.getUserMedia
-  }
+  };
 
   useEffect(() => {
-    console.log("props", props.authConfigs);
     startWebCam();
     prepareAuthSteps();
   }, []);
+
   return (
     <div className="flex flex-col gap-16 mt-12 items-center justify-center">
       {authSteps && (

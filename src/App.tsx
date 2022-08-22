@@ -105,10 +105,10 @@ function App() {
     // let id  = "1470923eea43f6bcab4326fee7047884cf84f374";
     // let courseId = userId?.split("courseId=")[1].split("loginId")[0];
     console.log(
-      `userId=, courseId=${courseId}, flag=${loadInstructorPage}, toolConsumerGuid=${toolConsumerGuid}, newTab=${newTab}, isNewTab=${isNewTab}`
+      `userId=${userId}, courseId=${courseId}, flag=${loadInstructorPage}, toolConsumerGuid=${toolConsumerGuid}, newTab=${newTab}, isNewTab=${isNewTab}`
     );
     setToolConsumerGuid(toolConsumerGuid);
-    // setId(loginId);
+    setId(loginId);
     // setId(getUuid(userId));
     // setId(getUuid('1470923eea43f6bcab4326fee7047884cf84f374'));
     setId(userId);

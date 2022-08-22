@@ -14,7 +14,7 @@ const PrivacyPolicy: React.FC<Props> = (props): JSX.Element => {
   };
 
   return (
-    <div>
+    <div className="max-h-96 overflow-y-scroll">
       <h3>What personal data we collect and why we collect it</h3>
       <h4>Comments</h4>
       <p>
@@ -31,7 +31,7 @@ const PrivacyPolicy: React.FC<Props> = (props): JSX.Element => {
       </p>
       <h4>Media</h4>
       <p>
-        f you upload images to the website, you should avoid uploading images
+        If you upload images to the website, you should avoid uploading images
         with embedded location data (EXIF GPS) included. Visitors to the website
         can download and extract any location data from images on the website.
       </p>

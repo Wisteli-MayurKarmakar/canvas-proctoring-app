@@ -144,7 +144,8 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
     if (stuAuthenticated || props.isAuthed) {
       startProctoring();
     } else {
-      alert("Please perform authentication first");
+      // alert("Please perform authentication first");
+      setShowAuthModal(true);
       return;
     }
   };
@@ -341,14 +342,14 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
   useEffect(() => {}, []);
 
   const handleOpenQuizInNewTab = () => {
-    // localStorage.setItem("selectedQuiz", JSON.stringify(props.quiz));
-    // window.open(
-    //   `https://examd.us/lti/config/index.html?userId=${props.id}&courseId=${props.courseId}&toolConsumerGuid=${props.toolConsumerGuid}&quizId=${props.quiz.id}&newTab=true`,
-    //   "_blank"
-    // );
+    localStorage.setItem("selectedQuiz", JSON.stringify(props.quiz));
     window.open(
-      `http://localhost:3000/lti/config?userId=${props.id}&courseId=${props.courseId}&toolConsumerGuid=${props.toolConsumerGuid}&quizId=${props.quiz.id}&newTab=true&auth=1`
+      `https://examd.us/lti/config/index.html?userId=${props.id}&courseId=${props.courseId}&toolConsumerGuid=${props.toolConsumerGuid}&quizId=${props.quiz.id}&newTab=true&auth=1&studentId=${props.studentId}`,
+      "_blank"
     );
+    // window.open(
+    //   `http://localhost:3000/lti/config?userId=${props.id}&courseId=${props.courseId}&toolConsumerGuid=${props.toolConsumerGuid}&quizId=${props.quiz.id}&newTab=true&auth=1`
+    // );
     setOpenNewTabPrompt(false);
   };
 
@@ -423,8 +424,7 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
         >
           End Proctoring
         </button>
-        <div className="relative -ml-0.4 top-2 w-0.5 h-16 bg-gray-600"></div>
-        <button
+        {/* <button
           className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 border border-blue-700 rounded mt-4"
           onClick={() => setShowAuthModal(true)}
         >
@@ -432,7 +432,7 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
         </button>
         <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 border border-blue-700 rounded mt-4 cursor-not-allowed">
           Update Profile
-        </button>
+        </button> */}
       </div>
       {alertUser && <InfoModal title="" message={alertMessage} />}
       {openNewTabPropmpt && (

@@ -3,7 +3,7 @@ import React, { useEffect } from "react";
 import PrivacyPolicy from "../../StudentDashboard/Tabs/PrivacyPolicy";
 import QuizRules from "../../StudentDashboard/Tabs/QuizRules";
 import SystemCheck from "../../StudentDashboard/Tabs/SystemCheck";
-import AuthenticateUser from "../../InstructorDashboard/AuthenticateUser";
+import Thanks from "../../StudentDashboard/Tabs/Thanks";
 import StudentAuthentication from "../../StudentDashboard/Tabs/StudentAuthentication";
 
 interface Props {
@@ -150,7 +150,6 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
     // },
   ];
 
-
   useEffect(() => {
     if (props.quizConfig) {
       let config = {} as any;
@@ -184,7 +183,16 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
       setQuizSteps(steps);
       setAuthConfigurations(config);
     }
+    steps.push({
+      name: "Thanks",
+      component: <Thanks />,
+    });
+    setQuizSteps(steps);
   }, []);
+
+  useEffect(() => {
+    console.log("steps", quizSteps);
+  } , [quizSteps]);
 
   useEffect(() => {
     if (stepNo === quizSteps.length - 1) {
@@ -197,7 +205,7 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
   const handleNext = () => {
     sendStatus(quizSteps[stepNo + 1].name);
     setStepName(quizSteps[stepNo + 1].name);
-    setStepNo((prevState: any) => prevState + 1);
+    setStepNo(stepNo + 1);
     setButtonDisabled(true);
   };
 
@@ -235,11 +243,11 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
               <Button key="close" onClick={() => close(false)}>
                 Close
               </Button>,
-              <Button key="next" onClick={handleNext} disabled={buttonDisabled}>
+              <Button key="next" onClick={handleNext} disabled={false}>
                 Next
               </Button>,
             ]
-          : stepNo === steps.length && [
+          : stepNo === steps.length - 1 || stepNo === steps.length  && [
               <Button
                 key="close"
                 onClick={() => {
