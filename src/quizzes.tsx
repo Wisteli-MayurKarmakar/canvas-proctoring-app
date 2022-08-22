@@ -151,7 +151,7 @@ const Quzzies: React.FC<Props> = (props) => {
       case "PrivacyPolicy":
         setModalTitle("Privacy Policy");
         setOptionModal(true);
-        setModalComponent(<PrivacyPolicy isChecked={() => {}} />);
+        setModalComponent(<PrivacyPolicy isChecked={() => {}} showAgree={false}/>);
         break;
       case "Authentication":
         setModalTitle("Authentication");
@@ -279,7 +279,8 @@ const Quzzies: React.FC<Props> = (props) => {
           <Modal
             title={modalTitle}
             visible={showOptionModal}
-            width={modalTitle === "Help" ? "40pc" : "90pc"}
+            width={"90pc"}
+            bodyStyle={{ maxHeight: "50%", height: 600, overflowY: "scroll" }}
             onCancel={() => {
               handleModalClose();
             }}

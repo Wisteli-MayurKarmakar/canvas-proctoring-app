@@ -71,13 +71,6 @@ const SystemCheck: React.FC<Props> = (props): JSX.Element => {
     });
 
     props.getSocketConnection(ws);
-
-    // ws.on("message", (data: any) => {
-    //   console.log(data);
-    // });
-    // ws.on("chat", (data: any) => {
-    //   console.log("chat", data);
-    // });
   };
 
   useEffect(() => {

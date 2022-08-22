@@ -65,60 +65,77 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
         msg: { stuId: props.userId, status: status },
       }),
     });
-  };
-
-  const sendSignal = (stage: any) => {
-    sendStatus(stage);
-
     socketInstance.on("chat", (data: any) => {
-      console.log("AuthModal", data);
-    });
+      console.log("data", data);
+      if (data.type === "user") {
+        return;
+      }
+      let msg = JSON.parse(data.message);
+
+      if (msg.msgType === "STU_LIVE_REQ") {
+        sendAuthStatus("STU_AUTH_STEP", quizSteps[stepNo].name, props.userId);
+      }
+    })
   };
 
-  // useEffect(() => {
-  //   if (socketInstance) {
-  //   }
-  // }, [socketInstance]);
+  // const sendSignal = (stage: any) => {
+  //   sendStatus(stage);
+
+  //   socketInstance.on("chat", (data: any) => {
+  //     console.log("AuthModal", data);
+  //   });
+  // };
 
   const handleSocketConnection = (socket: any) => {
     setSocketInstance(socket);
-    socket.emit("chat", {
+    // socket.emit("chat", {
+    //   evt: "chat",
+    //   room: room,
+    //   text: JSON.stringify({
+    //     msgType: "STU_LIVE_REP",
+    //     msg: { stuId: props.userId, status: steps[stepNo].name },
+    //   }),
+    // });
+
+    // socket.on("chat", (data: any) => {
+    //   if (data.type === "chat") {
+    //     let msg = JSON.parse(data.message);
+    //     if (msg.msgType === "STU_LIVE_REQ") {
+    //       let stuIds = msg.msg.stuIds;
+    //       let stuId = stuIds.find((id: any) => id === props.userId);
+    //       if (stuId) {
+    //         socket.emit("chat", {
+    //           evt: "chat",
+    //           room: room,
+    //           text: JSON.stringify({
+    //             msgType: "STU_LIVE_REP",
+    //             msg: { stuId: props.userId, status: steps[stepNo].name },
+    //           }),
+    //         });
+    //       }
+    //     }
+
+    //     if (msg.msgType === "STU_AUTHED") {
+    //       let stuId = msg.msg.stuId;
+    //       if (stuId === props.userId) {
+    //         props.getStuAuthStatus({ status: "AUTHED", stuId: stuId });
+    //         setStuAuthenticated(true);
+    //       }
+    //     }
+    //   }
+    // });
+  };
+
+  const sendAuthStatus = (msgType: string, stepName: string, stuId: string) => {
+    socketInstance.emit("chat", {
       evt: "chat",
       room: room,
       text: JSON.stringify({
-        msgType: "STU_LIVE_REP",
-        msg: { stuId: props.userId, status: steps[stepNo].name },
+        msgType: msgType,
+        msg: { stuId: stuId, stepName: stepName },
       }),
     });
-
-    socket.on("chat", (data: any) => {
-      if (data.type === "chat") {
-        let msg = JSON.parse(data.message);
-        if (msg.msgType === "STU_LIVE_REQ") {
-          let stuIds = msg.msg.stuIds;
-          let stuId = stuIds.find((id: any) => id === props.userId);
-          if (stuId) {
-            socket.emit("chat", {
-              evt: "chat",
-              room: room,
-              text: JSON.stringify({
-                msgType: "STU_LIVE_REP",
-                msg: { stuId: props.userId, status: steps[stepNo].name },
-              }),
-            });
-          }
-        }
-
-        if (msg.msgType === "STU_AUTHED") {
-          let stuId = msg.msg.stuId;
-          if (stuId === props.userId) {
-            props.getStuAuthStatus({ status: "AUTHED", stuId: stuId });
-            setStuAuthenticated(true);
-          }
-        }
-      }
-    });
-  };
+  }
 
   let steps = [
     {
@@ -136,7 +153,7 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
     },
     {
       name: "Privacy Policy",
-      component: <PrivacyPolicy isChecked={isAgree} />,
+      component: <PrivacyPolicy isChecked={isAgree} showAgree={true}/>,
     },
     {
       name: "Rules",
@@ -144,21 +161,23 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
         <QuizRules quizConfig={props.quizConfig} isChecked={isAgree} />
       ),
     },
-    // {
-    //   name: "Authentication",
-    //   component: <AuthenticateUser authConfigs={authConfigurations} userName={props.userName} quizTitle={props.quizTitle}/>,
-    // },
   ];
 
-  useEffect(() => {
-    if (props.quizConfig) {
-      let config = {} as any;
-      config["studentPicture"] = props.quizConfig.studentPicture;
-      config["studentIdDl"] = props.quizConfig.studentIdDl;
-      config["roomScan"] = props.quizConfig.roomScan;
-      config["otp"] = props.quizConfig.otp;
-      config["examdLiveLaunch"] = props.quizConfig.examdLiveLaunch;
+  const handleStudentAuthed = (status: any) => {
+    if (status) {
+      setButtonDisabled(false);
+      setStuAuthenticated(true);
+    }
+  };
 
+  useEffect(() => {
+    let config = {} as any;
+    config["studentPicture"] = props.quizConfig.studentPicture;
+    config["studentIdDl"] = props.quizConfig.studentIdDl;
+    config["roomScan"] = props.quizConfig.roomScan;
+    config["otp"] = props.quizConfig.otp;
+    config["examdLiveLaunch"] = props.quizConfig.examdLiveLaunch;
+    if (props.quizConfig) {
       if (
         props.quizConfig.studentPicture ||
         props.quizConfig.studentIdDl ||
@@ -175,38 +194,28 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
               userId={props.userId}
               courseId={props.courseId}
               quizId={props.quizId}
+              isStudentAuthed={handleStudentAuthed}
               // socket={socketInstance}
             />
           ),
         });
       }
       setQuizSteps(steps);
-      setAuthConfigurations(config);
     }
     steps.push({
       name: "Thanks",
       component: <Thanks />,
     });
     setQuizSteps(steps);
+    setAuthConfigurations(config);
   }, []);
-
-  useEffect(() => {
-    console.log("steps", quizSteps);
-  } , [quizSteps]);
-
-  useEffect(() => {
-    if (stepNo === quizSteps.length - 1) {
-      setStuAuthenticated(true);
-      props.authComplete();
-      return;
-    }
-  }, [stepNo]);
 
   const handleNext = () => {
     sendStatus(quizSteps[stepNo + 1].name);
     setStepName(quizSteps[stepNo + 1].name);
     setStepNo(stepNo + 1);
     setButtonDisabled(true);
+    sendAuthStatus("STU_AUTH_STEP", quizSteps[stepNo + 1].name, props.userId);
   };
 
   const closeWebCamResources = () => {
@@ -243,11 +252,11 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
               <Button key="close" onClick={() => close(false)}>
                 Close
               </Button>,
-              <Button key="next" onClick={handleNext} disabled={false}>
+              <Button key="next" onClick={handleNext} disabled={buttonDisabled}>
                 Next
               </Button>,
             ]
-          : stepNo === steps.length - 1 || stepNo === steps.length  && [
+          : stepNo === quizSteps.length - 1 && [
               <Button
                 key="close"
                 onClick={() => {

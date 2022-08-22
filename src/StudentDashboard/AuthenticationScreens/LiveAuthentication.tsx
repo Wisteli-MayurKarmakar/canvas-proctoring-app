@@ -1,3 +1,4 @@
+import { message } from "antd";
 import React, { useEffect } from "react";
 import { getWebSocketUrl } from "../../APIs/apiservices";
 
@@ -6,6 +7,7 @@ interface Props {
   quizId: string;
   userId: string;
   authConfigs: any;
+  isLiveAuthed: any;
 }
 
 const LiveAuthentication: React.FC<Props> = (props): JSX.Element => {
@@ -73,10 +75,33 @@ const LiveAuthentication: React.FC<Props> = (props): JSX.Element => {
     peerConnection.ondatachannel = (event: any) => {
       let recieveChannel = event.channel;
       recieveChannel.onmessage = (msg: any) => {
-        console.log("message recieved", msg)
+        console.log("message recieved", msg);
+        let data = JSON.parse(msg.data);
+        if ("authStatus" in data) {
+          if (
+            data["authStatus"] === "STU_AUTHED" &&
+            data["stuId"] === props.userId
+          ) {
+            message.success("You are successfully authenticated");
+            props.isLiveAuthed(true);
 
-      }
-    }
+            //close vdoStmSource
+            if (vdoStmSource) {
+              vdoStmSource.getTracks().forEach((track: any) => {
+                track.stop();
+              });
+            } else {
+              vStream.getTracks().forEach((track: any) => {
+                track.stop();
+              });
+            }
+
+            //close peerConnection
+            peerConnection.close();
+          }
+        }
+      };
+    };
 
     peerConnection.onicecandidate = async (event: any) => {
       if (event.candidate) {
@@ -165,11 +190,9 @@ const LiveAuthentication: React.FC<Props> = (props): JSX.Element => {
   }, []);
 
   return (
-    <div className="flex flex-row gap-40 mt-24 items-center justify-center">
+    <div className="flex flex-row gap-28 mt-2 items-center justify-center">
       <div className="flex flex-col justify-center">
-        <div className="box-border h-56 w-64 p-1 border-2 rounded">
-          <video ref={videoSrc} id="videoSrc" autoPlay muted />
-        </div>
+          <video ref={videoSrc} id="videoSrc" autoPlay muted className="h-56 w-full rounded"/>
         <p className="text-center text-xl font-bold">Video</p>
       </div>
     </div>

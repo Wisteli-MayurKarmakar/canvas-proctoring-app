@@ -2,6 +2,7 @@ import React from "react";
 
 interface Props {
   isChecked: (flag: boolean) => void;
+  showAgree: any;
 }
 
 const PrivacyPolicy: React.FC<Props> = (props): JSX.Element => {
@@ -14,7 +15,7 @@ const PrivacyPolicy: React.FC<Props> = (props): JSX.Element => {
   };
 
   return (
-    <div className="max-h-96 overflow-y-scroll">
+    <div>
       <h3>What personal data we collect and why we collect it</h3>
       <h4>Comments</h4>
       <p>
@@ -110,10 +111,12 @@ const PrivacyPolicy: React.FC<Props> = (props): JSX.Element => {
         What automated decision making and/or profiling we do with user data
       </h5>
       <h5>Industry regulatory disclosure requirements</h5>
-      <div className="flex flex-row gap-6 items-center justify-center text-xl">
-        <input type="checkbox" onClick={handleClick} />{" "}
-        <b>Agree privacy policy </b>
-      </div>
+      {props.showAgree && (
+        <div className="flex flex-row gap-6 items-center justify-center text-xl">
+          <input type="checkbox" onClick={handleClick} />{" "}
+          <b>Agree privacy policy </b>
+        </div>
+      )}
     </div>
   );
 };

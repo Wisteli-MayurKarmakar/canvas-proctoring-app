@@ -84,11 +84,10 @@ const Help: React.FC<Props> = (props): JSX.Element => {
     setIsLoading(true);
 
     axios
-      .post("https://examd.online/notification/api/v1/mail/sendEmail", {
+      .post("https://examd.online/notification/api/v1/mail/sendEmail", reqData, {
         headers: {
           Authorization: props.authToken,
         },
-        data: reqData,
       })
       .then((res: any) => {
         setIsLoading(false);
