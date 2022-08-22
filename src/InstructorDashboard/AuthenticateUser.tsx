@@ -27,6 +27,7 @@ const AuthenticateUser: React.FC<Props> = (props): JSX.Element => {
   const socket = getWebSocketUrl();
   const [roomName, setRoomName] = React.useState<string>("");
   var peerConnection = React.useRef<any>(null);
+  var peerDataChannel = React.useRef<any>(null);
   var destVideo: any = null;
   var answer: any = null;
   const TURN_SERVER_URL = "turn:examd.us:3478?transport=tcp";
@@ -71,8 +72,19 @@ const AuthenticateUser: React.FC<Props> = (props): JSX.Element => {
   const createPeerConnection = async () => {
     peerConnection.current = new RTCPeerConnection(PC_CONFIG);
 
+    // send data from peerDataChannel to server
+    peerDataChannel.current =
+      peerConnection.current.createDataChannel("dataChannel");
+    //open data channel
+    peerDataChannel.current.onopen = () => {
+      console.log("data channel opened");
+    };
+
     destVideo = new MediaStream();
     vdoDstRef.current.srcObject = destVideo;
+
+    //create data channel
+    // peerDataChannel = peerConnection.current.createDataChannel("dataChannel");
 
     peerConnection.current.ontrack = (event: any) => {
       event.streams[0].getTracks().forEach((track: any) => {
@@ -85,8 +97,6 @@ const AuthenticateUser: React.FC<Props> = (props): JSX.Element => {
         sendMsgViaSocket("candidate", event.candidate);
       }
     };
-
-    
   };
 
   const createOffer = async () => {
@@ -173,9 +183,18 @@ const AuthenticateUser: React.FC<Props> = (props): JSX.Element => {
   };
 
   const handleSave = async () => {
-    console.log("authBtn", authButtonDisabled)
     setIsAuthenticated(true);
-    sendMsgViaSocket("STU_AUTHED", {stuId: props.selectedRow.user.id});
+
+    let dataChannelState = await peerDataChannel.current.readyState;
+    if (dataChannelState === "open") {
+      peerDataChannel.current.send(
+        JSON.stringify({
+          authStatus: "STU_AUTHED",
+          stuId: props.selectedRow.user.id,
+        })
+      );
+    }
+    // sendMsgViaSocket("STU_AUTHED", { stuId: props.selectedRow.user.id });
   };
 
   useEffect(() => {
