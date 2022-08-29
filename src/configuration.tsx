@@ -28,6 +28,7 @@ import axios from "axios";
 import InfoModal from "./infoModal";
 import { defaultProcSettings } from "./CommonUtilites/ProctorSettingDefaults";
 import "./configuration.css";
+import SettingsModal from "./settingsModal";
 
 interface Props {
   auth: Object | any;
@@ -109,105 +110,108 @@ const abbrs = {
   },
 };
 
+const iconSize = ""
+
+
 const settingOptions: settingStruct = {
   "Recording Options": {
     recordWebcam: {
       fullName: "Record Webcam",
-      icon: <VideoCameraOutlined />,
+      icon: <VideoCameraOutlined style={{ fontSize: iconSize}}/>,
     },
     recordScreen: {
       fullName: "Record Screen",
-      icon: <DesktopOutlined />,
+      icon: <DesktopOutlined style={{ fontSize: iconSize}}/>,
     },
     recordAudio: {
       fullName: "Record Audio",
-      icon: <AudioOutlined />,
+      icon: <AudioOutlined style={{ fontSize: iconSize}}/>,
     },
     chat: {
       fullName: "Chat",
-      icon: <CommentOutlined />,
+      icon: <CommentOutlined style={{ fontSize: iconSize}}/>,
     },
   },
   "Verification Options": {
     studentPicture: {
       fullName: "Student Picture",
-      icon: <UserOutlined />,
+      icon: <UserOutlined style={{ fontSize: iconSize}}/>,
     },
     studentIdDl: {
       fullName: "Student ID or DL",
-      icon: <IdcardOutlined />,
+      icon: <IdcardOutlined style={{ fontSize: iconSize}}/>,
     },
     roomScan: {
       fullName: "Room Scan",
-      icon: <ScanOutlined />,
+      icon: <ScanOutlined style={{ fontSize: iconSize}}/>,
     },
     otp: {
       fullName: "One Time Password",
-      icon: <KeyOutlined />,
+      icon: <KeyOutlined style={{ fontSize: iconSize}}/>,
     },
   },
   "Student Resources": {
     calculatorAllowed: {
       fullName: "Calculator",
-      icon: <CalculatorOutlined />,
+      icon: <CalculatorOutlined style={{ fontSize: iconSize}}/>,
     },
     scratchPadAllowed: {
       fullName: "Scratch Pad",
-      icon: <SnippetsOutlined />,
+      icon: <SnippetsOutlined style={{ fontSize: iconSize}}/>,
     },
     liveHelp: {
       fullName: "Live Help",
-      icon: <RobotOutlined />,
+      icon: <RobotOutlined style={{ fontSize: iconSize}}/>,
     },
     whitelistPages: {
       fullName: "Whitelist Pages",
-      icon: <IeOutlined />,
+      icon: <IeOutlined style={{ fontSize: iconSize}}/>,
     },
   },
   "Lock Down Options": {
     disableCopyPaste: {
       fullName: "Disable Copy/ Paste",
-      icon: <CopyOutlined />,
+      icon: <CopyOutlined style={{ fontSize: iconSize}}/>,
     },
     disablePrinting: {
       fullName: "Disable Printing",
-      icon: <PrinterOutlined />,
+      icon: <PrinterOutlined style={{ fontSize: iconSize}}/>,
     },
     lockdownBrowser: {
       fullName: "Lock Down Browser",
-      icon: <ChromeOutlined />,
+      icon: <ChromeOutlined style={{ fontSize: iconSize}}/>,
     },
   },
   "Violation Options": {
     multiplePerson: {
       fullName: "Multiple Person",
-      icon: <TeamOutlined />,
+      icon: <TeamOutlined style={{ fontSize: iconSize}}/>,
     },
     cellPhone: {
       fullName: "Cell Phone",
-      icon: <PhoneOutlined />,
+      icon: <PhoneOutlined style={{ fontSize: iconSize}}/>,
     },
     noPersonInRoom: {
       fullName: "No Person In Room",
-      icon: <InteractionOutlined />,
+      icon: <InteractionOutlined style={{ fontSize: iconSize}}/>,
     },
     speaking: {
       fullName: "Speaking",
-      icon: <SoundOutlined />,
+      icon: <SoundOutlined style={{ fontSize: iconSize}}/>,
     },
   },
   "Proctor Options": {
     postExamReview: {
       fullName: "Post Exam Review",
-      icon: <ProjectOutlined />,
+      icon: <ProjectOutlined style={{ fontSize: iconSize}}/>,
     },
     examdLiveLaunch: {
       fullName: "Examd Live Launch",
-      icon: <RocketOutlined />,
+      icon: <RocketOutlined style={{ fontSize: iconSize}}/>,
     },
     instructorProctored: {
       fullName: "Instructor Proctored",
-      icon: <IdcardOutlined />,
+      icon: <IdcardOutlined style={{ fontSize: iconSize}}/>,
     },
     examdProctored: {
       fullName: "Examd Proctored",
@@ -228,6 +232,8 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
   let [applySettings, setApplySettings] = React.useState<boolean>(false);
   const [quizzes, setQuizzes] = React.useState<any>(null);
   const [selectedQuiz, setSelectedQuiz] = React.useState<any>(null);
+  let [quizSettings, setQuizSettings] = React.useState<any>(null);
+  let [configSaveStatus, setConfigSaveStatus] = React.useState<boolean>(false);
   let [defaultSettingsOptionsChecked, setDefaultSettingsOptionsChecked] =
     React.useState<any>(null);
 
@@ -416,12 +422,12 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
       )
       .then((res) => {
         setShowInfoModal(true);
-        setInfoMsg(res.data);
-        // alert(res.data);
-        handleResetAll();
+        setConfigSaveStatus(true);
+        setInfoMsg("Configurations saved successfully");
       })
       .catch((err) => {
         console.log(err);
+        setConfigSaveStatus(false);
         setShowInfoModal(true);
         setInfoMsg(
           "Something went wrong while saving. Please try again later."
@@ -447,6 +453,13 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
     }
     setChecked(checkOptions);
     setOptionsStatus(switchOptions);
+    let defaultOptions: {
+      [key: string]: boolean;
+    } = { ...defaultSettingsOptionsChecked };
+    for (let key in defaultOptions) {
+      defaultOptions[key] = false;
+    }
+    setDefaultSettingsOptionsChecked(defaultOptions);
   };
 
   const applyUserSettings = (settings: any) => {
@@ -454,7 +467,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
       (key: string) => settings[key] && key
     );
     let checkOptions: checkTypes = { ...checked };
-    //Set all CheckOptions to false
+
     for (let key in checkOptions) {
       let subOptions: optionCheckedProto = { ...checkOptions[key] };
       for (let subKey in subOptions) {
@@ -464,7 +477,6 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
     }
 
     let optSwitches: optionCheckedProto = { ...optionsStatus };
-    //Set all SwitchOptions to false
 
     for (let key in optSwitches) {
       optSwitches[key] = false;
@@ -495,15 +507,11 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
           headers: {
             Authorization: `Bearer ${props.auth.data.access_token}`,
           },
-          // params: {
-          //   guid: props.toolConsumerGuid,
-          //   courseId: props.courseId,
-          //   quizId: quizId,
-          // }
         }
       )
       .then((res) => {
         setUserSettings(res.data);
+        setQuizSettings(res.data);
         applyUserSettings(res.data);
         setApplySettings(false);
       })
@@ -591,8 +599,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
         ...defaultSettingsOptionsChecked,
         [optionName]: false,
       });
-      setOptionsEnableSwitchStatus();
-      setDefaultCheckedStatus();
+      applyUserSettings(quizSettings);
     }
   };
 
@@ -669,9 +676,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
                       checked={defaultSettingsOptionsChecked[setting.name]}
                     />
                     <div className="w-10 h-4 bg-gray-400 rounded-full shadow-inner"></div>
-                    <div
-                      className="dot absolute w-6 h-6 bg-white rounded-full shadow -left-1 -top-1 transition border-2 border-gray-400"
-                    ></div>
+                    <div className="dot absolute w-6 h-6 bg-white rounded-full shadow -left-1 -top-1 transition border-2 border-gray-400"></div>
                   </div>
                   {/* <div className="w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-focus:ring-4   peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-600"></div> */}
                   <div className="ml-3 mr-5 text-gray-700 font-medium">
@@ -757,71 +762,13 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
             Reset
           </button>
         </div>
-        {showInfoModal && (
-          <div
-            id="popup-modal"
-            tabIndex={-1}
-            className="overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 md:inset-0 h-modal md:h-full"
-          >
-            <div className="relative p-4 w-full max-w-md h-full md:h-auto mx-auto my-auto">
-              <div className="relative bg-white rounded-lg shadow dark:bg-gray-700">
-                <button
-                  type="button"
-                  className="absolute top-3 right-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center dark:hover:bg-gray-800 dark:hover:text-white"
-                  data-modal-toggle="popup-modal"
-                >
-                  <svg
-                    className="w-5 h-5"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                    xmlns="http://www.w3.org/2000/svg"
-                    onClick={() => setShowInfoModal(false)}
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                      clipRule="evenodd"
-                    ></path>
-                  </svg>
-                </button>
-                <div className="p-6 text-center">
-                  <svg
-                    className="mx-auto mb-4 w-14 h-14 text-gray-400 dark:text-gray-200"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    ></path>
-                  </svg>
-                  <h3 className="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
-                    {infoMsg}
-                  </h3>
-                  <button
-                    data-modal-toggle="popup-modal"
-                    type="button"
-                    onClick={() => setShowInfoModal(false)}
-                    className="text-white bg-green-600 hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300 dark:focus:ring-green-800 font-medium rounded-lg text-sm inline-flex items-center px-5 py-2.5 text-center mr-2"
-                  >
-                    Ok
-                  </button>
-                  <button
-                    data-modal-toggle="popup-modal"
-                    type="button"
-                    onClick={() => setShowInfoModal(false)}
-                    className="text-gray-500 bg-white hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-gray-200 rounded-lg border border-gray-200 text-sm font-medium px-5 py-2.5 hover:text-gray-900 focus:z-10 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-500 dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-gray-600"
-                  >
-                    Close
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
+        {showInfoModal && configSaveStatus && (
+          <SettingsModal
+            view={showInfoModal}
+            close={() => setShowInfoModal(false)}
+            message={infoMsg}
+            status={configSaveStatus}
+          />
         )}
       </div>
     </div>

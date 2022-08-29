@@ -28,7 +28,7 @@ export const defaultProcSettings = [
       },
     },
     {
-      name: "Default proctoring with Live launch",
+      name: "Default w/ Live launch",
       settings: {
         recordWebcam: false,
         recordScreen: true,
@@ -56,7 +56,7 @@ export const defaultProcSettings = [
       },
     },
     {
-      name: "Live Proctoring with Default options",
+      name: "Default w/ Live Proctoring",
       settings: {
         recordWebcam: false,
         recordScreen: true,
@@ -88,7 +88,7 @@ export const defaultProcSettings = [
       settings: {
         recordWebcam: false,
         recordScreen: false,
-        recordAudio: true,
+        recordAudio: false,
         chat: false,
         studentPicture: true,
         studentIdDl: true,
@@ -98,8 +98,8 @@ export const defaultProcSettings = [
         scratchPadAllowed: false,
         liveHelp: false,
         whitelistPages: false,
-        disableCopyPaste: false,
-        disablePrinting: false,
+        disableCopyPaste: true,
+        disablePrinting: true,
         multiplePerson: false,
         cellPhone: false,
         noPersonInRoom: false,

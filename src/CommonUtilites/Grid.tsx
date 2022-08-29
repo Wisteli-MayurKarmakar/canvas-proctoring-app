@@ -25,8 +25,6 @@ const Grid: React.FunctionComponent<Props> = (props): JSX.Element => {
       props.nestedTableColumns.forEach((col: any) => {
         if (col.key === "action") {
           col.render = (row: any) => {
-            console.log("row", row);
-            console.log("props id", props.enableAuth);
             return (
               <Button
                 type="link"

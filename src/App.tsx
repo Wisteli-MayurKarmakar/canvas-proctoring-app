@@ -75,7 +75,7 @@ function App() {
     let newTab = url.searchParams.get("newTab");
     let isAuthed = url.searchParams.get("auth");
     // let studentId = url.searchParams.get("studentId");
-    let studentId = "12";
+    let studentId = "1";
 
     if (studentId) {
       setStudentId(studentId);
@@ -96,22 +96,22 @@ function App() {
     // console.log("userId recieved", userId);
 
     //Test params
-    let loginId = "ncghosh@gmail.com"
-    let courseId = "16"
-    let userId = "12"
-    let toolConsumerGuid = "Examd"
+    let loginId = "ncghosh@gmail.com";
+    let courseId = "16";
+    let userId = "12";
+    let toolConsumerGuid = "Examd";
 
     // let id = userId?.split("loginId=")[1].split(" ")[0];
     // let id  = "1470923eea43f6bcab4326fee7047884cf84f374";
     // let courseId = userId?.split("courseId=")[1].split("loginId")[0];
     console.log(
-      `userId=${userId}, courseId=${courseId}, flag=${loadInstructorPage}, toolConsumerGuid=${toolConsumerGuid}, newTab=${newTab}, isNewTab=${isNewTab}`
+      `userId=${userId}, courseId=${courseId}, flag=${loadInstructorPage}, toolConsumerGuid=${toolConsumerGuid}, newTab=${newTab}, isNewTab=${isNewTab}, studentId=${studentId}`
     );
     setToolConsumerGuid(toolConsumerGuid);
     setId(loginId);
     // setId(getUuid(userId));
-    // setId(getUuid('1470923eea43f6bcab4326fee7047884cf84f374'));
-    setId(userId);
+    setId(getUuid('1470923eea43f6bcab4326fee7047884cf84f374'));
+    // setId(userId);
     setCourseId(courseId as string);
     if (loadInstructorPage === "Y") {
       setLoadFlag("Instructor");

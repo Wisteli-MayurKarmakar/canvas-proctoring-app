@@ -12,6 +12,10 @@ interface Props {
   courseId: string;
   quizId: string;
   isStudentAuthed: any;
+  authToken: any;
+  guid: any;
+  studentId: string;
+  authStatus: (status: boolean) => void;
   // socket: any;
 }
 
@@ -27,10 +31,14 @@ const StudentAuthentication: React.FC<Props> = (props): JSX.Element => {
     } else {
       props.isStudentAuthed(false);
     }
-  }
+  };
+
+  const handleAuthStatus = (status: boolean) => {
+    props.authStatus(true);
+  };
 
   const prepareAuthSteps = () => {
-    let steps: any = [];
+    let steps: Object[] = [];
     if (props.authConfigs.examdLiveLaunch) {
       steps.push({
         name: "Live Authentication",
@@ -38,7 +46,7 @@ const StudentAuthentication: React.FC<Props> = (props): JSX.Element => {
           <LiveAuthentication
             courseId={props.courseId}
             quizId={props.quizId}
-            userId={props.userId}
+            userId={props.studentId}
             authConfigs={props.authConfigs}
             isLiveAuthed={handleLiveAuthentication}
           />
@@ -61,7 +69,16 @@ const StudentAuthentication: React.FC<Props> = (props): JSX.Element => {
     if (props.authConfigs.studentIdDl || props.authConfigs.studentPicture) {
       steps.push({
         name: "Student Id/Dl Verification",
-        component: <StudentIdDlVerification authConfigs={props.authConfigs} />,
+        component: (
+          <StudentIdDlVerification
+            authConfigs={props.authConfigs}
+            authToken={props.authToken}
+            userId={props.userId}
+            guid={props.guid}
+            studentId={props.studentId}
+            handleAuth={handleAuthStatus}
+          />
+        ),
       });
     }
     setStepsLength(steps.length);
@@ -74,17 +91,12 @@ const StudentAuthentication: React.FC<Props> = (props): JSX.Element => {
     }
   };
 
-  const startWebCam = () => {
-    // navigator.mediaDevices.getUserMedia
-  };
-
   useEffect(() => {
-    startWebCam();
     prepareAuthSteps();
   }, []);
 
   return (
-    <div className="flex flex-col gap-16 mt-12 items-center justify-center">
+    <div className="flex flex-col gap-16 items-center justify-center">
       {authSteps && (
         <div>
           <p className="text-center text-xl font-bold">

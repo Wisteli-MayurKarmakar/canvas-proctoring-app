@@ -5,6 +5,7 @@ import InfoModal from "./infoModal";
 import AuthenticationModal from "./StudentDashboard/Modals/AuthenticationModal";
 import $ from "jquery";
 import { getWebSocketUrl } from "./APIs/apiservices";
+import ProctoringInfoModal from "./CommonUtilites/ProctoringInfoModal";
 
 declare global {
   interface Window {
@@ -36,6 +37,8 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
   let [showAuthModal, setShowAuthModal] = React.useState<boolean>(false);
   const [examStarted, setExamStarted] = React.useState<boolean>(false);
   let [stuAuthenticated, setStuAuthenticated] = React.useState<boolean>(false);
+  let [showProctoringAlert, setShowProctoringAlert] =
+    React.useState<boolean>(false);
   const [openNewTabPropmpt, setOpenNewTabPrompt] =
     React.useState<boolean>(false);
   const [quizConfig, setQuizConfig] = React.useState<any>(null);
@@ -163,7 +166,7 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
   };
 
   const startProctoring = async () => {
-    if (quizConfig.recordScreen && !props.isNewTab) {
+    if (!props.isNewTab) {
       setOpenNewTabPrompt(true);
       return;
     }
@@ -173,7 +176,7 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
     }
     setExamStarted(true);
     setAlertUser(true);
-    setAlertMessage("Your exam has started");
+    setShowProctoringAlert(true);
 
     await window.ExamdAutoProctorJS.initLibrary()
       .then((resp: any) => {
@@ -257,6 +260,7 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
       });
     } else {
       let vidEle: any = $("#xvideo");
+      console.log("vid: " + vidEle)
       //capture stream from vidEle
       stream = vidEle.get(0).captureStream();
       stream.getTracks().forEach((track: any) => {
@@ -339,17 +343,20 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
     }
   }, [props.quiz]);
 
-  useEffect(() => {}, []);
+  useEffect(() => {
+    if (props.isNewTab) {
+      startProctoring();
+    }
+  }, []);
 
   const handleOpenQuizInNewTab = () => {
-    localStorage.setItem("selectedQuiz", JSON.stringify(props.quiz));
-    window.open(
-      `https://examd.us/lti/config/index.html?userId=${props.id}&courseId=${props.courseId}&toolConsumerGuid=${props.toolConsumerGuid}&quizId=${props.quiz.id}&newTab=true&auth=1&studentId=${props.studentId}`,
-      "_blank"
-    );
     // window.open(
-    //   `http://localhost:3000/lti/config?userId=${props.id}&courseId=${props.courseId}&toolConsumerGuid=${props.toolConsumerGuid}&quizId=${props.quiz.id}&newTab=true&auth=1`
+    //   `https://examd.us/lti/config/index.html?userId=${props.id}&courseId=${props.courseId}&toolConsumerGuid=${props.toolConsumerGuid}&quizId=${props.quiz.id}&newTab=true&auth=1&studentId=${props.studentId}`,
+    //   "_blank"
     // );
+    window.open(
+      `http://localhost:3000/lti/config?userId=${props.id}&courseId=${props.courseId}&toolConsumerGuid=${props.toolConsumerGuid}&quizId=${props.quiz.id}&newTab=true&auth=1&studentId=${props.studentId}`
+    );
     setOpenNewTabPrompt(false);
   };
 
@@ -434,7 +441,12 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
           Update Profile
         </button> */}
       </div>
-      {alertUser && <InfoModal title="" message={alertMessage} />}
+      {showProctoringAlert && (
+        <ProctoringInfoModal
+          visible={showProctoringAlert}
+          close={() => setShowProctoringAlert(false)}
+        />
+      )}
       {openNewTabPropmpt && (
         <div
           id="popup-modal"
@@ -492,6 +504,9 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
           getStuAuthStatus={handleStuAuthStatus}
           authComplete={handleAuthComplete}
           quizConfig={quizConfig}
+          authToken={props.token}
+          guid={props.toolConsumerGuid}
+          studentId={props.studentId}
         />
       )}
     </div>

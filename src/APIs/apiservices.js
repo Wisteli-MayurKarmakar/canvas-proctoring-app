@@ -1,3 +1,4 @@
+import axios from "axios";
 import { io } from "socket.io-client";
 let webSocketUrl = "https://examd.us:4921/";
 
@@ -6,4 +7,22 @@ export const getWebSocketUrl = () => {
     autoConnect: false,
   });
   return socket;
+};
+
+export const getUserDetails = (authToken, guid, userId) => {
+  axios
+    .post(
+      `https://examd.us/student/api/v1/getLtiStudentProfileDetails/${guid}/${userId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      }
+    )
+    .then((resp) => {
+      return resp.data;
+    })
+    .catch((error) => {
+      return null;
+    });
 };

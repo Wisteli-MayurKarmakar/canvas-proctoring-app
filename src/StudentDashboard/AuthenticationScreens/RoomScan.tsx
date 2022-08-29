@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 
 const RoomScan: React.FC = () => {
   let liveCapSource = React.useRef<any>(null);
@@ -25,6 +25,14 @@ const RoomScan: React.FC = () => {
   const stop = () => {
     if (mediaStream) {
       mediaStream.getTracks().forEach((track: any) => track.stop());
+    } else {
+      //get tracks from the navigator.mediaDevices.getUserMedia and stop tracks
+      navigator.mediaDevices
+        .getUserMedia({ audio: true })
+        .then((stream: any) => {
+          recordedMedia = stream;
+          recordedMedia.getTracks().forEach((track: any) => track.stop());
+        });
     }
   };
 
@@ -68,6 +76,10 @@ const RoomScan: React.FC = () => {
         }
       });
   };
+
+  useEffect(() => {
+    stop();
+  }, []);
 
   return (
     <div className="flex flex-row items-center justify-center gap-10">

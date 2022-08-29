@@ -79,7 +79,6 @@ const LiveStreaming: React.FC<Props> = (props): JSX.Element => {
   };
 
   const addAnswer = async (answer: any) => {
-    console.log("addAnswer", answer);
     if (!peerConnection.current.currentRemoteDescription) {
       await peerConnection.current.setRemoteDescription(answer);
     }
@@ -87,6 +86,8 @@ const LiveStreaming: React.FC<Props> = (props): JSX.Element => {
 
   const addCandidate = async (candidate: any) => {
     if (peerConnection && candidate) {
+      console.log("answer", answer);
+      await peerConnection.current.setRemoteDescription(answer);
       await peerConnection.current.addIceCandidate(candidate);
     }
   };

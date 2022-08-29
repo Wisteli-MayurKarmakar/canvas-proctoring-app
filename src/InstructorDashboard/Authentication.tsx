@@ -86,7 +86,11 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
       key: "liveStat",
       title: `Live Status`,
       render: (row: any) => {
-        return <span>{stuLiveStatusObj[row.user.id]}</span>;
+        if (Object.keys(row).length > 0) {
+          return <span>{stuLiveStatusObj[row.user.id]}</span>;
+        } else{
+          return false;
+        }
       },
     },
     {
@@ -107,12 +111,6 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
     selectedQuizTitle: any,
     quizId: string
   ) => {
-    console.log(
-      "handleEnrollmentAuthentication",
-      row,
-      selectedQuizTitle,
-      quizId
-    );
     setSelectedQuizTitle(selectedQuizTitle);
     setSelectedRow(row);
     setQuizId(quizId);
@@ -173,19 +171,18 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
     if (enrollments) {
       let ids = Object.entries(enrollments).map(
         (enrollment: any) => enrollment[1].user_id
-      )
+      );
       socket.emit("chat", {
         evt: "chat",
         room: room,
         text: JSON.stringify({
           msgType: "STU_LIVE_REQ",
-          msg: {stuIds: [...ids], quizId: id},
+          msg: { stuIds: [...ids], quizId: id },
         }),
       });
     }
 
     socket.on("chat", (data: any) => {
-      console.log("stat msg", data)
       if (data.type === "chat") {
         let msg = JSON.parse(data.message);
         if (msg.msgType === "STU_LIVE_REP") {
@@ -203,7 +200,7 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
           setStuLiveStatusObj(temp);
 
           if (step === "Authentication") {
-            setDoAuth({step: step, studId: stuId})
+            setDoAuth({ step: step, studId: stuId });
           }
         }
       }
@@ -265,7 +262,6 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
             quizId={quizId}
             selectedRow={selectedRow}
             userId={props.userId}
-            
           />
         </Modal>
       )}

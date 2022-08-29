@@ -7,6 +7,7 @@ import SystemCheck from "./StudentDashboard/Tabs/SystemCheck";
 import PrivacyPolicy from "./StudentDashboard/Tabs/PrivacyPolicy";
 import ImageMatchAuthentication from "./StudentDashboard/AuthenticationScreens/ImageMatchAuthentication";
 import Help from "./StudentDashboard/Tabs/Help";
+import UpdateProfile from "./StudentDashboard/Menu/UpdateProfile";
 import { Button, message, Modal } from "antd";
 
 interface Props {
@@ -32,6 +33,62 @@ const Quzzies: React.FC<Props> = (props) => {
   let [modalTitle, setModalTitle] = React.useState<any>(null);
   let [closeStream, setCloseStream] = React.useState<boolean>(false);
   let [showHelpModal, setShowHelpModal] = React.useState<boolean>(false);
+  let [showUpdateProfileModal, setShowUpdateProfileModal] =
+    React.useState<boolean>(false);
+
+  const updateUsersDetails = async () => {
+    let students: Object[] = [];
+    let response: any = await axios.get(
+      `https://examd.us/student/api/v1/fetchCanvasEnrollmentsByCourseId/${props.courseId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${props.authToken}`,
+        },
+      }
+    );
+
+    response.data.forEach((item: any) => {
+      let userObj: any = {
+        idLtiStudentProfile: "",
+        guid: props.toolConsumerGuid,
+        idUser: "",
+        firstName: "",
+        lastName: "",
+        email: "",
+        // idFileIndex1: "",
+        // idFileIndex2: "",
+        // idFileName1: "",
+        // idFileName2: "",
+        status: 0,
+        createUser: "",
+        createDate: new Date().getTime(),
+        modifyUser: "",
+        modifyDate: "",
+      };
+      let name = item.user.name.split(" ");
+      userObj["idUser"] = item.user.id;
+      userObj["firstName"] = name[0];
+      userObj["lastName"] = name.length === 2 ? name[1] : "";
+      userObj["createUser"] = item.user.name;
+      students.push(userObj);
+    });
+
+    // students.forEach((student: any) => {
+    //   if (student.idUser === props.studentId && !studProfileId) {
+    //     setStudProfileId(student.idLtiStudentProfile);
+    //   }
+    // });
+
+    let stuSaveResponse = await axios.post(
+      `https://examd.us/student/api/v1/saveLtiStudentProfile`,
+      students,
+      {
+        headers: {
+          Authorization: `Bearer ${props.authToken}`,
+        },
+      }
+    );
+  };
 
   useEffect(() => {
     $(document).bind("keyup keydown", function (e) {
@@ -39,7 +96,6 @@ const Quzzies: React.FC<Props> = (props) => {
         return false;
       }
     });
-    console.log("Quizzes: useEffect", props);
     axios
       .get(
         `https://examd-dev.uc.r.appspot.com/student/api/v1/fetchCanvasQuizzesByCourseId/${props.courseId}`,
@@ -63,15 +119,11 @@ const Quzzies: React.FC<Props> = (props) => {
             res.data.find((item: any) => item.id === props.quizId)
           );
         }
-        // if (selectedQuiz) {
-        //   let id = JSON.parse(selectedQuiz).id;
-        //   setSelectedQuiz(JSON.parse(selectedQuiz));
-        //   localStorage.removeItem("selectedQuiz");
-        // }
       })
       .catch((err) => {
         console.log(err);
       });
+    updateUsersDetails();
   }, []);
 
   const startQuizz = (quizz: Object | any) => {
@@ -96,41 +148,12 @@ const Quzzies: React.FC<Props> = (props) => {
     setShowHelpModal(true);
   };
 
-  const getQuizConfigByIdAndGuid = (quizId: any) => {
-    axios
-      .get(
-        `https://examd-dev.uc.r.appspot.com/student/api/v1/getLtiCanvasConfigByGuidCourseIdQuizId?guid=${[
-          props.toolConsumerGuid,
-        ]}&courseId=${props.courseId}&quizId=${quizId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${props.authToken}`,
-          },
-        }
-      )
-      .then((res) => {
-        let config: any = res.data;
-        let temp = {} as any;
-        temp["studentPicture"] = config.studentPicture;
-        // temp["studentIdDl"] = config.studentIdDl;
-        // temp["roomScan"] = config.roomScan;
-        // temp["otp"] = config.otp;
-        // temp["examdLiveLaunch"] = config.examdLiveLaunch;
-        setModalComponent(
-          <ImageMatchAuthentication
-            courseId={props.courseId}
-            studentId={props.studentId}
-            closeStream={setCloseStream}
-          />
-        );
-        setOptionModal(true);
-      })
-      .catch((err) => {
-        message.error(
-          "This Quiz is not Proctored. Please go to the Quiz Page and Continue."
-        );
-      });
-  };
+  const handleOpenUpdateProfile = (flag: boolean) => {
+    if (flag) {
+      setOptionModal(false);
+      setShowUpdateProfileModal(true);
+    }
+  }
 
   const showSideOptionModal = (componentName: any) => {
     switch (componentName) {
@@ -151,7 +174,9 @@ const Quzzies: React.FC<Props> = (props) => {
       case "PrivacyPolicy":
         setModalTitle("Privacy Policy");
         setOptionModal(true);
-        setModalComponent(<PrivacyPolicy isChecked={() => {}} showAgree={false}/>);
+        setModalComponent(
+          <PrivacyPolicy isChecked={() => {}} showAgree={false} />
+        );
         break;
       case "Authentication":
         setModalTitle("Authentication");
@@ -161,10 +186,11 @@ const Quzzies: React.FC<Props> = (props) => {
             studentId={props.studentId}
             courseId={props.courseId}
             closeStream={closeStream}
+            authToken={props.authToken}
+            guid={props.toolConsumerGuid}
+            openUpdateProfile={handleOpenUpdateProfile}
           />
         );
-        break;
-      case "UpdateProfile":
         break;
       default:
         break;
@@ -174,9 +200,7 @@ const Quzzies: React.FC<Props> = (props) => {
   const handleModalClose = () => {
     setModalComponent(null);
     setOptionModal(false);
-    if (modalTitle === "Authentication") {
-      window.location.reload();
-    }
+    window.location.reload();
   };
 
   if (quizzes) {
@@ -187,50 +211,91 @@ const Quzzies: React.FC<Props> = (props) => {
             <button
               type="button"
               onClick={() => showSideOptionModal("SystemCheck")}
-              className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
+              className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight  rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
             >
-              System Check
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;System Check &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
             </button>
           </div>
           <div className="flex space-x-2 justify-center">
             <button
               type="button"
               onClick={() => showSideOptionModal("Authentication")}
-              className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
+              className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight  rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
             >
-              Authentication
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Authentication Test&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
             </button>
           </div>
           <div className="flex space-x-2 justify-center">
             <button
               type="button"
               onClick={() => showSideOptionModal("PrivacyPolicy")}
-              className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
+              className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight  rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
             >
-              Privacy Policy
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Privacy Policy&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
             </button>
           </div>
           <div className="flex space-x-2 justify-center">
             <button
               type="button"
-              onClick={() => showSideOptionModal("UpdateProfile")}
-              disabled={true}
-              className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs cursor-not-allowed leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
+              onClick={() => {
+                setShowUpdateProfileModal(true);
+              }}
+              className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight  rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
             >
-              Update Profile
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Update Profile&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            </button>
+          </div>
+          <div className="flex space-x-2 justify-center">
+            <button
+              type="button"
+              disabled={true}
+              onClick={() => {
+                setShowUpdateProfileModal(true);
+              }}
+              className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium cursor-not-allowed text-xs leading-tight rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
+            >
+              &nbsp;&nbsp;Download Lockdown Browser&nbsp;&nbsp;
+            </button>
+          </div>
+          <div className="flex space-x-2 justify-center">
+            <button
+              type="button"
+              disabled={true}
+              onClick={() => {
+                setShowUpdateProfileModal(true);
+              }}
+              className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium cursor-not-allowed text-xs leading-tight  rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
+            >
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Help Document&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            </button>
+          </div>
+          <div className="flex space-x-2 justify-center">
+            <button
+              type="button"
+              disabled={true}
+              onClick={() => {
+                setShowUpdateProfileModal(true);
+              }}
+              className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium cursor-not-allowed text-xs leading-tight  rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
+            >
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Help Video&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
             </button>
           </div>
           <div className="flex space-x-2 justify-center">
             <button
               type="button"
               onClick={handleShowHelpModal}
-              className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
+              className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight  rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
             >
-              Help
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Email/ Phone
+              Help&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
             </button>
           </div>
         </div>
-        <div className="relative -ml-0.4 top-2 w-0.5 h-96 bg-gray-600"></div>
+        <div
+          className="relative -ml-0.4 top-2 w-0.5 bg-gray-600"
+          style={{ height: "30rem" }}
+        ></div>
         <div className="flex flex-col gap-5 justify-center items-center h-screen mx-auto mt-5 text-center container text-lg ">
           <div className="flex flex-row gap-10">
             {quizzes.map((quiz: any, index) => {
@@ -310,6 +375,15 @@ const Quzzies: React.FC<Props> = (props) => {
             visible={showHelpModal}
             onCancel={() => setShowHelpModal(false)}
             authToken={props.authToken}
+          />
+        )}
+        {showUpdateProfileModal && (
+          <UpdateProfile
+            show={showUpdateProfileModal}
+            close={() => setShowUpdateProfileModal(false)}
+            authToken={props.authToken}
+            guid={props.toolConsumerGuid}
+            userId={props.studentId}
           />
         )}
       </div>

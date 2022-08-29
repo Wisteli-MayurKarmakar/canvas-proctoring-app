@@ -17,6 +17,9 @@ interface Props {
   authComplete: () => void;
   courseId: string;
   getStuAuthStatus: (data: any) => void;
+  authToken: any;
+  guid: any;
+  studentId: string;
 }
 
 const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
@@ -50,11 +53,11 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
     }
   };
 
-  useEffect(() => {
-    if (stepNo > 3) {
-      props.authComplete();
-    }
-  }, [stepNo]);
+  // useEffect(() => {
+  //   if (stepNo > 3) {
+  //     props.authComplete();
+  //   }
+  // }, [stepNo]);
 
   const sendStatus = (status: any) => {
     socketInstance.emit("chat", {
@@ -66,7 +69,6 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
       }),
     });
     socketInstance.on("chat", (data: any) => {
-      console.log("data", data);
       if (data.type === "user") {
         return;
       }
@@ -75,7 +77,7 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
       if (msg.msgType === "STU_LIVE_REQ") {
         sendAuthStatus("STU_AUTH_STEP", quizSteps[stepNo].name, props.userId);
       }
-    })
+    });
   };
 
   // const sendSignal = (stage: any) => {
@@ -135,7 +137,7 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
         msg: { stuId: stuId, stepName: stepName },
       }),
     });
-  }
+  };
 
   let steps = [
     {
@@ -153,7 +155,7 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
     },
     {
       name: "Privacy Policy",
-      component: <PrivacyPolicy isChecked={isAgree} showAgree={true}/>,
+      component: <PrivacyPolicy isChecked={isAgree} showAgree={true} />,
     },
     {
       name: "Rules",
@@ -167,6 +169,13 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
     if (status) {
       setButtonDisabled(false);
       setStuAuthenticated(true);
+    }
+  };
+
+  const handleAuthStatus = (status: boolean) => {
+    if (status) {
+      setStuAuthenticated(status);
+      setButtonDisabled(false);
     }
   };
 
@@ -195,6 +204,10 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
               courseId={props.courseId}
               quizId={props.quizId}
               isStudentAuthed={handleStudentAuthed}
+              authToken={props.authToken}
+              guid={props.guid}
+              studentId={props.studentId}
+              authStatus={handleAuthStatus}
               // socket={socketInstance}
             />
           ),
@@ -206,6 +219,17 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
       name: "Thanks",
       component: <Thanks />,
     });
+
+    let flag: boolean = false;
+    steps.forEach((step: { [key: string]: string | JSX.Element }) => {
+      if (step.name === "Authentication") {
+        flag = true;
+      }
+    });
+
+    if (!flag) {
+      setStuAuthenticated(true);
+    }
     setQuizSteps(steps);
     setAuthConfigurations(config);
   }, []);
@@ -253,7 +277,7 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
                 Close
               </Button>,
               <Button key="next" onClick={handleNext} disabled={buttonDisabled}>
-                Next
+                Next Step
               </Button>,
             ]
           : stepNo === quizSteps.length - 1 && [
@@ -262,6 +286,7 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
                 onClick={() => {
                   closeWebCamResources();
                   close(false);
+                  props.authComplete();
                 }}
                 disabled={stuAuthenticated ? false : true}
               >
