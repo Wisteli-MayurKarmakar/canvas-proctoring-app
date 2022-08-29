@@ -239,7 +239,7 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
     setStepName(quizSteps[stepNo + 1].name);
     setStepNo(stepNo + 1);
     setButtonDisabled(true);
-    sendAuthStatus("STU_AUTH_STEP", quizSteps[stepNo + 1].name, props.userId);
+    sendAuthStatus("STU_AUTH_STEP", quizSteps[stepNo + 1].name, props.studentId);
   };
 
   const closeWebCamResources = () => {
