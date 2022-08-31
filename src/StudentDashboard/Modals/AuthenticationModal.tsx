@@ -215,10 +215,10 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
       }
       setQuizSteps(steps);
     }
-    steps.push({
-      name: "Thanks",
-      component: <Thanks />,
-    });
+    // steps.push({
+    //   name: "Thanks",
+    //   component: <Thanks />,
+    // });
 
     let flag: boolean = false;
     steps.forEach((step: { [key: string]: string | JSX.Element }) => {

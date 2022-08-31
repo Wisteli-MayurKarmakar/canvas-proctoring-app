@@ -1,4 +1,4 @@
-import { message } from "antd";
+import { message, Modal } from "antd";
 import axios from "axios";
 import React, { FunctionComponent, useEffect, useState } from "react";
 import InfoModal from "./infoModal";
@@ -94,6 +94,7 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
     // setShowAuthModal(false);
     setStuAuthenticated(true);
     // startProctoring();
+    handleOpenQuizInNewTab();
   };
 
   useEffect(() => {
@@ -109,7 +110,7 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
       "https://examd-dev.uc.r.appspot.com/student/api/v1/saveLtiVideoRef",
       {
         idLtiVideoRef: videoId,
-        idUser: props.id,
+        idUser: props.studentId,
         idInstructor: "",
         idReference: videoId,
         idExam: props.quiz.id,
@@ -231,6 +232,7 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
     setAlertUser(true);
     setAlertMessage("Your exam has ended");
     window.ExamdAutoProctorJS.stopRecording();
+    window.close();
   };
 
   const handleStuAuthStatus = (data: any): void => {
@@ -260,7 +262,7 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
       });
     } else {
       let vidEle: any = $("#xvideo");
-      console.log("vid: " + vidEle)
+      console.log("vid: " + vidEle);
       //capture stream from vidEle
       stream = vidEle.get(0).captureStream();
       stream.getTracks().forEach((track: any) => {
@@ -306,12 +308,7 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
       courseId: props.courseId,
     });
 
-    socket.on("connect", () => {
-      console.log("client sid", socket.id);
-    });
-
     socket.on("chat", (data: any) => {
-      console.log("chat", data);
       if (data.type === "chat") {
         let msg = JSON.parse(data.message);
         if (msg.msgType === "offer") {
@@ -321,12 +318,6 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
         if (msg.msgType === "candidate") {
           addCandidate(msg.msg);
         }
-
-        // if (msg.msgType === "STU_LIVE_REP") {
-        //   if (msg.msg.stuId === props.selectedRow.user.id) {
-        //     message.success("Please start authentication");
-        //   }
-        // }
       }
     });
   };
@@ -350,70 +341,19 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
   }, []);
 
   const handleOpenQuizInNewTab = () => {
-    // window.open(
-    //   `https://examd.us/lti/config/index.html?userId=${props.id}&courseId=${props.courseId}&toolConsumerGuid=${props.toolConsumerGuid}&quizId=${props.quiz.id}&newTab=true&auth=1&studentId=${props.studentId}`,
-    //   "_blank"
-    // );
     window.open(
-      `http://localhost:3000/lti/config?userId=${props.id}&courseId=${props.courseId}&toolConsumerGuid=${props.toolConsumerGuid}&quizId=${props.quiz.id}&newTab=true&auth=1&studentId=${props.studentId}`
+      `https://examd.us/lti/config/index.html?userId=${props.id}&courseId=${props.courseId}&toolConsumerGuid=${props.toolConsumerGuid}&quizId=${props.quiz.id}&newTab=true&auth=1&studentId=${props.studentId}`,
+      "_blank"
     );
+    // window.open(
+    //   `http://localhost:3000/lti/config?userId=${props.id}&courseId=${props.courseId}&toolConsumerGuid=${props.toolConsumerGuid}&quizId=${props.quiz.id}&newTab=true&auth=1&studentId=${props.studentId}`
+    // );
     setOpenNewTabPrompt(false);
   };
 
   return (
     <div className="flex flex-col items-center justify-center">
       <div id="xmedia" className="flex flex-row"></div>
-
-      {!props.quiz ? (
-        <div
-          className="flex p-4 mb-4 text-sm text-blue-700 bg-blue-100 rounded-lg dark:bg-blue-200 dark:text-blue-800"
-          role="alert"
-        >
-          <svg
-            aria-hidden="true"
-            className="flex-shrink-0 inline w-5 h-5 mr-3"
-            fill="currentColor"
-            viewBox="0 0 20 20"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              fillRule="evenodd"
-              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-              clipRule="evenodd"
-            ></path>
-          </svg>
-          <span className="sr-only">Info</span>
-          <div>
-            <span className="font-medium">Please Select a Quiz</span>
-          </div>
-        </div>
-      ) : (
-        <div
-          className="flex p-4 mb-4 text-sm text-blue-700 bg-blue-100 rounded-lg dark:bg-blue-200 dark:text-blue-800"
-          role="alert"
-        >
-          <svg
-            aria-hidden="true"
-            className="flex-shrink-0 inline w-5 h-5 mr-3"
-            fill="currentColor"
-            viewBox="0 0 20 20"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              fillRule="evenodd"
-              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-              clipRule="evenodd"
-            ></path>
-          </svg>
-          <span className="sr-only">Info</span>
-          <div>
-            <span className="font-medium">
-              Quiz selected: {props.quiz.title}
-            </span>
-          </div>
-        </div>
-      )}
-
       <div className="container text-center flex justify-center gap-8 h-full items-center">
         <button
           className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 border border-blue-700 rounded mt-4"
@@ -431,15 +371,6 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
         >
           End Proctoring
         </button>
-        {/* <button
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 border border-blue-700 rounded mt-4"
-          onClick={() => setShowAuthModal(true)}
-        >
-          System Check
-        </button>
-        <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 border border-blue-700 rounded mt-4 cursor-not-allowed">
-          Update Profile
-        </button> */}
       </div>
       {showProctoringAlert && (
         <ProctoringInfoModal
@@ -448,49 +379,42 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
         />
       )}
       {openNewTabPropmpt && (
-        <div
-          id="popup-modal"
-          tabIndex={-1}
-          className="overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 md:inset-0 h-modal md:h-full"
+        <Modal
+          visible={true}
+          footer={null}
+          destroyOnClose={true}
+          maskClosable={false}
+          onCancel={() => setOpenNewTabPrompt(false)}
         >
-          <div className="relative mx-auto p-4 w-full max-w-md h-full md:h-auto">
-            <div className="relative bg-white rounded-lg shadow dark:bg-gray-700">
-              <button
-                type="button"
-                className="absolute top-3 right-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center dark:hover:bg-gray-800 dark:hover:text-white"
-                data-modal-toggle="popup-modal"
-              ></button>
-              <div className="p-6 text-center">
-                <svg
-                  aria-hidden="true"
-                  className="mx-auto mb-4 w-14 h-14 text-gray-400 dark:text-gray-200"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  ></path>
-                </svg>
-                <h3 className="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
-                  Open {props.quiz.title} quiz in a new tab
-                </h3>
-                <button
-                  data-modal-toggle="popup-modal"
-                  type="button"
-                  onClick={handleOpenQuizInNewTab}
-                  className="text-white bg-green-600 hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-green-800 font-medium rounded-lg text-sm inline-flex items-center px-5 py-2.5 text-center mr-2"
-                >
-                  Open
-                </button>
-              </div>
-            </div>
+          <div className="p-6 text-center">
+            <svg
+              aria-hidden="true"
+              className="mx-auto mb-4 w-14 h-14 text-gray-400 dark:text-gray-200"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              ></path>
+            </svg>
+            <h3 className="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
+              Open {props.quiz.title} quiz in a new tab
+            </h3>
+            <button
+              data-modal-toggle="popup-modal"
+              type="button"
+              onClick={handleOpenQuizInNewTab}
+              className="text-white bg-green-600 hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-green-800 font-medium rounded-lg text-sm inline-flex items-center px-5 py-2.5 text-center mr-2"
+            >
+              Open
+            </button>
           </div>
-        </div>
+        </Modal>
       )}
       {showAuthModal && quizTitle && quizId && quizConfig && (
         <AuthenticationModal

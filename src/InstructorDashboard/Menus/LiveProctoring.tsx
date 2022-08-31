@@ -123,7 +123,7 @@ const LiveProctoring: React.FC<Props> = (props): JSX.Element => {
 
   return (
     <div className="flex items-center flex-col justify-center w-5/5">
-      <div className="flex flex-row gap-6 justify-center">
+      <div className="flex flex-row flex-wrap gap-6 justify-center">
         {quizzes &&
           quizzes.map((quizz: any, index: number) => {
             return (
@@ -150,13 +150,10 @@ const LiveProctoring: React.FC<Props> = (props): JSX.Element => {
           })}
       </div>
       <br />
-      <div
-        className="box-border border-4 p-10 rounded"
-        style={{ height: 550, width: 1700 }}
-      >
+      <div className="box-border border-4 p-10 rounded h-full w-full">
         <Row gutter={24}>
           <Col
-            span={14}
+            span={24}
             style={{ overflowY: "scroll", height: 500, maxHeight: 500 }}
           >
             <div className="grid grid-cols-3 gap-3 h-full content-between">
@@ -164,7 +161,7 @@ const LiveProctoring: React.FC<Props> = (props): JSX.Element => {
                 enrollments.map((enrollment: any, index: number) => {
                   return (
                     <div
-                      className={`box-border h-56 w-64 text-center p-2 border-2 ${
+                      className={`box-border h-56 w-56 text-center p-2 border-2 ${
                         enrollmentLiveStatus[enrollment.user.id] === 0
                           ? onNotJoinColorCode
                           : enrollmentLiveStatus[enrollment.user.id] === 1
@@ -176,11 +173,11 @@ const LiveProctoring: React.FC<Props> = (props): JSX.Element => {
                         <p className="text-center font-semibold">
                           {enrollment.user.name}
                         </p>
-                        <div className="box-border h-28 mb-3 w-60 border-2 rounded border-blue-400 overflow-y-scroll"></div>
+                        <div className="box-border h-28 mb-3 w-48 border-2 rounded border-blue-400 overflow-y-scroll"></div>
                         <button
                           type="button"
                           onClick={() => showLiveStreamModal(enrollment)}
-                          className="justify-center px-20 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
+                          className="justify-center px-8 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
                         >
                           Stream Live
                         </button>
@@ -195,7 +192,7 @@ const LiveProctoring: React.FC<Props> = (props): JSX.Element => {
               )}
             </div>
           </Col>
-          <Col span={10}>
+          {/* <Col span={10}>
             <div className="grid grid-cols-3 h-full gap-3 content-center">
               {enrollments ? (
                 enrollments.map((item: any, index: number) => {
@@ -216,7 +213,7 @@ const LiveProctoring: React.FC<Props> = (props): JSX.Element => {
                 </p>
               )}
             </div>
-          </Col>
+          </Col> */}
         </Row>
       </div>
       {showLiveStream && selectedStudent && selectedQuiz && (

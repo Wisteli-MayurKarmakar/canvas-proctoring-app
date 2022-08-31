@@ -20,6 +20,9 @@ const StudentIdDlVerification: React.FC<Props> = (props): JSX.Element => {
   let [idProofBlob, setIdProofBlob] = React.useState<Blob | null>(null);
   let [pictureAuthed, setPictureAuthed] = React.useState<boolean>(false);
   let [idAuthed, setIdAuthed] = React.useState<boolean>(false);
+  let [showProfilePicAlert, setShowProfilePicAlert] =
+    React.useState<boolean>(false);
+  let [showIdPicAlert, setShowIdPicAlert] = React.useState<boolean>(false);
   let [studentAuthed, setStudentAuthed] = React.useState<boolean>(false);
   let [authStarted, setAuthStarted] = React.useState<boolean>(false);
   let [snapshotBlob, setSnapshotBlob] = React.useState<Blob | string>("");
@@ -313,7 +316,12 @@ const StudentIdDlVerification: React.FC<Props> = (props): JSX.Element => {
           responseType: "arraybuffer",
         }
       );
-      if (responsePicture.headers["content-type"] === "application/json") {
+      if (
+        responsePicture.headers["content-type"] === "application/json" ||
+        responsePicture.headers["content-type"] === "text/plain" ||
+        responsePicture.headers["content-type"] === "text/html"
+      ) {
+        setShowProfilePicAlert(true);
         return;
       }
       let blobPricture = new Blob([responsePicture.data], {
@@ -333,7 +341,12 @@ const StudentIdDlVerification: React.FC<Props> = (props): JSX.Element => {
           responseType: "arraybuffer",
         }
       );
-      if (responseId.headers["content-type"] === "application/json") {
+      if (
+        responseId.headers["content-type"] === "application/json" ||
+        responseId.headers["content-type"] === "text/plain" ||
+        responseId.headers["content-type"] === "text/html"
+      ) {
+        setShowIdPicAlert(true);
         return;
       }
       let blobId = new Blob([responseId.data], {
@@ -389,7 +402,7 @@ const StudentIdDlVerification: React.FC<Props> = (props): JSX.Element => {
   };
 
   useEffect(() => {
-    getUserDetails();
+    // getUserDetails();
     getStudentProofs();
   }, []);
 
@@ -454,15 +467,61 @@ const StudentIdDlVerification: React.FC<Props> = (props): JSX.Element => {
           </p>
         </div>
       )}
-
+      {showProfilePicAlert && (
+        <div
+          className="flex p-4 mb-4 text-sm text-yellow-700 bg-yellow-100 rounded-lg dark:bg-yellow-200 dark:text-yellow-800"
+          role="alert"
+        >
+          <svg
+            aria-hidden="true"
+            className="flex-shrink-0 inline w-5 h-5 mr-3"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+              clip-rule="evenodd"
+            ></path>
+          </svg>
+          <span className="sr-only">Info</span>
+          <div>
+            <span className="font-medium">No Profile picture available!</span>{" "}
+            Please upload a profile picture and try again.
+          </div>
+        </div>
+      )}
+      {showIdPicAlert && (
+        <div
+          className="flex p-4 mb-4 text-sm text-yellow-700 bg-yellow-100 rounded-lg dark:bg-yellow-200 dark:text-yellow-800"
+          role="alert"
+        >
+          <svg
+            aria-hidden="true"
+            className="flex-shrink-0 inline w-5 h-5 mr-3"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+              clip-rule="evenodd"
+            ></path>
+          </svg>
+          <span className="sr-only">Info</span>
+          <div>
+            <span className="font-medium">No Id available!</span> Please upload
+            an Id and try again.
+          </div>
+        </div>
+      )}
       {!retryInProgress &&
         (studentAuthed ? (
-          <div className="flex h-full justify-center w-full items-center justify-center">
+          <div className="flex h-full justify-center w-full items-center">
             <p className="text-lg text-green-500 font-bold">Congratulations,</p>
-            <p className="text-lg font-bold">
-              &nbsp;you are authenticated. Please go to the next screen to
-              continue.
-            </p>
+            <p className="text-lg font-bold">&nbsp;you are authenticated.</p>
           </div>
         ) : (
           <div className="flex flex-col h-full w-full items-center justify-center">

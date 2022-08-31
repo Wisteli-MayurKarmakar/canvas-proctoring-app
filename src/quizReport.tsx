@@ -1,7 +1,7 @@
 import "antd/dist/antd.css";
 import { Button, message, Space, Table } from "antd";
 import React, { FunctionComponent, useEffect } from "react";
-import axios from "axios";
+import axios, { AxiosResponse } from "axios";
 import Report from "./report";
 import InfoModal from "./infoModal";
 
@@ -16,30 +16,26 @@ const ProctoringExam: FunctionComponent<Props> = (props): JSX.Element => {
   const [noOfStudentsOfExam, setNoOfStudentsOfExam] = React.useState<
     number | null
   >(0);
+  let [quizConfigs, setQuizConfigs] = React.useState<any>([]);
   let [activeExpRow, setActiveExpRow] = React.useState<any>([]);
   const [fullVideo, setFullVideo] = React.useState<any>(null);
   const [scrVideo, setScrVideo] = React.useState<any>(null);
-  const [exceptions, setExceptions] = React.useState<any>(null);
-
-  let [token, setToken] = React.useState<string | null>(
-    "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqb2huIiwibmJmIjoxNjU3MjY5MDA4LCJyb2xlcyI6WyJTVFUiXSwiaXNzIjoidXNlcnMiLCJleHAiOjE2NTcyNzI2MDgsImlhdCI6MTY1NzI2OTAwOH0.H2_o6ttkmBiar5GgzpA2Z1SnSpwTddCUW4K4BFDdhM0"
-  );
-  let [apiEndPoints, setApiEndPoints] = React.useState<string | null>(null);
+  let [exceptions, setExceptions] = React.useState<any>(null);
+  let [currentRow, setCurrentRow] = React.useState<any>(null);
+  let [profilePic, setProfilePic] = React.useState<any>(null);
   let [authData, setAuthData] = React.useState<Object | null>(null);
   const [instructorId, setInstructorId] = React.useState<string | null>(
     "17c292b5-4d2c-451a-9e1c-e6393a5aa77e"
   );
   const [courseDetails, setCourseDetails] = React.useState<any>(null);
   const [showRepModal, setShowRepModal] = React.useState<boolean>(false);
-  const [studentsCompletedExam, setStudentsCompletedExam] = React.useState<
-    any | null
-  >({});
   const [studList, setStudList] = React.useState<any>(null);
 
   const [quizData, setQuizData] = React.useState<any[]>([]);
-  const [isFetchingReport, setIsFetchingReport] = React.useState<boolean>(false);
-  let selectedQuiz = "";
-  let quizDate = "";
+  const [isFetchingReport, setIsFetchingReport] =
+    React.useState<boolean>(false);
+  let [selectedQuiz, setSelectedQuiz] = React.useState<any>(null);
+
   const userName = "ca6a42188e970ab77fab0e34";
   const password = "e5aa447e19ee4180b5ba1364";
 
@@ -63,16 +59,6 @@ const ProctoringExam: FunctionComponent<Props> = (props): JSX.Element => {
       });
   };
 
-  // const getEndPoints = (): void => {
-  //   axios
-  //     .get("https://examd.us/cdn/urls/xproctor/1")
-  //     .then((res: any) => {
-  //       setApiEndPoints(res.data);
-  //       authenticateUser(res.data.auth_url as string);
-  //     })
-  //     .catch((err) => {});
-  // };
-
   const getStudentsByCourseId = () => {
     axios
       .get(
@@ -87,23 +73,6 @@ const ProctoringExam: FunctionComponent<Props> = (props): JSX.Element => {
           key: item.id,
         }));
         setStudList(data);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  };
-
-  const authenticateUser = (url: string) => {
-    axios
-      .post(url, {
-        username: userName,
-        password: password,
-      })
-      .then((res) => {
-        setAuthData(res.data);
-        getCourseDetails();
-        getCourseQuizesById();
-        getStudentsByCourseId();
       })
       .catch((err) => {
         console.log(err);
@@ -126,12 +95,27 @@ const ProctoringExam: FunctionComponent<Props> = (props): JSX.Element => {
       });
   };
 
-  useEffect(() => {
-    if (fullVideo || scrVideo || exceptions) {
-      setIsFetchingReport(false);
-      setShowRepModal(true);
+  const getQuizConfigs = async (id: string) => {
+    let config = await axios.get(
+      `https://examd-dev.uc.r.appspot.com/student/api/v1/getLtiCanvasConfigByGuidCourseIdQuizId?guid=${[
+        props.toolConsumerGuid,
+      ]}&courseId=${props.courseId}&quizId=${id}`
+    );
+
+    if (config.data) {
+      let configurations = [...quizConfigs];
+      let obj: {
+        [key: string]: Object;
+      } = {};
+      obj.quizId = id;
+      obj.config = config.data;
+      configurations.push(obj);
+      setQuizConfigs(configurations);
+    } else {
+      message.error("Failed to get configurations");
+      return;
     }
-  }, [fullVideo, scrVideo]);
+  };
 
   useEffect(() => {
     // getEndPoints();
@@ -140,44 +124,82 @@ const ProctoringExam: FunctionComponent<Props> = (props): JSX.Element => {
     getStudentsByCourseId();
   }, []);
 
-  const getFullVideoAndScreenCap = (fileName: string) => {
-    axios
-      .get(`https://examd.us/media/${fileName}_vdo/webm`, {
+  const getFullVideo = async (fileName: string): Promise<boolean> => {
+    let response = await axios.get(
+      `https://examd.us/media/${fileName}_vdo/webm`,
+      {
         headers: {
           "Content-type": "video/webm",
         },
         responseType: "arraybuffer",
-      })
-      .then((resp: any) => {
-        const blobUrl = URL.createObjectURL(
-          new Blob([resp.data], { type: "video/mp4" })
-        );
-        setFullVideo(blobUrl);
-      })
-      .catch((error) => {
-        console.log(error);
-      });
-    axios
-      .get(`https://examd.us/media/${fileName}_scr/webm`, {
-        headers: {
-          "Content-type": "video/webm",
-        },
-        responseType: "arraybuffer",
-      })
-      .then((resp: any) => {
-        const blobUrl = URL.createObjectURL(
-          new Blob([resp.data], { type: "video/mp4" })
-        );
-        setScrVideo(blobUrl);
-      })
-      .catch((error) => {
-        console.log(error);
-      });
+      }
+    );
+    if (response.headers["content-type"] !== "application/json") {
+      const blobUrl = URL.createObjectURL(
+        new Blob([response.data], { type: response.headers["content-type"] })
+      );
+      setFullVideo(blobUrl);
+      return true;
+    }
+    return false;
   };
 
-  const getVideoRefId = (quizId: string, quizDate: string, id: string) => {
-    axios
-      .post(
+  const getScreenCap = async (fileName: string): Promise<boolean> => {
+    let response = await axios.get(
+      `https://examd.us/media/${fileName}_scr/webm`,
+      {
+        headers: {
+          "Content-type": "video/webm",
+        },
+        responseType: "arraybuffer",
+      }
+    );
+
+    if (response.headers["content-type"] !== "application/json") {
+      const blobUrl = URL.createObjectURL(
+        new Blob([response.data], { type: response.headers["content-type"] })
+      );
+      setScrVideo(blobUrl);
+      return true;
+    }
+    return false;
+  };
+
+  const getFullVideoAndScreenCap = async (
+    fileName: string
+  ): Promise<boolean> => {
+    let fullVideo: any = getFullVideo(fileName);
+
+    let scrVideo: any = getScreenCap(fileName);
+
+    let [res1, res2] = await Promise.all([fullVideo, scrVideo]);
+
+    if (res1 && res2) {
+      return true;
+    }
+
+    return false;
+  };
+
+  const getVideoRefId = async (
+    quizId: string,
+    quizDate: string,
+    id: string
+  ) => {
+    let configObj: any = null;
+    quizConfigs.forEach((config: any) => {
+      if (config.quizId === selectedQuiz.id) {
+        configObj = config.config;
+      }
+    });
+    if (!selectedQuiz.all_dates.due_at) {
+      message.error("Something went wrong. Please try again later");
+      return;
+    }
+
+    let ltiVidRefResponse = null;
+    try {
+      ltiVidRefResponse = await axios.post(
         "https://examd-dev.uc.r.appspot.com/student/api/v1/getLtiCVideoRef",
         {
           idUser: id,
@@ -189,31 +211,115 @@ const ProctoringExam: FunctionComponent<Props> = (props): JSX.Element => {
         {
           headers: { Authorization: `Bearer ${props.reqToken}` },
         }
-      )
-      .then((resp) => {
-        getFullVideoAndScreenCap(resp.data.idReference);
-        getExceptions(resp.data.idReference);
-      })
-      .catch((error) => {
-        console.log(error);
-        alert("No report available");
-      });
+      );
+    } catch (e) {
+      message.error("Failed to fetch result");
+      return;
+    }
+
+    if (ltiVidRefResponse && ltiVidRefResponse.data) {
+      setIsFetchingReport(true);
+      if (configObj.recordScreen && configObj.recordWebcam) {
+        let isMediaAvailable = getFullVideoAndScreenCap(
+          ltiVidRefResponse.data.idReference
+        );
+        let exceptions = getExceptions(ltiVidRefResponse.data.idReference);
+
+        let [res1, res2] = await Promise.all([isMediaAvailable, exceptions]);
+
+        if (res1 && res2) {
+          setShowRepModal(true);
+        } else {
+          message.error("Something went wrong. Please try again later");
+        }
+      }
+
+      if (configObj.recordScreen && !configObj.recordWebcam) {
+        let screenCap = getScreenCap(ltiVidRefResponse.data.idReference);
+        let exceptions = getExceptions(ltiVidRefResponse.data.idReference);
+
+        let [res1, res2] = await Promise.all([screenCap, exceptions]);
+
+        if (res1 && res2) {
+          setShowRepModal(true);
+        } else {
+          message.error("Something went wrong. Please try again later");
+        }
+      }
+
+      if (!configObj.recordScreen && configObj.recordWebcam) {
+        let fullVideo = getFullVideo(ltiVidRefResponse.data.idReference);
+        let exceptions = getExceptions(ltiVidRefResponse.data.idReference);
+        let [res1, res2] = await Promise.all([fullVideo, exceptions]);
+
+        if (res1 && res2) {
+          setShowRepModal(true);
+        } else {
+          message.error("Something went wrong. Please try again later");
+        }
+      }
+      if (!configObj.recordScreen && !configObj.recordWebcam) {
+        let exceptions = await getExceptions(
+          ltiVidRefResponse.data.idReference
+        );
+        if (exceptions) {
+          setShowRepModal(true);
+        } else {
+          message.error("Something went wrong. Please try again later");
+        }
+      }
+
+      setIsFetchingReport(false);
+    } else {
+      console.log("error");
+    }
   };
 
-  const getExceptions = (fileId: string) => {
-    axios.get(`https://examd.online/ai/db/excp/list/ex/${fileId}`, {
-      headers: { Authorization: "Basic VEl4QXBaZTdNQ29zVzY6cFUxVVJ6akdrWThRVkM=" },
-    }).then((res) => {
-      setExceptions(res.data.data);
-    }).catch((err) => {
-      message.error("Error fetching exceptions");
-    })
-  }
+  const getExceptions = async (fileId: string): Promise<boolean> => {
+    let exceptions = await axios.get(
+      `https://examd.online/ai/db/excp/list/ex/${fileId}`,
+      {
+        headers: {
+          Authorization: "Basic VEl4QXBaZTdNQ29zVzY6cFUxVVJ6akdrWThRVkM=",
+        },
+      }
+    );
+
+    if (exceptions.data.data) {
+      setExceptions(exceptions.data.data);
+      return true;
+    }
+    return false;
+  };
+
+  const getUserProfilePicture = async (studentId: string) => {
+    let response = await axios.get(
+      `https://examd-dev.uc.r.appspot.com/student/api/v1/viewCanvasProfile/${props.toolConsumerGuid}/${studentId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${props.reqToken}`,
+        },
+        responseType: "arraybuffer",
+      }
+    );
+
+    if (
+      response.headers["content-type"] === "image/jpeg" ||
+      response.headers["content-type"] === "image/png" ||
+      response.headers["content-type"] === "image/svg" ||
+      response.headers["content-type"] === "image/webp" ||
+      response.headers["content-type"] === "image/jpg"
+    ) {
+      let blob = new Blob([response.data], {
+        type: response.headers["content-type"],
+      });
+      setProfilePic(URL.createObjectURL(blob));
+    }
+  };
 
   const handleViewReport = (row: any) => {
-    setIsFetchingReport(true);
-    getVideoRefId(selectedQuiz, quizDate, props.userId);
-    
+    getUserProfilePicture(row.user.id);
+    getVideoRefId(selectedQuiz.id, selectedQuiz.all_dates.due_at, row.user.id);
   };
 
   const handleRefreshTable = () => {
@@ -332,8 +438,6 @@ const ProctoringExam: FunctionComponent<Props> = (props): JSX.Element => {
             pagination={{ position: ["bottomRight"] }}
             expandable={{
               expandedRowRender: (rowData: any) => {
-                selectedQuiz = rowData.id;
-                quizDate = rowData.all_dates.due_at;
                 if (studList) {
                   return (
                     <>
@@ -355,7 +459,18 @@ const ProctoringExam: FunctionComponent<Props> = (props): JSX.Element => {
                   return <p className="font-bold">Getting students...</p>;
                 }
               },
-              defaultExpandedRowKeys: [],
+              // expandedRowKeys: [currentRow],
+              onExpand(expanded, record) {
+                if (expanded) {
+                  setSelectedQuiz(record);
+                  setCurrentRow(record.key);
+                }
+              },
+              onExpandedRowsChange: (row: any) => {
+                if (row.length > 0) {
+                  getQuizConfigs(row[row.length - 1]);
+                }
+              },
             }}
           />
         ) : (
@@ -364,7 +479,7 @@ const ProctoringExam: FunctionComponent<Props> = (props): JSX.Element => {
           </p>
         )}
       </div>
-      {showRepModal && (fullVideo || scrVideo || exceptions) && (
+      {showRepModal && (
         <Report
           show={showRepModal}
           close={() => setShowRepModal(false)}
@@ -373,9 +488,10 @@ const ProctoringExam: FunctionComponent<Props> = (props): JSX.Element => {
           fullVideoUrl={fullVideo}
           scrVideo={scrVideo}
           exceptions={exceptions}
+          profilePic={profilePic}
         />
       )}
-      {!fullVideo && !scrVideo && isFetchingReport && (
+      {isFetchingReport && (
         <InfoModal title="" message="Fetching report. Please wait..." />
       )}
     </div>

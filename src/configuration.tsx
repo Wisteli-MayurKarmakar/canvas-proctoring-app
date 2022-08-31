@@ -29,6 +29,7 @@ import InfoModal from "./infoModal";
 import { defaultProcSettings } from "./CommonUtilites/ProctorSettingDefaults";
 import "./configuration.css";
 import SettingsModal from "./settingsModal";
+import { message } from "antd";
 
 interface Props {
   auth: Object | any;
@@ -110,108 +111,107 @@ const abbrs = {
   },
 };
 
-const iconSize = ""
-
+const iconSize = "";
 
 const settingOptions: settingStruct = {
   "Recording Options": {
     recordWebcam: {
       fullName: "Record Webcam",
-      icon: <VideoCameraOutlined style={{ fontSize: iconSize}}/>,
+      icon: <VideoCameraOutlined style={{ fontSize: iconSize }} />,
     },
     recordScreen: {
       fullName: "Record Screen",
-      icon: <DesktopOutlined style={{ fontSize: iconSize}}/>,
+      icon: <DesktopOutlined style={{ fontSize: iconSize }} />,
     },
     recordAudio: {
       fullName: "Record Audio",
-      icon: <AudioOutlined style={{ fontSize: iconSize}}/>,
+      icon: <AudioOutlined style={{ fontSize: iconSize }} />,
     },
     chat: {
       fullName: "Chat",
-      icon: <CommentOutlined style={{ fontSize: iconSize}}/>,
+      icon: <CommentOutlined style={{ fontSize: iconSize }} />,
     },
   },
   "Verification Options": {
     studentPicture: {
       fullName: "Student Picture",
-      icon: <UserOutlined style={{ fontSize: iconSize}}/>,
+      icon: <UserOutlined style={{ fontSize: iconSize }} />,
     },
     studentIdDl: {
       fullName: "Student ID or DL",
-      icon: <IdcardOutlined style={{ fontSize: iconSize}}/>,
+      icon: <IdcardOutlined style={{ fontSize: iconSize }} />,
     },
     roomScan: {
       fullName: "Room Scan",
-      icon: <ScanOutlined style={{ fontSize: iconSize}}/>,
+      icon: <ScanOutlined style={{ fontSize: iconSize }} />,
     },
     otp: {
       fullName: "One Time Password",
-      icon: <KeyOutlined style={{ fontSize: iconSize}}/>,
+      icon: <KeyOutlined style={{ fontSize: iconSize }} />,
     },
   },
   "Student Resources": {
     calculatorAllowed: {
       fullName: "Calculator",
-      icon: <CalculatorOutlined style={{ fontSize: iconSize}}/>,
+      icon: <CalculatorOutlined style={{ fontSize: iconSize }} />,
     },
     scratchPadAllowed: {
       fullName: "Scratch Pad",
-      icon: <SnippetsOutlined style={{ fontSize: iconSize}}/>,
+      icon: <SnippetsOutlined style={{ fontSize: iconSize }} />,
     },
     liveHelp: {
       fullName: "Live Help",
-      icon: <RobotOutlined style={{ fontSize: iconSize}}/>,
+      icon: <RobotOutlined style={{ fontSize: iconSize }} />,
     },
     whitelistPages: {
       fullName: "Whitelist Pages",
-      icon: <IeOutlined style={{ fontSize: iconSize}}/>,
+      icon: <IeOutlined style={{ fontSize: iconSize }} />,
     },
   },
   "Lock Down Options": {
     disableCopyPaste: {
       fullName: "Disable Copy/ Paste",
-      icon: <CopyOutlined style={{ fontSize: iconSize}}/>,
+      icon: <CopyOutlined style={{ fontSize: iconSize }} />,
     },
     disablePrinting: {
       fullName: "Disable Printing",
-      icon: <PrinterOutlined style={{ fontSize: iconSize}}/>,
+      icon: <PrinterOutlined style={{ fontSize: iconSize }} />,
     },
     lockdownBrowser: {
       fullName: "Lock Down Browser",
-      icon: <ChromeOutlined style={{ fontSize: iconSize}}/>,
+      icon: <ChromeOutlined style={{ fontSize: iconSize }} />,
     },
   },
   "Violation Options": {
     multiplePerson: {
       fullName: "Multiple Person",
-      icon: <TeamOutlined style={{ fontSize: iconSize}}/>,
+      icon: <TeamOutlined style={{ fontSize: iconSize }} />,
     },
     cellPhone: {
       fullName: "Cell Phone",
-      icon: <PhoneOutlined style={{ fontSize: iconSize}}/>,
+      icon: <PhoneOutlined style={{ fontSize: iconSize }} />,
     },
     noPersonInRoom: {
       fullName: "No Person In Room",
-      icon: <InteractionOutlined style={{ fontSize: iconSize}}/>,
+      icon: <InteractionOutlined style={{ fontSize: iconSize }} />,
     },
     speaking: {
       fullName: "Speaking",
-      icon: <SoundOutlined style={{ fontSize: iconSize}}/>,
+      icon: <SoundOutlined style={{ fontSize: iconSize }} />,
     },
   },
   "Proctor Options": {
     postExamReview: {
       fullName: "Post Exam Review",
-      icon: <ProjectOutlined style={{ fontSize: iconSize}}/>,
+      icon: <ProjectOutlined style={{ fontSize: iconSize }} />,
     },
     examdLiveLaunch: {
       fullName: "Examd Live Launch",
-      icon: <RocketOutlined style={{ fontSize: iconSize}}/>,
+      icon: <RocketOutlined style={{ fontSize: iconSize }} />,
     },
     instructorProctored: {
       fullName: "Instructor Proctored",
-      icon: <IdcardOutlined style={{ fontSize: iconSize}}/>,
+      icon: <IdcardOutlined style={{ fontSize: iconSize }} />,
     },
     examdProctored: {
       fullName: "Examd Proctored",
@@ -295,6 +295,30 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
     return false;
   };
 
+  const checkIfProctorOptionsSelected = () => {
+    let flag: boolean = false;
+    let proctorOptions: optionCheckedProto = {
+      ...(checked["Proctor Options"] as {}),
+    };
+
+    Object.keys(proctorOptions).forEach((key) => {
+      if (key === "examdLiveLaunch") {
+        if (proctorOptions[key]) {
+          flag = true;
+        }
+      }
+    });
+
+    if (flag) {
+      alert(
+        "Please enable all proctor options before enabling examd live launch"
+      );
+      return true;
+    }
+
+    return false;
+  };
+
   const handleOptionClick = (option: string, subOption: string) => {
     if (subOption === "examdLiveLaunch") {
       let res = checkIfVerificationOptSelected();
@@ -305,6 +329,14 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
         return;
       }
     }
+
+    if (option === "Verification Options") {
+      let res = checkIfProctorOptionsSelected();
+      if (res) {
+        return;
+      }
+    }
+
     let options: optionCheckedProto = { ...(checked[option] as {}) };
     let flag = true;
 
@@ -421,17 +453,16 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
         }
       )
       .then((res) => {
-        setShowInfoModal(true);
+        message.success("Configurations saved successfully");
+        // setShowInfoModal(true);
         setConfigSaveStatus(true);
-        setInfoMsg("Configurations saved successfully");
       })
       .catch((err) => {
-        console.log(err);
         setConfigSaveStatus(false);
-        setShowInfoModal(true);
-        setInfoMsg(
+        message.error(
           "Something went wrong while saving. Please try again later."
         );
+        // setShowInfoModal(true);
         handleResetAll();
       });
   };
@@ -605,7 +636,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
 
   return (
     <div className="flex flex-col gap-5 justify-center items-center mt-5 text-center container text-lg">
-      <div className="flex flex-row gap-10">
+      <div className="flex flex-row flex-wrap gap-10">
         {quizzes ? (
           quizzes.map((quiz: any, index: number) => {
             return (
@@ -654,7 +685,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
           </div>
         )}
       </div>
-      <div className="flex flex-row gap-10 h-24 w-full items-center justify-center">
+      <div className="flex flex-row gap-10 h-24 lg:w-full md:w-screen sm:w-screen md:pl-4 md:pr-4 sm:pl-2 sm:pr-2 items-center justify-center">
         <div className="flex lg:flex-row md:flex-row sm:flex-col items-center justify-center box-border h-full w-full border-4 border-blue-400 rounded">
           {defaultSettingsOptionsChecked &&
             defaultProcSettings.map((setting: any, index: number) => {
@@ -679,7 +710,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
                     <div className="dot absolute w-6 h-6 bg-white rounded-full shadow -left-1 -top-1 transition border-2 border-gray-400"></div>
                   </div>
                   {/* <div className="w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-focus:ring-4   peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-600"></div> */}
-                  <div className="ml-3 mr-5 text-gray-700 font-medium">
+                  <div className="ml-1 mr-5 text-gray-700 font-semibold lg:text-lg md:text-baseline sm:text-sm">
                     {setting.name}
                   </div>
                 </label>
@@ -762,14 +793,14 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
             Reset
           </button>
         </div>
-        {showInfoModal && configSaveStatus && (
+        {/* {showInfoModal && configSaveStatus && (
           <SettingsModal
             view={showInfoModal}
             close={() => setShowInfoModal(false)}
             message={infoMsg}
             status={configSaveStatus}
           />
-        )}
+        )} */}
       </div>
     </div>
   );

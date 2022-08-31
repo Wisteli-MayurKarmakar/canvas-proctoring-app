@@ -2,7 +2,7 @@ export const defaultProcSettings = [
     {
       name: "Default Proctoring",
       settings: {
-        recordWebcam: false,
+        recordWebcam: true,
         recordScreen: true,
         recordAudio: false,
         chat: false,

@@ -67,15 +67,15 @@ function App() {
     let url_string = window.location.href;
     let url = new URL(url_string);
     let loadInstructorPage = url.searchParams.get("loadInstructorPage");
-    // let userId = url.searchParams.get("userId");
-    // let courseId = url.searchParams.get("courseId");
-    // let toolConsumerGuid = url.searchParams.get("toolConsumerGuid");
-    // let loginId = url.searchParams.get("loginId");
+    let userId = url.searchParams.get("userId");
+    let courseId = url.searchParams.get("courseId");
+    let toolConsumerGuid = url.searchParams.get("toolConsumerGuid");
+    let loginId = url.searchParams.get("loginId");
+    let studentId = url.searchParams.get("studentId");
     let quizId = url.searchParams.get("quizId");
     let newTab = url.searchParams.get("newTab");
     let isAuthed = url.searchParams.get("auth");
-    // let studentId = url.searchParams.get("studentId");
-    let studentId = "1";
+    // let studentId = "1";
 
     if (studentId) {
       setStudentId(studentId);
@@ -96,10 +96,10 @@ function App() {
     // console.log("userId recieved", userId);
 
     //Test params
-    let loginId = "ncghosh@gmail.com";
-    let courseId = "16";
-    let userId = "12";
-    let toolConsumerGuid = "Examd";
+    // let loginId = "ncghosh@gmail.com";
+    // let courseId = "16";
+    // let userId = "12";
+    // let toolConsumerGuid = "Examd";
 
     // let id = userId?.split("loginId=")[1].split(" ")[0];
     // let id  = "1470923eea43f6bcab4326fee7047884cf84f374";
@@ -109,8 +109,8 @@ function App() {
     );
     setToolConsumerGuid(toolConsumerGuid);
     setId(loginId);
-    // setId(getUuid(userId));
-    setId(getUuid('1470923eea43f6bcab4326fee7047884cf84f374'));
+    setId(getUuid(userId));
+    // setId(getUuid('1470923eea43f6bcab4326fee7047884cf84f374'));
     // setId(userId);
     setCourseId(courseId as string);
     if (loadInstructorPage === "Y") {

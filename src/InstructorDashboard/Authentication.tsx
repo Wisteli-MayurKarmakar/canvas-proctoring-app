@@ -183,6 +183,7 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
     }
 
     socket.on("chat", (data: any) => {
+      console.log("chat", data);
       if (data.type === "chat") {
         let msg = JSON.parse(data.message);
         if (msg.msgType === "STU_LIVE_REP") {
@@ -190,6 +191,14 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
           let stage = msg.msg.status;
           let temp = { ...stuLiveStatusObj };
           temp[stuId] = stage;
+          setStuLiveStatusObj(temp);
+        }
+
+        if (msg.msgType === "EXAM_SESS_JOIN") {
+          let stuId = msg.msg.stuId;
+          let step = msg.msg.stepName;
+          let temp = { ...stuLiveStatusObj };
+          temp[stuId] = "JOINED";
           setStuLiveStatusObj(temp);
         }
         if (msg.msgType === "STU_AUTH_STEP") {

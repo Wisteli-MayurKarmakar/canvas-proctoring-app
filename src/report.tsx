@@ -9,6 +9,7 @@ interface Props {
   fullVideoUrl: any;
   scrVideo: any;
   exceptions: any;
+  profilePic: any;
 }
 
 const Report: React.FC<Props> = ({
@@ -19,6 +20,7 @@ const Report: React.FC<Props> = ({
   fullVideoUrl,
   scrVideo,
   exceptions,
+  profilePic,
 }): JSX.Element => {
 
   return (
@@ -30,34 +32,38 @@ const Report: React.FC<Props> = ({
       footer={null}
     >
       <div
-        className="flex flex-col overflow-scroll overflow-x-hidden"
+        className="flex flex-col overflow-scroll overflow-x-hidden gap-6"
         style={{ maxHeight: "44pc" }}
       >
-        <p className="text-lg">Authentication</p>
+        <p className="text-lg text-center font-bold underline">Authentication</p>
         <div className="flex flex-row pl-3 gap-56 mx-auto">
           <div className="flex flex-col">
-            <div className="box-border h-72 w-72 p-4 border-4"></div>
-            <p className="text-sm text-center">Picture taken during exam</p>
+            <div className="flex box-border h-56 justify-center items-center w-56 p-4 border-4 rounded">
+              <p className="text-lg text-center font-semibold">Not available</p>
+            </div>
+            <p className="text-sm text-center font-semibold">Picture taken during exam</p>
           </div>
           <div className="flex flex-col">
-            <div className="box-border h-72 w-72 p-4 border-4"></div>
-            <p className="text-sm text-center">Picture from profile</p>
+            <div className="box-border h-56 w-56 p-4 border-4 rounded">
+              {profilePic && <img src={profilePic} alt="Not available" className="h-full w-full rounded"/>}
+            </div>
+            <p className="text-sm text-center font-semibold">Picture from profile</p>
           </div>
         </div>
-        <p className="text-lg pt-8">Violation screen, video, messages</p>
+        <p className="text-lg text-center font-bold underline">Violation screen, video, messages</p>
         <div className="flex flex-row pl-3 gap-56 mx-auto">
           <div className="flex flex-col">
-            <div className="box-border h-72 w-72 p-4 border-4">
-              <video controls style={{ height: "100%" }}>
+            <div className="box-border h-64 w-80 p-4 border-4 rounded">
+              <video controls className="object-fill rounded">
                 <source src={fullVideoUrl}></source>
               </video>
             </div>
-            <p className="text-sm text-center">Video recording</p>
+            <p className="text-sm text-center font-semibold">Video recording</p>
           </div>
-          <div className="flex flex-col">
-            <div className="box-border h-72 w-72 p-4 border-4">
+          <div className="flex flex-col h-full items-center justify-center">
+            <div className="box-border h-64 w-80 p-4 border-4 rounded">
               {scrVideo ? (
-                <video controls style={{ height: "100%" }}>
+                <video controls className="object-fill rounded">
                   <source src={scrVideo}></source>
                 </video>
               ) : (
@@ -66,11 +72,12 @@ const Report: React.FC<Props> = ({
                 </div>
               )}
             </div>
-            <p className="text-sm text-center">Screen recording</p>
+            <p className="text-sm text-center font-semibold">Screen recording</p>
           </div>
         </div>
         <div className="flex flex-col">
-          <div className="box-border mx-auto h-full w-11/12 p-4 text-center mt-8 border-4">
+            <p className="text-lg text-center font-bold underline">Violation messages</p>
+          <div className="box-border mx-auto h-full w-11/12 p-4 rounded text-center mt-8 border-4">
             {exceptions && exceptions.length > 0 ? (
               <div>
                 <Timeline
@@ -91,10 +98,9 @@ const Report: React.FC<Props> = ({
                 </Timeline>
               </div>
             ) : (
-              <p>No exceptions</p>
+              <p className="text-lg font-semibold">No exceptions...</p>
             )}
           </div>
-          <p className="text-sm text-center">Violation messages</p>
         </div>
       </div>
     </Modal>

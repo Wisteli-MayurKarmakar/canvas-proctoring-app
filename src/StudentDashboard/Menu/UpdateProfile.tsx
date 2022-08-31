@@ -20,6 +20,8 @@ const UpdateProfile: React.FC<Props> = (props): JSX.Element => {
   let [photoFileName, setPhotoFileName] = React.useState<any>(null);
   let [idFileName, setIdFileName] = React.useState<any>(null);
   let [fetchingProofs, setFetchingProofs] = React.useState<boolean>(false);
+  let [localProfilPic, setLocalProfilPic] = React.useState<boolean>(false);
+  let [localIdPic, setLocalIdPic] = React.useState<boolean>(false);
 
   const getUserProfileDetails = () => {
     axios
@@ -42,9 +44,11 @@ const UpdateProfile: React.FC<Props> = (props): JSX.Element => {
   const handleDeleteMedia = (mediaType: string) => {
     switch (mediaType) {
       case "picture":
+        setLocalProfilPic(false);
         setStudentPhotos(null);
         break;
       case "id":
+        setLocalIdPic(false);
         setStudentId(null);
         break;
       default:
@@ -55,10 +59,17 @@ const UpdateProfile: React.FC<Props> = (props): JSX.Element => {
   const handlePhotoUpload = (e: any) => {
     const file = e.target.files[0];
     let ftype: string = file.type.split("/")[1];
-    // if (ftype !== "image/jpeg" && ftype !== "image/jpg") {
-    //   message.error("Only jpg/ jpeg files are allowed");
-    //   return;
-    // }
+
+    if (ftype !== "jpeg" && ftype !== "png" && ftype !== "jpg") {
+      message.error("Only jpg or png files are allowed");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024 * 1024) {
+      message.error("File size is more than 5mb");
+      return;
+    }
+    setLocalProfilPic(true);
     setPhotoFileName(props.userId + "prfl" + `.${ftype}`);
     setStudentPhotoFile(file);
 
@@ -73,10 +84,17 @@ const UpdateProfile: React.FC<Props> = (props): JSX.Element => {
   const handleIdUpload = (e: any) => {
     const file = e.target.files[0];
     let ftype: string = file.type.split("/")[1];
-    // if (ftype !== "image/jpeg" && ftype !== "image/jpg") {
-    //   message.error("Only jpg/ jpeg files are allowed");
-    //   return;
-    // }
+
+    if (ftype !== "jpeg" && ftype !== "png" && ftype !== "jpg") {
+      message.error("Only jpg or png files are allowed");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024 * 1024) {
+      message.error("File size is more than 5mb");
+      return;
+    }
+    setLocalIdPic(true);
     setIdFileName(props.userId + "dl" + `.${ftype}`);
     setStuIdFile(file);
 
@@ -116,81 +134,104 @@ const UpdateProfile: React.FC<Props> = (props): JSX.Element => {
         Accept: "*/*",
         "Content-Type": "multipart/form-data",
         Authorization: `Bearer ${props.authToken}`,
+        "Content-Disposition": `form-data; name=file; filename=${
+          proofType === "proof1" ? photoFileName : idFileName
+        }`,
       },
     });
 
     if (uploadResponse.status === 200) {
+      if (proofType === "proof1") {
+        setLocalProfilPic(false);
+      } else {
+        setLocalIdPic(false);
+      }
       message.success("File uploaded successfully.");
     } else {
       message.error("Something went wrong uploading the file.");
     }
   };
 
-  const handleSave = () => {
-    if (!studentPhotos || !studentId) {
-      message.error(
-        `Please select ${!studentId ? "id proof" : "profile picture"} to save.`
-      );
-      return;
+  const handleSave = (uploadType: string) => {
+    if (uploadType === "picture") {
+      if (!studentPhotos) {
+        message.error("Please select a student photo to save.");
+        return;
+      } else {
+        if (userDetails.idLtiStudentProfile) {
+          uploadProofs(userDetails.idLtiStudentProfile, "proof1");
+        } else {
+          message.error("Something went wrong when saving profile picture.");
+          return;
+        }
+      }
     }
-    if (userDetails.idLtiStudentProfile) {
-      uploadProofs(userDetails.idLtiStudentProfile, "proof1");
-      uploadProofs(userDetails.idLtiStudentProfile, "proof2");
-    } else {
-      console.log("No id");
+
+    if (uploadType === "id") {
+      if (!studentId) {
+        message.error("Please select a student id save.");
+        return;
+      } else {
+        if (userDetails.idLtiStudentProfile) {
+          uploadProofs(userDetails.idLtiStudentProfile, "proof2");
+        } else {
+          message.error("Something went wrong when saving id.");
+          return;
+        }
+      }
     }
   };
 
-  useEffect(() => {
-    if (studentPhotos || studentId) {
-      setFetchingProofs(false);
-    }
-  }, [studentPhotos, studentId]);
-
-  const getStudentProofs = () => {
+  const getStudentProofs = async () => {
     setFetchingProofs(true);
-    axios
-      .get(
-        `https://examd-dev.uc.r.appspot.com/student/api/v1/viewCanvasProfile/${props.guid}/${props.userId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${props.authToken}`,
-          },
-          responseType: "arraybuffer",
-        }
-      )
-      .then((resp: any) => {
-        if (resp.status === 200) {
-          let blob = new Blob([resp.data], {
-            type: resp.headers["content-type"],
-          });
-          setStudentPhotos(URL.createObjectURL(blob));
-        }
-      })
-      .catch((error: any) => {
-        console.log(error);
+    let picFlag: boolean = false;
+    let idFlag: boolean = false;
+    let picProof = await axios.get(
+      `https://examd-dev.uc.r.appspot.com/student/api/v1/viewCanvasProfile/${props.guid}/${props.userId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${props.authToken}`,
+        },
+        responseType: "arraybuffer",
+      }
+    );
+    if (
+      picProof.headers["content-type"] === "image/jpeg" ||
+      picProof.headers["content-type"] === "image/png" ||
+      picProof.headers["content-type"] === "image/svg" ||
+      picProof.headers["content-type"] === "image/webp" ||
+      picProof.headers["content-type"] === "image/jpg"
+    ) {
+      picFlag = true;
+      let blob = new Blob([picProof.data], {
+        type: picProof.headers["content-type"],
       });
-    axios
-      .get(
-        `https://examd-dev.uc.r.appspot.com/student/api/v1/downloadDL/${props.guid}/${props.userId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${props.authToken}`,
-          },
-          responseType: "arraybuffer",
-        }
-      )
-      .then((resp: any) => {
-        if (resp.status === 200) {
-          let blob = new Blob([resp.data], {
-            type: resp.headers["content-type"],
-          });
-          setStudentId(URL.createObjectURL(blob));
-        }
-      })
-      .catch((error: any) => {
-        console.log(error);
+      setStudentPhotos(URL.createObjectURL(blob));
+    }
+    let idProof = await axios.get(
+      `https://examd-dev.uc.r.appspot.com/student/api/v1/downloadDL/${props.guid}/${props.userId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${props.authToken}`,
+        },
+        responseType: "arraybuffer",
+      }
+    );
+
+    if (
+      idProof.headers["content-type"] === "image/jpeg" ||
+      idProof.headers["content-type"] === "image/png" ||
+      idProof.headers["content-type"] === "image/svg" ||
+      idProof.headers["content-type"] === "image/webp" ||
+      idProof.headers["content-type"] === "image/jpg"
+    ) {
+      idFlag = true;
+      let blob = new Blob([idProof.data], {
+        type: idProof.headers["content-type"],
       });
+      setStudentId(URL.createObjectURL(blob));
+    }
+    setFetchingProofs(false);
   };
 
   useEffect(() => {
@@ -214,9 +255,9 @@ const UpdateProfile: React.FC<Props> = (props): JSX.Element => {
         <Button key="close" onClick={props.close}>
           Close
         </Button>,
-        <Button key="save" onClick={handleSave}>
-          Save
-        </Button>,
+        // <Button key="save" onClick={handleSave}>
+        //   Save
+        // </Button>,
       ]}
     >
       {userDetails && (
@@ -262,7 +303,7 @@ const UpdateProfile: React.FC<Props> = (props): JSX.Element => {
               </div>
             </div>
           </fieldset>
-          {!studentId && (!studentPhotos || !fetchingProofs) && (
+          {(!studentId || !studentPhotos) && !fetchingProofs && (
             <div
               className="flex p-2 mb-2 text-sm h-full justify-center text-blue-700 bg-blue-100 rounded-lg"
               role="alert"
@@ -348,7 +389,7 @@ const UpdateProfile: React.FC<Props> = (props): JSX.Element => {
                     className="max-w-64 max-h-64 rounded-lg"
                     alt="Unable to show"
                   ></img>
-                  <div className="flex space-x-2 justify-center">
+                  <div className="flex flex-row space-x-2 justify-center gap-4">
                     <button
                       type="button"
                       onClick={() => handleDeleteMedia("picture")}
@@ -356,6 +397,15 @@ const UpdateProfile: React.FC<Props> = (props): JSX.Element => {
                     >
                       Delete
                     </button>
+                    {localProfilPic && (
+                      <button
+                        type="button"
+                        onClick={() => handleSave("picture")}
+                        className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
+                      >
+                        Save
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
@@ -413,7 +463,7 @@ const UpdateProfile: React.FC<Props> = (props): JSX.Element => {
                     className="max-w-64 max-h-64 rounded-lg"
                     alt="Unable to show"
                   ></img>
-                  <div className="flex space-x-2 justify-center">
+                  <div className="flex flex-row gap-4 space-x-2 justify-center">
                     <button
                       type="button"
                       onClick={() => handleDeleteMedia("id")}
@@ -421,6 +471,15 @@ const UpdateProfile: React.FC<Props> = (props): JSX.Element => {
                     >
                       Delete
                     </button>
+                    {localIdPic && (
+                      <button
+                        type="button"
+                        onClick={() => handleSave("id")}
+                        className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
+                      >
+                        Save
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
