@@ -30,7 +30,8 @@ const Grid: React.FunctionComponent<Props> = (props): JSX.Element => {
                 type="link"
                 key={row.id}
                 disabled={
-                  props.enableAuth && props.enableAuth.step === "Authentication" &&
+                  props.enableAuth &&
+                  props.enableAuth.step === "Authentication" &&
                   props.enableAuth.studId === row.user.id
                     ? false
                     : true

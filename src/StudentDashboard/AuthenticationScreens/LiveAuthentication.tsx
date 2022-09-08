@@ -7,7 +7,7 @@ interface Props {
   quizId: string;
   userId: string;
   authConfigs: any;
-  isLiveAuthed: any;
+  isLiveAuthed: (status: boolean) => void;
 }
 
 const LiveAuthentication: React.FC<Props> = (props): JSX.Element => {

@@ -134,7 +134,6 @@ let configAbbrs: configAbbrPrototype = {
 };
 
 const QuizRules: React.FC<Props> = (props) => {
-
   const getQuizConfigs = (): JSX.Element[] => {
     let items: JSX.Element[] = [];
     let cols: JSX.Element[] = [];
@@ -145,10 +144,10 @@ const QuizRules: React.FC<Props> = (props) => {
     delete props.quizConfig.courseId;
     delete props.quizConfig.quizId;
 
-    Object.entries(props.quizConfig).forEach((item: any) => {
+    Object.entries(props.quizConfig).forEach((item: any, index: number) => {
       let obj = configAbbrs[item[0]];
       cols.push(
-        <Col span={4}>
+        <Col span={4} key={index}>
           <Row gutter={24}>
             <Col span={18}>
               <p className="font-bold">{obj && obj.fullName}</p>

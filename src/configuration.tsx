@@ -288,7 +288,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
     }
     if (flag) {
       alert(
-        "Please disable all verification options before enabling examd live launch"
+        "Please disable all AI authentication options before enabling Examd Live Launch"
       );
       return true;
     }
@@ -311,7 +311,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
 
     if (flag) {
       alert(
-        "Please enable all proctor options before enabling examd live launch"
+        "Please disable Examd Live Launch options before enabling an AI Authenction option"
       );
       return true;
     }
@@ -320,22 +320,68 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
   };
 
   const handleOptionClick = (option: string, subOption: string) => {
-    if (subOption === "examdLiveLaunch") {
-      let res = checkIfVerificationOptSelected();
-      if (res) {
-        let checkedOptions: optionCheckedProto = { ...(optionsStatus as {}) };
-        checkedOptions[option] = false;
-        setOptionsStatus(checkedOptions);
+    if (defaultSettingsOptionsChecked["Default Proctoring"]) {
+      if (subOption === "examdLiveLaunch") {
+        message.error(
+          "Cannot select Examd Live Launch option with Default Proctoring"
+        );
         return;
       }
     }
 
-    if (option === "Verification Options") {
-      let res = checkIfProctorOptionsSelected();
-      if (res) {
+    if (defaultSettingsOptionsChecked["Default w/ Live launch"]) {
+      if (subOption === "studentIdDl" || subOption === "studentPicture") {
+        message.error(
+          "Cannot select any AI authentication option with Live Launch Proctoring"
+        );
         return;
       }
     }
+
+    if (
+      defaultSettingsOptionsChecked["Default w/ Live Proctoring"] ||
+      defaultSettingsOptionsChecked["Lock down Browser"]
+    ) {
+      if (subOption === "examdLiveLaunch") {
+        let res =
+          checked["Verification Options"]["studentPicture"] ||
+          checked["Verification Options"]["studentIdDl"];
+
+        if (res) {
+          message.error(
+            "Please de-select AI authentication options before selecting Live Launch"
+          );
+          return;
+        }
+      }
+
+      if (subOption === "studentPicture" || subOption === "studentIdDl") {
+        let res = checked["Proctor Options"]["examdLiveLaunch"];
+
+        if (res) {
+          message.error(
+            "Please de-select Live Launch options before selecting any AI authentication option"
+          );
+          return;
+        }
+      }
+    }
+    // if (subOption === "examdLiveLaunch") {
+    //   let res = checkIfVerificationOptSelected();
+    //   if (res) {
+    //     let checkedOptions: optionCheckedProto = { ...(optionsStatus as {}) };
+    //     checkedOptions[option] = false;
+    //     setOptionsStatus(checkedOptions);
+    //     return;
+    //   }
+    // }
+
+    // if (option === "Verification Options") {
+    //   let res = checkIfProctorOptionsSelected();
+    //   if (res) {
+    //     return;
+    //   }
+    // }
 
     let options: optionCheckedProto = { ...(checked[option] as {}) };
     let flag = true;
@@ -616,11 +662,70 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
     setDefaultSettingsOptionsChecked(optionsChecked);
   };
 
+  const checkExamLiveLaunchSelected = (): boolean => {
+    return checked["Proctor Options"]["examdLiveLaunch"];
+  };
+
+  const checkPhotoIdSelected = (): boolean => {
+    let res1 = checked["Verification Options"]["studentIdDl"];
+    let res2 = checked["Verification Options"]["studentPicture"];
+    return res1 || res2;
+  };
+
+  const checkPhotoIdAndLiveLaunchSelected = (): boolean => {
+    let res1 =
+      checked["Verification Options"]["studentIdDl"] ||
+      checked["Verification Options"]["studentPicture"];
+    let res2 = checked["Proctor Options"]["examdLiveLaunch"];
+
+    return res1 && res2;
+  };
+
   const handleCheckboxChange = (e: any, idx: number, optionName: string) => {
     if (!selectedQuiz) {
       alert("Please select a quiz");
       return;
     }
+
+    if (optionName === "Default Proctoring") {
+      let res: boolean = checkExamLiveLaunchSelected();
+      if (res) {
+        let checkedOptions = { ...checked };
+        checkedOptions["Proctor Options"]["examdLiveLaunch"] = false;
+        setChecked(checkedOptions);
+      }
+    }
+
+    if (optionName === "Default w/ Live launch") {
+      let res: boolean = checkPhotoIdSelected();
+
+      if (res) {
+        let checkedOptions = { ...checked };
+        checkedOptions["Verification Options"]["studentIdDl"] = false;
+        checkedOptions["Verification Options"]["studentPicture"] = false;
+        setChecked(checkedOptions);
+      }
+    }
+
+    if (optionName === "Default w/ Live Proctoring") {
+      let res: boolean = checkPhotoIdAndLiveLaunchSelected();
+
+      if (res) {
+        let checkedOptions = { ...checked };
+        checkedOptions["Proctor Options"]["examdLiveLaunch"] = false;
+        setChecked(checkedOptions);
+      }
+    }
+
+    if (optionName === "Lock down Browser") {
+      let res: boolean = checkPhotoIdAndLiveLaunchSelected();
+      if (res) {
+        let checkedOptions = { ...checked };
+        checkedOptions["Proctor Options"]["examdLiveLaunch"] = false;
+        setChecked(checkedOptions);
+      }
+    }
+
     if (e.target.checked) {
       let settings: any = { ...defaultProcSettings[idx].settings };
       resetOtherDefaultCheckedOptions(optionName);
@@ -648,11 +753,11 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
                 onClick={() => handleSelectQuiz(quiz)}
                 className={`block p-6 max-w-sm bg-white rounded-lg border ${
                   quizzesStat[quiz.title]
-                    ? "border-blue-600 border-4"
+                    ? "border-blue-400 border-4"
                     : "border-gray-200"
                 } hover:bg-gray-100 dark:${
                   quizzesStat[quiz.title]
-                    ? "border-blue-600"
+                    ? "border-blue-400"
                     : "border-gray-700"
                 } dark:hover:bg-gray-300`}
               >

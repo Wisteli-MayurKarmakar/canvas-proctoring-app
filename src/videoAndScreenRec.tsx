@@ -1,7 +1,6 @@
-import { message, Modal } from "antd";
+import { message, Modal, Popconfirm } from "antd";
 import axios from "axios";
-import React, { FunctionComponent, useEffect, useState } from "react";
-import InfoModal from "./infoModal";
+import React, { FunctionComponent, useEffect } from "react";
 import AuthenticationModal from "./StudentDashboard/Modals/AuthenticationModal";
 import $ from "jquery";
 import { getWebSocketUrl } from "./APIs/apiservices";
@@ -35,6 +34,10 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
   let [alertUser, setAlertUser] = React.useState<boolean>(false);
   let [alertMessage, setAlertMessage] = React.useState<string | null>(null);
   let [showAuthModal, setShowAuthModal] = React.useState<boolean>(false);
+  let [showCloseProcPrompt, setShowCloseProcPrompt] =
+    React.useState<boolean>(false);
+  // let [video, setVideo] = React.useState<string>("0");
+  // let [screen, setScreen] = React.useState<string>("0");
   const [examStarted, setExamStarted] = React.useState<boolean>(false);
   let [stuAuthenticated, setStuAuthenticated] = React.useState<boolean>(false);
   let [showProctoringAlert, setShowProctoringAlert] =
@@ -66,27 +69,27 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
     ],
   };
 
-  const setConfigByQuizCourseGuid = (): void => {
+  const setConfigByQuizCourseGuid = async () => {
     if (props.quiz) {
-      axios
-        .get(
-          `https://examd-dev.uc.r.appspot.com/student/api/v1/getLtiCanvasConfigByGuidCourseIdQuizId?guid=${[
-            props.toolConsumerGuid,
-          ]}&courseId=${props.courseId}&quizId=${props.quiz.id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${props.token}`,
-            },
-          }
-        )
-        .then((res) => {
-          setQuizConfig(res.data);
-        })
-        .catch((err) => {
-          message.error(
-            "This Quiz is not Proctored. Please go to the Quiz Page and Continue."
-          );
-        });
+      let response = await axios.get(
+        `https://examd-dev.uc.r.appspot.com/student/api/v1/getLtiCanvasConfigByGuidCourseIdQuizId?guid=${[
+          props.toolConsumerGuid,
+        ]}&courseId=${props.courseId}&quizId=${props.quiz.id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${props.token}`,
+          },
+        }
+      );
+
+      if (response.data) {
+        setQuizConfig(response.data);
+      } else {
+        message.error(
+          "This Quiz is not Proctored. Please go to the Quiz Page and Continue."
+        );
+      }
+      return;
     }
   };
 
@@ -167,10 +170,16 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
   };
 
   const startProctoring = async () => {
-    if (!props.isNewTab) {
+    if (!props.isNewTab && !stuAuthenticated) {
       setOpenNewTabPrompt(true);
       return;
     }
+
+    if (!props.isNewTab && stuAuthenticated) {
+      handleOpenQuizInNewTab();
+      return;
+    }
+
     if (props.quiz === null) {
       message.warn("Please select a quiz");
       return;
@@ -197,26 +206,39 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
       .catch((error: any) => {});
 
     // Open Audio Video devices channels
+    // let videoCap = video === "1" ? true : false;
+    // let screenCap = screen === "1" ? true : false;
+
+    // if (quizConfig) {
+    //   videoCap = quizConfig.recordWebcam;
+    //   screenCap = quizConfig.recordScreen;
+    // }
+
     await window.ExamdAutoProctorJS.openChannels(
       true,
       true,
-      props.isNewTab ? true : quizConfig.recordScreen,
+      true,
       false,
-      (msg: any) => {
-        // call(msg)
-        // window.ExamdAutoProctorJS.xsock.on("message", (data: any) => {
-        // })
-      },
+      (msg: any) => {},
       (msg: any) => {
         console.log("log message", msg);
       }
     );
 
     // Starts VDO + Audio recording
-    await window.ExamdAutoProctorJS.startVideoRecording();
+    try {
+      await window.ExamdAutoProctorJS.startVideoRecording();
 
+    } catch (e) {
+      console.log("Error starting video recording");
+    }
+
+    try {
+      await window.ExamdAutoProctorJS.startScreenRecording();
+    } catch (e) {
+      console.log("Error starting screen recording");
+    }
     // Starts Screen recording
-    await window.ExamdAutoProctorJS.startScreenRecording();
     let vidEle: any = $("#xvideo");
     //capture stream from vidEle
     stream = vidEle.get(0).captureStream();
@@ -228,11 +250,9 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
   };
 
   const handleEndExam = async () => {
-    setExamStarted(false);
-    setAlertUser(true);
-    setAlertMessage("Your exam has ended");
-    window.ExamdAutoProctorJS.stopRecording();
-    window.close();
+    setShowCloseProcPrompt(true);
+
+    // window.close();
   };
 
   const handleStuAuthStatus = (data: any): void => {
@@ -248,14 +268,6 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
       peerConnection = new RTCPeerConnection(PC_CONFIG);
     }
     let localStream: any = null;
-    // if (!vdoStmSource) {
-    //   localStream = await navigator.mediaDevices.getUserMedia({
-    //     audio: true,
-    //     video: true,
-    //   });
-    //   videoSrc.current.srcObject = localStream;
-    //   setVdoStmSource(localStream);
-    // }
     if (stream) {
       stream.getTracks().forEach((track: any) => {
         peerConnection.addTrack(track, stream);
@@ -346,9 +358,23 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
       "_blank"
     );
     // window.open(
-    //   `http://localhost:3000/lti/config?userId=${props.id}&courseId=${props.courseId}&toolConsumerGuid=${props.toolConsumerGuid}&quizId=${props.quiz.id}&newTab=true&auth=1&studentId=${props.studentId}`
+    //   `http://localhost:3000/lti/config?userId=${props.id}&courseId=${
+    //     props.courseId
+    //   }&toolConsumerGuid=${props.toolConsumerGuid}&quizId=${
+    //     props.quiz.id
+    //   }&newTab=true&auth=1&studentId=${props.studentId}&video=${
+    //     quizConfig.recordWebcam ? "1" : "0"
+    //   }&screen=${quizConfig.recordScreen ? "1" : "0"}`
     // );
     setOpenNewTabPrompt(false);
+  };
+
+  const handleOk = (): void => {
+    setExamStarted(false);
+    setAlertUser(true);
+    setAlertMessage("Your exam has ended");
+    window.ExamdAutoProctorJS.stopRecording();
+    window.close();
   };
 
   return (
@@ -432,6 +458,47 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
           guid={props.toolConsumerGuid}
           studentId={props.studentId}
         />
+      )}
+      {showCloseProcPrompt && (
+        <Modal
+          visible={showCloseProcPrompt}
+          closable={false}
+          footer={null}
+          title={null}
+          width={"50pc"}
+        >
+          <div className="flex flex-col items-center h-full w-full gap-4">
+            <p className="text-lg font-semibold">
+              Proctoring is in progress. Closing this tab automatically close
+              your test/quiz.
+            </p>
+            <p className="text-lg font-semibold">
+              Are you sure you want to close the tab and close the test/quiz?
+            </p>
+            <div className="flex flex-row gap-4">
+              <div className="flex space-x-2 justify-center">
+                <button
+                  type="button"
+                  onClick={() => setShowCloseProcPrompt(false)}
+                  className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
+                >
+                  No
+                </button>
+              </div>
+              <div className="flex space-x-2 justify-center">
+                <button
+                  onClick={() => {
+                    handleOk();
+                  }}
+                  type="button"
+                  className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
+                >
+                  Yes
+                </button>
+              </div>
+            </div>
+          </div>
+        </Modal>
       )}
     </div>
   );

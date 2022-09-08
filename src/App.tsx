@@ -67,15 +67,22 @@ function App() {
     let url_string = window.location.href;
     let url = new URL(url_string);
     let loadInstructorPage = url.searchParams.get("loadInstructorPage");
-    let userId = url.searchParams.get("userId");
-    let courseId = url.searchParams.get("courseId");
-    let toolConsumerGuid = url.searchParams.get("toolConsumerGuid");
-    let loginId = url.searchParams.get("loginId");
-    let studentId = url.searchParams.get("studentId");
+    // let userId = url.searchParams.get("userId");
+    // let courseId = url.searchParams.get("courseId");
+    // let toolConsumerGuid = url.searchParams.get("toolConsumerGuid");
+    // let loginId = url.searchParams.get("loginId");
+    // let studentId = url.searchParams.get("studentId");
     let quizId = url.searchParams.get("quizId");
     let newTab = url.searchParams.get("newTab");
     let isAuthed = url.searchParams.get("auth");
-    // let studentId = "1";
+
+    //Test params
+    let studentId = "1";
+    let loginId = "ncghosh@gmail.com";
+    let courseId = "16";
+    let userId = "12";
+    let toolConsumerGuid = "Examd";
+    setId(userId);
 
     if (studentId) {
       setStudentId(studentId);
@@ -89,30 +96,19 @@ function App() {
       setQuizId(quizId);
     }
 
-    // if newTab is true, open in new tab
     if (newTab === "true") {
       setIsNewTab(true);
     }
-    // console.log("userId recieved", userId);
+    setToolConsumerGuid(toolConsumerGuid);
+    setId(loginId);
+    // setId(getUuid(userId));
+    // setId(getUuid('1470923eea43f6bcab4326fee7047884cf84f374'));
+    setCourseId(courseId as string);
 
-    //Test params
-    // let loginId = "ncghosh@gmail.com";
-    // let courseId = "16";
-    // let userId = "12";
-    // let toolConsumerGuid = "Examd";
-
-    // let id = userId?.split("loginId=")[1].split(" ")[0];
-    // let id  = "1470923eea43f6bcab4326fee7047884cf84f374";
-    // let courseId = userId?.split("courseId=")[1].split("loginId")[0];
     console.log(
       `userId=${userId}, courseId=${courseId}, flag=${loadInstructorPage}, toolConsumerGuid=${toolConsumerGuid}, newTab=${newTab}, isNewTab=${isNewTab}, studentId=${studentId}`
     );
-    setToolConsumerGuid(toolConsumerGuid);
-    setId(loginId);
-    setId(getUuid(userId));
-    // setId(getUuid('1470923eea43f6bcab4326fee7047884cf84f374'));
-    // setId(userId);
-    setCourseId(courseId as string);
+
     if (loadInstructorPage === "Y") {
       setLoadFlag("Instructor");
     } else {

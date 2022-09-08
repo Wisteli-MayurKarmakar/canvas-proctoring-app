@@ -1,7 +1,8 @@
-import { Col, message, Row } from "antd";
+import { Col, Divider, message, Row } from "antd";
 import React, { useEffect } from "react";
 import InfoModal from "../infoModal";
 import { getWebSocketUrl } from "../APIs/apiservices";
+import axios from "axios";
 
 interface Props {
   authConfigs: any;
@@ -10,6 +11,7 @@ interface Props {
   quizId: string;
   selectedRow: any;
   userId: string;
+  guid: string;
 }
 
 interface rtcStateProto {
@@ -21,6 +23,9 @@ const AuthenticateUser: React.FC<Props> = (props): JSX.Element => {
   const user = "chat_" + props.userId + "_" + "instr";
   const room = "rm_" + props.courseId + "_" + props.quizId;
   let [isAuthenticated, setIsAuthenticated] = React.useState<boolean>(false);
+  let [studentPhoto, setStudentPhoto] = React.useState<any>(null);
+  let [studentId, setStudentId] = React.useState<any>(null);
+  let [fetchingProofs, setFetchingProofs] = React.useState<boolean>(false);
   const [authButtonDisabled, setAuthButtonDisabled] =
     React.useState<boolean>(true);
   let vdoDstRef = React.useRef<any>(null);
@@ -160,7 +165,7 @@ const AuthenticateUser: React.FC<Props> = (props): JSX.Element => {
     }
 
     socket.on("chat", (data: any) => {
-      console.log("authuser msg", data)
+      console.log("authuser msg", data);
       if (data.type === "chat") {
         let msg = JSON.parse(data.message);
         if (msg.msgType === "answer") {
@@ -198,10 +203,70 @@ const AuthenticateUser: React.FC<Props> = (props): JSX.Element => {
     // sendMsgViaSocket("STU_AUTHED", { stuId: props.selectedRow.user.id });
   };
 
+  const getStudentProofs = async (studentId: string) => {
+    setFetchingProofs(true);
+    let picProof = await axios.get(
+      `https://examd-dev.uc.r.appspot.com/student/api/v1/viewCanvasProfile/${props.guid}/${props.selectedRow.user.id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${props.authConfigs.data.access_token}`,
+        },
+        responseType: "arraybuffer",
+      }
+    );
+
+    if (
+      picProof.headers["content-type"] === "image/jpeg" ||
+      picProof.headers["content-type"] === "image/png" ||
+      picProof.headers["content-type"] === "image/svg" ||
+      picProof.headers["content-type"] === "image/webp" ||
+      picProof.headers["content-type"] === "image/jpg"
+    ) {
+      let blob = new Blob([picProof.data], {
+        type: picProof.headers["content-type"],
+      });
+      setStudentPhoto(URL.createObjectURL(blob));
+    }
+
+    let idProof = await axios.get(
+      `https://examd-dev.uc.r.appspot.com/student/api/v1/downloadDL/${props.guid}/${props.selectedRow.user.id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${props.authConfigs.data.access_token}`,
+        },
+        responseType: "arraybuffer",
+      }
+    );
+
+    if (
+      idProof.headers["content-type"] === "image/jpeg" ||
+      idProof.headers["content-type"] === "image/png" ||
+      idProof.headers["content-type"] === "image/svg" ||
+      idProof.headers["content-type"] === "image/webp" ||
+      idProof.headers["content-type"] === "image/jpg"
+    ) {
+      let blob = new Blob([idProof.data], {
+        type: idProof.headers["content-type"],
+      });
+      setStudentId(URL.createObjectURL(blob));
+    }
+    setFetchingProofs(false);
+  };
+
   useEffect(() => {
-    console.log("selectedRow", props.selectedRow);
     connectSocket();
+    getStudentProofs(props.selectedRow.user.id);
   }, []);
+
+  if (fetchingProofs) {
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <p className="text-lg font-semibold">
+          Fetching details. Please wait...
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col items-center justify-center">
@@ -242,8 +307,32 @@ const AuthenticateUser: React.FC<Props> = (props): JSX.Element => {
         <div className="box-border h-44 w-56 p-1 border-2 rounded">
           <video autoPlay playsInline muted ref={vdoDstRef}></video>
         </div>
-        <div className="box-border h-44 w-56 p-1 border-2 rounded"></div>
-        <div className="box-border h-44 w-56 p-1 border-2 rounded"></div>
+        <div className="box-border h-44 w-56 p-1 border-2 rounded">
+          {studentPhoto ? (
+            <img
+              src={studentPhoto}
+              alt="Not found"
+              className="object-fill h-40 w-56 rounded"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-lg font-semibold">
+              Not available
+            </div>
+          )}
+        </div>
+        <div className="box-border h-44 w-56 p-1 border-2 rounded">
+          {studentId ? (
+            <img
+              src={studentId}
+              alt="Not found"
+              className="object-fill h-40 w-56 rounded"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-lg font-semibold">
+              Not available
+            </div>
+          )}
+        </div>
       </div>
       <br />
       <div className="flex space-x-2 justify-center">

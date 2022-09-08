@@ -1,4 +1,6 @@
 import { Modal, Timeline } from "antd";
+import axios from "axios";
+import React from "react";
 import { useEffect } from "react";
 
 interface Props {
@@ -6,10 +8,14 @@ interface Props {
   close: () => void;
   title: string;
   data: Object | null;
-  fullVideoUrl: any;
-  scrVideo: any;
   exceptions: any;
   profilePic: any;
+  studentId: string;
+  quizId: string;
+  courseId: string;
+  guid: string;
+  fileName: string;
+  configuration: { [key: string]: boolean };
 }
 
 const Report: React.FC<Props> = ({
@@ -17,12 +23,15 @@ const Report: React.FC<Props> = ({
   close,
   title,
   data,
-  fullVideoUrl,
-  scrVideo,
   exceptions,
   profilePic,
+  studentId,
+  quizId,
+  guid,
+  courseId,
+  fileName,
+  configuration,
 }): JSX.Element => {
-
   return (
     <Modal
       visible={show}
@@ -35,36 +44,44 @@ const Report: React.FC<Props> = ({
         className="flex flex-col overflow-scroll overflow-x-hidden gap-6"
         style={{ maxHeight: "44pc" }}
       >
-        <p className="text-lg text-center font-bold underline">Authentication</p>
+        <p className="text-lg text-center font-bold underline">
+          Authentication
+        </p>
         <div className="flex flex-row pl-3 gap-56 mx-auto">
           <div className="flex flex-col">
             <div className="flex box-border h-56 justify-center items-center w-56 p-4 border-4 rounded">
               <p className="text-lg text-center font-semibold">Not available</p>
             </div>
-            <p className="text-sm text-center font-semibold">Picture taken during exam</p>
+            <p className="text-sm text-center font-semibold">
+              Picture taken during exam
+            </p>
           </div>
           <div className="flex flex-col">
             <div className="box-border h-56 w-56 p-4 border-4 rounded">
-              {profilePic && <img src={profilePic} alt="Not available" className="h-full w-full rounded"/>}
+              {profilePic && (
+                <img
+                  src={profilePic}
+                  alt="Not available"
+                  className="h-full w-full rounded"
+                />
+              )}
             </div>
-            <p className="text-sm text-center font-semibold">Picture from profile</p>
+            <p className="text-sm text-center font-semibold">
+              Picture from profile
+            </p>
           </div>
         </div>
-        <p className="text-lg text-center font-bold underline">Violation screen, video, messages</p>
-        <div className="flex flex-row pl-3 gap-56 mx-auto">
+        <p className="text-lg text-center font-bold underline">
+          Violation screen, video, messages
+        </p>
+        <div className={`flex flex-row pl-3 gap-8 mx-auto`}>
           <div className="flex flex-col">
             <div className="box-border h-64 w-80 p-4 border-4 rounded">
-              <video controls className="object-fill rounded">
-                <source src={fullVideoUrl}></source>
-              </video>
-            </div>
-            <p className="text-sm text-center font-semibold">Video recording</p>
-          </div>
-          <div className="flex flex-col h-full items-center justify-center">
-            <div className="box-border h-64 w-80 p-4 border-4 rounded">
-              {scrVideo ? (
+              {configuration.recordWebcam ? (
                 <video controls className="object-fill rounded">
-                  <source src={scrVideo}></source>
+                  <source
+                    src={`https://examd.us/media/${fileName}_vdo/webm`}
+                  ></source>
                 </video>
               ) : (
                 <div className="flex items-center justify-center">
@@ -72,11 +89,47 @@ const Report: React.FC<Props> = ({
                 </div>
               )}
             </div>
-            <p className="text-sm text-center font-semibold">Screen recording</p>
+            <p className="text-sm text-center font-semibold">Video recording</p>
+          </div>
+          <div className="flex flex-col h-full items-center justify-center">
+            <div className="box-border h-64 w-80 p-4 border-4 rounded">
+              {configuration.recordScreen ? (
+                <video controls className="object-fill rounded">
+                  <source
+                    src={`https://examd.us/media/${fileName}_scr/webm`}
+                  ></source>
+                </video>
+              ) : (
+                <div className="flex items-center justify-center">
+                  <h4 className="text-center">Option not configured</h4>
+                </div>
+              )}
+            </div>
+            <p className="text-sm text-center font-semibold">
+              Screen recording
+            </p>
+          </div>
+          <div className="flex flex-col">
+            <div className="box-border h-64 w-80 p-4 border-4 rounded">
+              {configuration.roomScan ? (
+                <video controls className="object-fill rounded">
+                  <source
+                    src={`https://examd.us/media/${guid}_${courseId}_${quizId}_${studentId}_rmvdo/webm`}
+                  ></source>
+                </video>
+              ) : (
+                <div className="flex items-center justify-center">
+                  <h4 className="text-center">Option not configured</h4>
+                </div>
+              )}
+            </div>
+            <p className="text-sm text-center font-semibold">Room Scan</p>
           </div>
         </div>
         <div className="flex flex-col">
-            <p className="text-lg text-center font-bold underline">Violation messages</p>
+          <p className="text-lg text-center font-bold underline">
+            Violation messages
+          </p>
           <div className="box-border mx-auto h-full w-11/12 p-4 rounded text-center mt-8 border-4">
             {exceptions && exceptions.length > 0 ? (
               <div>

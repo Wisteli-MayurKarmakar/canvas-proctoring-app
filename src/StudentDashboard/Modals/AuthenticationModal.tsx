@@ -139,32 +139,6 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
     });
   };
 
-  let steps = [
-    {
-      name: "System Check",
-      component: (
-        <SystemCheck
-          quizId={props.quizId}
-          stuName={props.userName}
-          stuId={props.userId}
-          systemCheckStatus={getSystemCheckStatus}
-          courseId={props.courseId}
-          getSocketConnection={handleSocketConnection}
-        />
-      ),
-    },
-    {
-      name: "Privacy Policy",
-      component: <PrivacyPolicy isChecked={isAgree} showAgree={true} />,
-    },
-    {
-      name: "Rules",
-      component: (
-        <QuizRules quizConfig={props.quizConfig} isChecked={isAgree} />
-      ),
-    },
-  ];
-
   const handleStudentAuthed = (status: any) => {
     if (status) {
       setButtonDisabled(false);
@@ -180,6 +154,36 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
   };
 
   useEffect(() => {
+    let steps: {
+      [key: string]: any;
+    }[] = [
+      {
+        name: "System Check",
+        key: "systemCheck",
+        component: (
+          <SystemCheck
+            quizId={props.quizId}
+            stuName={props.userName}
+            stuId={props.userId}
+            systemCheckStatus={getSystemCheckStatus}
+            courseId={props.courseId}
+            getSocketConnection={handleSocketConnection}
+          />
+        ),
+      },
+      {
+        name: "Privacy Policy",
+        key: "privacyPolicy",
+        component: <PrivacyPolicy isChecked={isAgree} showAgree={true} />,
+      },
+      {
+        name: "Rules",
+        key: "rules",
+        component: (
+          <QuizRules quizConfig={props.quizConfig} isChecked={isAgree} />
+        ),
+      },
+    ];
     let config = {} as any;
     config["studentPicture"] = props.quizConfig.studentPicture;
     config["studentIdDl"] = props.quizConfig.studentIdDl;
@@ -196,6 +200,7 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
       ) {
         steps.push({
           name: "Authentication",
+          key: "auth",
           component: (
             <StudentAuthentication
               authConfigs={config}
@@ -213,25 +218,12 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
           ),
         });
       }
+      // setQuizSteps(steps);
+    }
+    if (steps.length <= 4) {
       setQuizSteps(steps);
+      setAuthConfigurations(config);
     }
-    // steps.push({
-    //   name: "Thanks",
-    //   component: <Thanks />,
-    // });
-
-    let flag: boolean = false;
-    steps.forEach((step: { [key: string]: string | JSX.Element }) => {
-      if (step.name === "Authentication") {
-        flag = true;
-      }
-    });
-
-    if (!flag) {
-      setStuAuthenticated(true);
-    }
-    setQuizSteps(steps);
-    setAuthConfigurations(config);
   }, []);
 
   const handleNext = () => {
@@ -239,7 +231,11 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
     setStepName(quizSteps[stepNo + 1].name);
     setStepNo(stepNo + 1);
     setButtonDisabled(true);
-    sendAuthStatus("STU_AUTH_STEP", quizSteps[stepNo + 1].name, props.studentId);
+    sendAuthStatus(
+      "STU_AUTH_STEP",
+      quizSteps[stepNo + 1].name,
+      props.studentId
+    );
   };
 
   const closeWebCamResources = () => {
@@ -267,7 +263,6 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
       bodyStyle={{ maxHeight: "50%", height: 600, overflowY: "scroll" }}
       onCancel={() => {
         closeWebCamResources();
-        // window.location.reload();
         close(false);
       }}
       footer={

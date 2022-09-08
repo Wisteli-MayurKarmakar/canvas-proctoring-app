@@ -1,5 +1,5 @@
 import axios from "axios";
-import React, { useEffect } from "react";
+import React, { useCallback, useEffect } from "react";
 import OtpVerification from "../AuthenticationScreens/OtpVerification";
 import RoomScan from "../AuthenticationScreens/RoomScan";
 import LiveAuthentication from "../AuthenticationScreens/LiveAuthentication";
@@ -19,56 +19,141 @@ interface Props {
   // socket: any;
 }
 
-const StudentAuthentication: React.FC<Props> = (props): JSX.Element => {
-  let [authSteps, setAuthSteps] = React.useState<any>(null);
-  let [stepsLength, setStepsLength] = React.useState<any>(null);
-  let [currentStep, setCurrentStep] = React.useState<number>(0);
-  let [quizTitle, setQuizTitle] = React.useState<any>(null);
+const handleLiveAuthentication = (
+  status: boolean,
+  isStudentAuthed: (flag: boolean) => void
+) => {
+  if (status) {
+    isStudentAuthed(true);
+  } else {
+    isStudentAuthed(false);
+  }
+};
 
-  const handleLiveAuthentication = (status: boolean) => {
-    if (status) {
-      props.isStudentAuthed(true);
+const handleAuthStatus = (
+  status: boolean,
+  authSteps: {
+    [key: string]: any;
+  }[],
+  currentStep: number,
+  authStatus: (flag: boolean) => void,
+  setCurrentStep: (step: number) => void
+) => {
+  if (currentStep === authSteps.length - 1) {
+    authStatus(true);
+  } else {
+    setCurrentStep(currentStep + 1);
+  }
+};
+
+const handleRmVideSent = (
+  status: boolean,
+  authSteps: {
+    [key: string]: any;
+  }[],
+  currentStep: number,
+  authStatus: (flag: boolean) => void,
+  setCurrentStep: (step: number) => void
+) => {
+  if (status) {
+    if (currentStep === authSteps.length - 1) {
+      authStatus(true);
     } else {
-      props.isStudentAuthed(false);
+      setCurrentStep(currentStep + 1);
     }
-  };
+  }
+};
 
-  const handleAuthStatus = (status: boolean) => {
-    props.authStatus(true);
-  };
+const handleOtpVerification = (
+  status: boolean,
+  currentStep: number,
+  setCurrentStep: (step: number) => void,
+  authSteps: {
+    [key: string]: any;
+  }[],
+  authStatus: (flag: boolean) => void
+) => {
+  if (currentStep === authSteps.length - 1) {
+    authStatus(true);
+  } else {
+    setCurrentStep(currentStep + 1);
+  }
+};
+
+const StudentAuthentication: React.FC<Props> = (props): JSX.Element => {
+  let [currentStep, setCurrentStep] = React.useState<number>(0);
 
   const prepareAuthSteps = () => {
-    let steps: Object[] = [];
-    if (props.authConfigs.examdLiveLaunch) {
+    if (!props.authConfigs) {
+      return [];
+    }
+
+    let steps: {
+      [key: string]: any;
+    }[] = [];
+
+    if (props.authConfigs.roomScan) {
       steps.push({
-        name: "Live Authentication",
+        name: "Room Scan",
+        key: "roomScan",
         component: (
-          <LiveAuthentication
+          <RoomScan
+            authToken={props.authToken}
+            guid={props.guid}
+            studentId={props.studentId}
             courseId={props.courseId}
             quizId={props.quizId}
-            userId={props.studentId}
-            authConfigs={props.authConfigs}
-            isLiveAuthed={handleLiveAuthentication}
+            rmVideoSent={(status) =>
+              handleRmVideSent(
+                status,
+                steps,
+                currentStep,
+                props.authStatus,
+                setCurrentStep
+              )
+            }
           />
         ),
       });
     }
+
     if (props.authConfigs.otp) {
       steps.push({
         name: "OTP Verification",
-        component: <OtpVerification />,
-      });
-    }
-    if (props.authConfigs.roomScan) {
-      steps.push({
-        name: "Room Scan",
-        component: <RoomScan />,
+        key: "otp",
+        component: (
+          <OtpVerification
+            authToken={props.authToken}
+            guid={props.guid}
+            studentId={props.studentId}
+            otpVerified={(status) =>
+              handleOtpVerification(
+                status,
+                currentStep,
+                setCurrentStep,
+                steps,
+                props.authStatus
+              )
+            }
+          />
+        ),
       });
     }
 
     if (props.authConfigs.studentIdDl || props.authConfigs.studentPicture) {
+      let name: string = "Student Profile Picture Verification"
+
+      if (props.authConfigs.studentIdDl && props.authConfigs.studentPicture) {
+        name = "Student Profile Picture and ID/DL Verification"
+      }
+
+      if (!props.authConfigs.studentPicture && props.authConfigs.studentIdDl) {
+        name = "Student ID/ DL Verification"
+      }
+
       steps.push({
-        name: "Student Id/Dl Verification",
+        name: name,
+        key: "studentIdDl",
         component: (
           <StudentIdDlVerification
             authConfigs={props.authConfigs}
@@ -76,45 +161,52 @@ const StudentAuthentication: React.FC<Props> = (props): JSX.Element => {
             userId={props.userId}
             guid={props.guid}
             studentId={props.studentId}
-            handleAuth={handleAuthStatus}
+            handleAuth={(status) =>
+              handleAuthStatus(
+                status,
+                steps,
+                currentStep,
+                props.authStatus,
+                setCurrentStep
+              )
+            }
           />
         ),
       });
     }
-    setStepsLength(steps.length);
-    setAuthSteps(steps);
-  };
 
-  const handleNextStep = () => {
-    if (currentStep < stepsLength - 1) {
-      setCurrentStep((prevState: any) => prevState + 1);
+    if (props.authConfigs.examdLiveLaunch) {
+      steps.push({
+        name: "Live Authentication",
+        key: "Live",
+        component: (
+          <LiveAuthentication
+            courseId={props.courseId}
+            quizId={props.quizId}
+            userId={props.studentId}
+            authConfigs={props.authConfigs}
+            isLiveAuthed={(status) =>
+              handleLiveAuthentication(status, props.isStudentAuthed)
+            }
+          />
+        ),
+      });
     }
+
+    return steps;
   };
 
-  useEffect(() => {
-    prepareAuthSteps();
-  }, []);
+  let steps = prepareAuthSteps();
 
   return (
-    <div className="flex flex-col gap-16 items-center justify-center">
-      {authSteps && (
-        <div>
+    <div className="flex flex-col gap-4 items-center justify-center">
+      {steps.length > 0 && (
+        <>
           <p className="text-center text-xl font-bold">
-            {authSteps[currentStep].name}
+            {steps[currentStep].name}
           </p>
-          {authSteps[currentStep].component}
-        </div>
-      )}
-      {currentStep !== stepsLength - 1 && (
-        <div className="flex space-x-2 justify-center">
-          <button
-            onClick={handleNextStep}
-            type="button"
-            className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
-          >
-            Next
-          </button>
-        </div>
+          {steps[currentStep].component}
+        </>
       )}
     </div>
   );

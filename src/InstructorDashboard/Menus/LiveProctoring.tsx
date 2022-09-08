@@ -150,18 +150,18 @@ const LiveProctoring: React.FC<Props> = (props): JSX.Element => {
           })}
       </div>
       <br />
-      <div className="box-border border-4 p-10 rounded h-full w-full">
+      <div className="box-border border-4 p-6 rounded h-full w-full">
         <Row gutter={24}>
           <Col
             span={24}
             style={{ overflowY: "scroll", height: 500, maxHeight: 500 }}
           >
-            <div className="grid grid-cols-3 gap-3 h-full content-between">
+            <div className="flex flex-row flex-wrap w-full gap-8 h-full justify-center">
               {enrollments ? (
                 enrollments.map((enrollment: any, index: number) => {
                   return (
                     <div
-                      className={`box-border h-56 w-56 text-center p-2 border-2 ${
+                      className={`box-border h-72 w-72 text-center p-2 border-2 ${
                         enrollmentLiveStatus[enrollment.user.id] === 0
                           ? onNotJoinColorCode
                           : enrollmentLiveStatus[enrollment.user.id] === 1
@@ -169,11 +169,11 @@ const LiveProctoring: React.FC<Props> = (props): JSX.Element => {
                           : onViolationsColorCode
                       } rounded`}
                     >
-                      <div className="flex flex-col justify-center items-center">
+                      <div className="flex flex-col h-full w-full justify-center items-center">
                         <p className="text-center font-semibold">
                           {enrollment.user.name}
                         </p>
-                        <div className="box-border h-28 mb-3 w-48 border-2 rounded border-blue-400 overflow-y-scroll"></div>
+                        <div className="box-border h-60 mb-3 w-60 border-2 rounded border-blue-400 overflow-y-scroll"></div>
                         <button
                           type="button"
                           onClick={() => showLiveStreamModal(enrollment)}

@@ -60,7 +60,7 @@ const StudentIdDlVerification: React.FC<Props> = (props): JSX.Element => {
     if (!canvasRef.current) return "";
     let context = canvasRef.current.getContext("2d");
     context.drawImage(vidSrcRef.current, 0, 0, imgWidth, imgHeight);
-    let data = canvasRef.current.toDataURL("image/jpg");
+    let data = canvasRef.current.toDataURL("image/webp");
     let b64: string = data.split(";")[1].split(",")[1];
     let snapshotBlob = convertBase64toBlob(b64, "image/jpg");
     return snapshotBlob;
@@ -78,12 +78,12 @@ const StudentIdDlVerification: React.FC<Props> = (props): JSX.Element => {
     formData.append(
       "images",
       proofBlob,
-      props.studentId + authType === "picture" ? "pic.jpg" : "dl.jpg"
+      props.studentId + authType === "picture" ? "pic.png" : "dl.png"
     );
-    formData.append("imaget", snapshotBlob, props.studentId + "2.jpg");
+    formData.append("imaget", snapshotBlob, props.studentId + "2.png");
     formData.append("name", props.studentId);
     let response = await axios.post(
-      `https://examd.us/ai/frame/match`,
+      `https://examd.online/ai/frame/match`,
       formData,
       {
         headers: {
@@ -93,7 +93,6 @@ const StudentIdDlVerification: React.FC<Props> = (props): JSX.Element => {
         },
       }
     );
-
     if (response.data.data) {
       setPictureAuthed(true);
       return true;
@@ -113,34 +112,32 @@ const StudentIdDlVerification: React.FC<Props> = (props): JSX.Element => {
     delayBetweenRetries: number,
     timeout: number
   ): Promise<boolean> => {
-    return new Promise<boolean>((resolve) => {
-      let cancel = false;
-
+    return new Promise<boolean>((resolve, reject) => {
       (async () => {
         for (let i = 0; i < maxRetry; i++) {
-          console.log(`retry ${i + 1}`);
-          if (cancel) {
-            return;
-          }
-
           try {
             await f();
             resolve(true);
             return;
           } catch (e) {
-            console.log(e);
           }
           await delay(delayBetweenRetries);
         }
-
-        console.log("retries failed due to max retries");
-        resolve(false);
+        reject("failed to connect to");
       })();
     });
   };
 
   const startVideo = async () => {
-    let stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    let stream = await navigator.mediaDevices.getUserMedia({
+      video: true,
+      audio: true,
+    });
+
+    if (vidSrcRef.current && stream) {
+      vidSrcRef.current.srcObject = stream;
+    }
+
     vidSrcRef.current.srcObject = stream;
     imgHeight =
       vidSrcRef.current.videoHeight / (vidSrcRef.current.videoWidth / imgWidth);
@@ -159,18 +156,18 @@ const StudentIdDlVerification: React.FC<Props> = (props): JSX.Element => {
     let awaitIdRes = null;
 
     try {
-      if (studentPhoto) {
-        awaitPictureRes = retry(
+      if (props.authConfigs.studentPicture) {
+        awaitPictureRes = await retry(
           async () => {
             if (!pictureBlob) {
-              return;
+              return false;
             }
             let resPic = await doAiAuth(pictureBlob, "picture");
             if (resPic) {
               setPictureAuthed(true);
               return true;
             } else {
-              return false;
+              throw new Error("failed to validate");
             }
           },
           3,
@@ -179,16 +176,16 @@ const StudentIdDlVerification: React.FC<Props> = (props): JSX.Element => {
         );
       }
 
-      if (studentId) {
-        awaitIdRes = retry(
+      if (props.authConfigs.studentIdDl) {
+        awaitIdRes = await retry(
           async () => {
             if (!idProofBlob) {
-              return;
+              return false;
             }
             let resId = await doAiAuth(idProofBlob, "id");
             if (resId) {
               setIdAuthed(true);
-              return;
+              return true;
             } else {
               throw new Error("failed to validate");
             }
@@ -206,7 +203,11 @@ const StudentIdDlVerification: React.FC<Props> = (props): JSX.Element => {
 
       if (pictureAuth && idAuth) {
         if (resPic && resId) {
-          setStudentAuthed(true);
+          if (awaitPictureRes && awaitIdRes) {
+            setStudentAuthed(true);
+          } else {
+            setStudentAuthed(false);
+          }
         } else {
           setStudentAuthed(false);
         }
@@ -215,7 +216,9 @@ const StudentIdDlVerification: React.FC<Props> = (props): JSX.Element => {
 
       if (pictureAuth && !idAuth) {
         if (resPic) {
-          setStudentAuthed(true);
+          if (awaitPictureRes) {
+            setStudentAuthed(true);
+          }
         } else {
           setStudentAuthed(false);
         }
@@ -224,7 +227,9 @@ const StudentIdDlVerification: React.FC<Props> = (props): JSX.Element => {
 
       if (!pictureAuth && idAuth) {
         if (resId) {
-          setStudentAuthed(true);
+          if (awaitIdRes) {
+            setStudentAuthed(true);
+          }
         } else {
           setStudentAuthed(false);
         }
@@ -252,58 +257,6 @@ const StudentIdDlVerification: React.FC<Props> = (props): JSX.Element => {
       props.handleAuth(true);
     }
   }, [studentAuthed]);
-
-  const handleTakePhoto = () => {
-    if (!canvasRef.current) {
-      return;
-    }
-    const context = canvasRef.current.getContext("2d");
-    if (context) {
-      context.drawImage(vidSrcRef.current, 0, 0, imgWidth, imgHeight);
-      const data = canvasRef.current.toDataURL("image/png");
-      setStudentPhoto(data);
-    }
-  };
-
-  const handleTakeId = () => {
-    if (!studentPhoto) {
-      alert("Please take photo first");
-      return;
-    }
-    if (!canvasRef.current) {
-      return;
-    }
-    const context = canvasRef.current.getContext("2d");
-    if (context) {
-      context.drawImage(
-        vidSrcRef.current,
-        0,
-        imgHeight - imgHeight / 2,
-        imgWidth,
-        imgHeight / 2
-      );
-      const data = canvasRef.current.toDataURL("image/png");
-      setStudentId(data);
-    }
-  };
-
-  const getUserDetails = () => {
-    axios
-      .post(
-        `https://examd.us/student/api/v1/getLtiStudentProfileDetails/${props.guid}/${props.userId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${props.authToken}`,
-          },
-        }
-      )
-      .then((resp) => {
-        setUserDetails(resp.data);
-      })
-      .catch((error) => {
-        message.error("Unable to retrieve user details");
-      });
-  };
 
   const getStudentProofs = async () => {
     if (props.authConfigs.studentPicture) {
@@ -402,7 +355,6 @@ const StudentIdDlVerification: React.FC<Props> = (props): JSX.Element => {
   };
 
   useEffect(() => {
-    // getUserDetails();
     getStudentProofs();
   }, []);
 
@@ -531,7 +483,7 @@ const StudentIdDlVerification: React.FC<Props> = (props): JSX.Element => {
               </p>
             </div>
             <div
-              className="flex p-4 mb-4 text-sm w-full text-red-700 bg-red-100 rounded-lg dark:bg-red-200 dark:text-red-800"
+              className="flex p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg dark:bg-red-200 dark:text-red-800"
               role="alert"
             >
               <svg
@@ -556,7 +508,7 @@ const StudentIdDlVerification: React.FC<Props> = (props): JSX.Element => {
                   <li>Make sure that your'e facing straight to the camera</li>
                   <li>Proper light conditions</li>
                   <li>
-                    Matches the ID/Picture with accessories like hat, glasses,
+                    Doesn't matches the ID/Picture with accessories like hat, glasses,
                     beard etc.
                   </li>
                 </ul>

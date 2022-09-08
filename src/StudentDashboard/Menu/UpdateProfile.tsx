@@ -60,6 +60,7 @@ const UpdateProfile: React.FC<Props> = (props): JSX.Element => {
     const file = e.target.files[0];
     let ftype: string = file.type.split("/")[1];
 
+    console.log(`Uploading file ${file.type}`);
     if (ftype !== "jpeg" && ftype !== "png" && ftype !== "jpg") {
       message.error("Only jpg or png files are allowed");
       return;
@@ -260,7 +261,7 @@ const UpdateProfile: React.FC<Props> = (props): JSX.Element => {
         // </Button>,
       ]}
     >
-      {userDetails && (
+      {userDetails ? (
         <div className="flex flex-col h-full w-full justify-center items-center gap-4">
           <fieldset
             className="h-32 w-full"
@@ -489,6 +490,10 @@ const UpdateProfile: React.FC<Props> = (props): JSX.Element => {
               Please wait...
             </div>
           )}
+        </div>
+      ) : (
+        <div className="flex h-full w-full text-lg font-semibold items-center justify-center">
+          Fetching user details. Please wait...
         </div>
       )}
     </Modal>

@@ -12,6 +12,7 @@ interface Props {
   courseId: string;
   authData: any;
   userId: string;
+  guid: string;
 }
 
 const Authentication: React.FC<Props> = (props): JSX.Element => {
@@ -119,7 +120,7 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
 
   const fetchQuizzesByCourseId = async (courseId: string): Promise<void> => {
     axios
-      .get(COURSES_BY_QUIZ_ID_URL + "16", {
+      .get(COURSES_BY_QUIZ_ID_URL + courseId, {
         headers: {
           Authorization: `Bearer ${props.authData.data.access_token}`,
         },
@@ -271,6 +272,7 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
             quizId={quizId}
             selectedRow={selectedRow}
             userId={props.userId}
+            guid={props.guid}
           />
         </Modal>
       )}
