@@ -19,8 +19,8 @@ const InfoModal: FunctionComponent<Props> = (props): JSX.Element => {
         <div className="flex items-end sm:items-center justify-center min-h-full p-4 text-center sm:p-0">
           <div className="relative bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-lg sm:w-full">
             <div className="bg-white px-4 pb-4 sm:p-6 sm:pb-4">
-              <div className="flex flex-row">
-                <div className="flex-shrink-0 flex items-center justify-center h-12 w-8 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+              <div className="flex flex-row gap-4 w-full h-full items-center">
+                {/* <div className="flex-shrink-0 flex flex-col items-center justify-center rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     className="h-5 w-5 fill-blue-500"
@@ -32,17 +32,17 @@ const InfoModal: FunctionComponent<Props> = (props): JSX.Element => {
                       clipRule="evenodd"
                     />
                   </svg>
-                </div>
-                <div className="text-center w-full h-full sm:text-left">
-                  <h3
+                </div> */}
+                <div className="flex flex-col w-full h-full items-center justify-center">
+                  {/* <h3
                     className="leading-6 font-medium text-gray-900 text-2xl"
                     id="modal-title"
                   >
                     {props.title}
-                  </h3>
-                  <div className="mt-2">
+                  </h3> */}
+                  {/* <div className="mt-2"> */}
                     <p className="text-xl text-gray-500">{props.message}</p>
-                  </div>
+                  {/* </div> */}
                 </div>
               </div>
             </div>

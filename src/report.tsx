@@ -118,7 +118,7 @@ const Report: React.FC<Props> = ({
                   ></source>
                 </video>
               ) : (
-                <div className="flex items-center justify-center">
+                <div className="flex h-full items-center justify-center">
                   <h4 className="text-center">Option not configured</h4>
                 </div>
               )}

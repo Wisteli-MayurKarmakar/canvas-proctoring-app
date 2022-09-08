@@ -9,7 +9,6 @@ import {
   VideoCameraOutlined,
 } from "@ant-design/icons";
 import { AiOutlineFundView } from "react-icons/ai";
-import classes from "./tabs.module.scss";
 
 interface Props {
   quizId: any;

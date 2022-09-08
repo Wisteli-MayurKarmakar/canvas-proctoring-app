@@ -92,9 +92,14 @@ const LiveAuthentication: React.FC<Props> = (props): JSX.Element => {
               track.stop();
             });
           } else {
-            vStream.getTracks().forEach((track: any) => {
+            //Get stream from videoSrc video element and strop the tracks
+            let stream = videoSrc.current.captureStream()
+            stream.getTracks().forEach((track: any) => {
               track.stop();
             });
+            // vStream.getTracks().forEach((track: any) => {
+            //   track.stop();
+            // });
           }
 
           //close peerConnection
@@ -137,6 +142,7 @@ const LiveAuthentication: React.FC<Props> = (props): JSX.Element => {
   };
 
   const sendActiveNotification = () => {
+    console.log("roomName: " + roomName);
     socket.connect();
     socket.emit("validate", {
       evt: "chat",

@@ -100,7 +100,7 @@ function App() {
       setIsNewTab(true);
     }
     setToolConsumerGuid(toolConsumerGuid);
-    setId(loginId);
+    // setId(loginId);
     // setId(getUuid(userId));
     // setId(getUuid('1470923eea43f6bcab4326fee7047884cf84f374'));
     setCourseId(courseId as string);
@@ -112,8 +112,8 @@ function App() {
     if (loadInstructorPage === "Y") {
       setLoadFlag("Instructor");
     } else {
-      setLoadFlag("Student");
-      // setLoadFlag("Instructor");
+      // setLoadFlag("Student");
+      setLoadFlag("Instructor");
     }
   };
 
