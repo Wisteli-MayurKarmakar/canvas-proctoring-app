@@ -236,6 +236,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
   let [configSaveStatus, setConfigSaveStatus] = React.useState<boolean>(false);
   let [defaultSettingsOptionsChecked, setDefaultSettingsOptionsChecked] =
     React.useState<any>(null);
+  let [isReset, setIsReset] = React.useState<boolean>(false);
 
   const borderColorOnSelect = "#12b0ff";
   const defaultBorderColor = "#949799";
@@ -257,7 +258,6 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
       setOptionsStatus(options);
       return;
     }
-
     setOptionsStatus(options);
   };
 
@@ -276,50 +276,55 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
     setChecked(checks);
   };
 
-  const checkIfVerificationOptSelected = (): boolean => {
-    let flag: boolean = false;
-    let verificationOpt: optionCheckedProto = {
-      ...(checked["Verification Options"] as {}),
-    };
-    for (let key in verificationOpt) {
-      if (verificationOpt[key]) {
-        flag = true;
-      }
-    }
-    if (flag) {
-      alert(
-        "Please disable all AI authentication options before enabling Examd Live Launch"
-      );
-      return true;
-    }
-    return false;
-  };
+  // const checkIfVerificationOptSelected = (): boolean => {
+  //   let flag: boolean = false;
+  //   let verificationOpt: optionCheckedProto = {
+  //     ...(checked["Verification Options"] as {}),
+  //   };
+  //   for (let key in verificationOpt) {
+  //     if (verificationOpt[key]) {
+  //       flag = true;
+  //     }
+  //   }
+  //   if (flag) {
+  //     alert(
+  //       "Please disable all AI authentication options before enabling Examd Live Launch"
+  //     );
+  //     return true;
+  //   }
+  //   return false;
+  // };
 
-  const checkIfProctorOptionsSelected = () => {
-    let flag: boolean = false;
-    let proctorOptions: optionCheckedProto = {
-      ...(checked["Proctor Options"] as {}),
-    };
+  // const checkIfProctorOptionsSelected = () => {
+  //   let flag: boolean = false;
+  //   let proctorOptions: optionCheckedProto = {
+  //     ...(checked["Proctor Options"] as {}),
+  //   };
 
-    Object.keys(proctorOptions).forEach((key) => {
-      if (key === "examdLiveLaunch") {
-        if (proctorOptions[key]) {
-          flag = true;
-        }
-      }
-    });
+  //   Object.keys(proctorOptions).forEach((key) => {
+  //     if (key === "examdLiveLaunch") {
+  //       if (proctorOptions[key]) {
+  //         flag = true;
+  //       }
+  //     }
+  //   });
 
-    if (flag) {
-      alert(
-        "Please disable Examd Live Launch options before enabling an AI Authenction option"
-      );
-      return true;
-    }
+  //   if (flag) {
+  //     alert(
+  //       "Please disable Examd Live Launch options before enabling an AI Authenction option"
+  //     );
+  //     return true;
+  //   }
 
-    return false;
-  };
+  //   return false;
+  // };
 
   const handleOptionClick = (option: string, subOption: string) => {
+    if (optionsStatus[option] === false) {
+      alert(`Please enable ${option} first`);
+      return;
+    }
+
     if (defaultSettingsOptionsChecked["Default Proctoring"]) {
       if (subOption === "examdLiveLaunch") {
         message.error(
@@ -386,11 +391,6 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
     let options: optionCheckedProto = { ...(checked[option] as {}) };
     let flag = true;
 
-    if (optionsStatus[option] === false) {
-      alert(`Please enable ${option} first`);
-      return;
-    }
-
     for (let key in options) {
       if (key === subOption && options[key]) {
         flag = false;
@@ -428,7 +428,6 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
       return;
     }
     let flag = true;
-    let option = null;
     let optionsEnabled: string[] = [];
     Object.keys(optionsStatus).forEach((option: string) => {
       if (optionsStatus[option] === true) {
@@ -438,43 +437,25 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
 
     let optionsChoosen: string[] = [];
     Object.keys(checked).map((option: string) => {
+      let optionEnabled: boolean = optionsEnabled.includes(option);
+      let anyOptionSelected: boolean = false;
       Object.keys(checked[option]).forEach((subOption: string) => {
         if (checked[option][subOption] === true) {
+          if (optionEnabled) {
+            anyOptionSelected = true;
+          }
           optionsChoosen.push(subOption);
         }
       });
-    });
-    for (let key in optionsStatus) {
-      if (!optionsStatus[key]) {
+      if (optionEnabled && !anyOptionSelected) {
         flag = false;
-      } else {
-        flag = true;
-        option = key;
-        break;
       }
-    }
+    });
 
-    if (flag && option) {
-      flag = false;
-      for (let key in checked[option]) {
-        if (checked[option][key]) {
-          flag = true;
-          break;
-        }
-      }
-      if (!flag) {
-        alert(`Please select any one option to submit.`);
-        return;
-      }
-    } else {
+    if (!flag) {
       alert(`Please select any one option to submit.`);
       return;
     }
-
-    // if (optionsEnabled.length !== optionsChoosen.length) {
-    //   alert(`Please select an options for the enabled option.`);
-    //   return;
-    // }
 
     let checkedOptions: checkTypes = { ...(checked as {}) };
     let allOptions: settingOptionsStatus = {};
@@ -500,7 +481,6 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
       )
       .then((res) => {
         message.success("Configurations saved successfully");
-        // setShowInfoModal(true);
         setConfigSaveStatus(true);
       })
       .catch((err) => {
@@ -508,7 +488,6 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
         message.error(
           "Something went wrong while saving. Please try again later."
         );
-        // setShowInfoModal(true);
         handleResetAll();
       });
   };
@@ -537,6 +516,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
       defaultOptions[key] = false;
     }
     setDefaultSettingsOptionsChecked(defaultOptions);
+    setIsReset(true);
   };
 
   const applyUserSettings = (settings: any) => {
@@ -649,6 +629,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
     quizStat[quiz.title] = true;
     setQuizzesStat(quizStat);
     getUserSettings(quiz.id);
+    setIsReset(false);
   };
 
   const resetOtherDefaultCheckedOptions = (optionName: string) => {

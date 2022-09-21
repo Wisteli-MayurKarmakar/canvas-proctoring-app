@@ -17,11 +17,21 @@ const UpdateProfile: React.FC<Props> = (props): JSX.Element => {
   let [studentId, setStudentId] = React.useState<any>(null);
   let [studPhotoFile, setStudentPhotoFile] = React.useState<any>(null);
   let [stuIdFile, setStuIdFile] = React.useState<any>(null);
+  let [verificationStarted, setVerificationStarted] =
+    React.useState<boolean>(false);
+  let [verificationFailed, setVerificationFailed] =
+    React.useState<boolean>(false);
+  let [photoBlob, setPhotoBlob] = React.useState<any>(null);
+  let [idBlob, setIdBlob] = React.useState<any>(null);
   let [photoFileName, setPhotoFileName] = React.useState<any>(null);
   let [idFileName, setIdFileName] = React.useState<any>(null);
   let [fetchingProofs, setFetchingProofs] = React.useState<boolean>(false);
   let [localProfilPic, setLocalProfilPic] = React.useState<boolean>(false);
   let [localIdPic, setLocalIdPic] = React.useState<boolean>(false);
+  let canvasRef: any = React.useRef<any>();
+  let videoRef: any = React.useRef<any>();
+  let imgWidth: number = 0;
+  let imgHeight: number = 0;
 
   const getUserProfileDetails = () => {
     axios
@@ -56,9 +66,162 @@ const UpdateProfile: React.FC<Props> = (props): JSX.Element => {
     }
   };
 
-  const handlePhotoUpload = (e: any) => {
+  // const delay = (seconds: number): Promise<void> => {
+  //   return new Promise((resolve) => {
+  //     setTimeout(resolve, seconds * 1000);
+  //   });
+  // };
+
+  // const retry = async <T extends () => Promise<any>>(
+  //   f: T,
+  //   maxRetry: number,
+  //   delayBetweenRetries: number,
+  //   timeout: number
+  // ): Promise<boolean> => {
+  //   return new Promise<boolean>((resolve, reject) => {
+  //     (async () => {
+  //       for (let i = 0; i < maxRetry; i++) {
+  //         try {
+  //           await f();
+  //           resolve(true);
+  //           return;
+  //         } catch (e) {}
+  //         await delay(delayBetweenRetries);
+  //       }
+  //       reject("failed to connect to");
+  //     })();
+  //   });
+  // };
+
+  // const doAIVerification = async (
+  //   file: any,
+  //   verType: string
+  // ): Promise<boolean> => {
+  //   let formData = new FormData();
+  //   formData.append(
+  //     "images",
+  //     file,
+  //     props.userId + verType === "picture" ? "pic.jpg" : "dl.jpg"
+  //   );
+
+  //   if (verType === "picture") {
+  //     formData.append("imaget", stuIdFile, props.userId + "2.jpg");
+  //   } else {
+  //     formData.append("imaget", studPhotoFile, props.userId + "2.jpg");
+  //   }
+  //   formData.append("name", props.userId);
+
+  //   let response = await axios.post(
+  //     `https://examd.us/ai/frame/match`,
+  //     formData,
+  //     {
+  //       headers: {
+  //         Accept: "*/*",
+  //         "Content-Type": "multipart/form-data",
+  //         Authorization: `Basic ${btoa("TIxApZe7MCosW6:pU1URzjGkY8QVC")}`,
+  //       },
+  //     }
+  //   );
+  //   if (response.data.data) {
+  //     return true;
+  //   }
+  //   return false;
+  // };
+
+  // function convertBase64toBlob(
+  //   b64Data: string,
+  //   contentType = "",
+  //   sliceSize = 512
+  // ) {
+  //   const byteCharacters = atob(b64Data);
+  //   const byteArrays = [];
+  //   for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+  //     const slice = byteCharacters.slice(offset, offset + sliceSize);
+  //     const byteNumbers = new Array(slice.length);
+  //     for (let i = 0; i < slice.length; i++) {
+  //       byteNumbers[i] = slice.charCodeAt(i);
+  //     }
+  //     const byteArray = new Uint8Array(byteNumbers);
+  //     byteArrays.push(byteArray);
+  //   }
+  //   const blob = new Blob(byteArrays, { type: contentType });
+  //   return blob;
+  // }
+
+  // const takeSnapshot = async () => {
+  //   let stream = await navigator.mediaDevices.getUserMedia({
+  //     video: true,
+  //     audio: true,
+  //   });
+
+  //   if (videoRef.current && stream) {
+  //     videoRef.current.srcObject = stream;
+  //   }
+
+  //   videoRef.current.srcObject = stream;
+
+  //   imgHeight =
+  //     videoRef.current.videoHeight / (videoRef.current.videoWidth / imgWidth);
+
+  //   if (isNaN(imgHeight)) {
+  //     imgHeight = imgWidth / (4 / 3);
+  //   }
+
+  //   videoRef.current.height = imgHeight;
+  //   videoRef.current.width = imgWidth;
+  //   canvasRef.current.height = imgHeight;
+  //   canvasRef.current.width = imgWidth;
+
+  //   if (!canvasRef.current) return "";
+  //   let context = canvasRef.current.getContext("2d");
+  //   context.drawImage(videoRef.current, 0, 0, imgWidth, imgHeight);
+  //   let data = canvasRef.current.toDataURL("image/jpg");
+  //   let b64: string = data.split(";")[1].split(",")[1];
+  //   let snapshotBlob = convertBase64toBlob(b64, "image/jpg");
+  //   return snapshotBlob;
+  // };
+
+  const handlePhotoUpload = async (e: any) => {
     const file = e.target.files[0];
     let ftype: string = file.type.split("/")[1];
+    // setVerificationStarted(true);
+
+    // if (stuIdFile) {
+    //   let res: boolean = await doAIVerification(file, "picture");
+    //   setVerificationStarted(false);
+
+    //   if (!res) {
+    //     setVerificationFailed(true);
+    //     message.error("Verification failed. Please try again");
+    //     return;
+    //   }
+    // } else {
+    //   let snapshot: any = takeSnapshot();
+    //   try {
+    //     let response = await retry(
+    //       async () => {
+    //         let resPic = await doAIVerification(snapshot, "picture");
+    //         if (resPic) {
+    //           return true;
+    //         } else {
+    //           throw new Error("failed to validate");
+    //         }
+    //       },
+    //       3,
+    //       1,
+    //       30
+    //     );
+
+    //     if (response) {
+    //       setVerificationStarted(false);
+    //     }
+    //   } catch (e) {
+    //     setVerificationStarted(false);
+    //     setVerificationFailed(true);
+    //     message.error("Verification failed. Please try again");
+    //     return;
+    //   }
+    // }
 
     console.log(`Uploading file ${file.type}`);
     if (ftype !== "jpeg" && ftype !== "png" && ftype !== "jpg") {
@@ -207,6 +370,7 @@ const UpdateProfile: React.FC<Props> = (props): JSX.Element => {
       let blob = new Blob([picProof.data], {
         type: picProof.headers["content-type"],
       });
+      setPhotoBlob(blob);
       setStudentPhotos(URL.createObjectURL(blob));
     }
     let idProof = await axios.get(
@@ -230,6 +394,7 @@ const UpdateProfile: React.FC<Props> = (props): JSX.Element => {
       let blob = new Blob([idProof.data], {
         type: idProof.headers["content-type"],
       });
+      setIdBlob(blob);
       setStudentId(URL.createObjectURL(blob));
     }
     setFetchingProofs(false);
@@ -261,6 +426,8 @@ const UpdateProfile: React.FC<Props> = (props): JSX.Element => {
         // </Button>,
       ]}
     >
+      <canvas ref={canvasRef} className="hidden"></canvas>
+      <video ref={videoRef} className="hidden"></video>
       {userDetails ? (
         <div className="flex flex-col h-full w-full justify-center items-center gap-4">
           <fieldset
@@ -317,9 +484,9 @@ const UpdateProfile: React.FC<Props> = (props): JSX.Element => {
                 xmlns="http://www.w3.org/2000/svg"
               >
                 <path
-                  fill-rule="evenodd"
+                  fillRule="evenodd"
                   d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                  clip-rule="evenodd"
+                  clipRule="evenodd"
                 ></path>
               </svg>
               <span className="sr-only">Info</span>
@@ -366,9 +533,9 @@ const UpdateProfile: React.FC<Props> = (props): JSX.Element => {
                       xmlns="http://www.w3.org/2000/svg"
                     >
                       <path
-                        fill-rule="evenodd"
+                        fillRule="evenodd"
                         d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                        clip-rule="evenodd"
+                        clipRule="evenodd"
                       ></path>
                     </svg>
                     <span className="sr-only">Please Note</span>

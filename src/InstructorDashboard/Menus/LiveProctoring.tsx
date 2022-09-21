@@ -1,4 +1,4 @@
-import { Col, Divider, message, Row } from "antd";
+import { Col, message, Row } from "antd";
 import axios from "axios";
 import moment from "moment";
 import React, { useEffect } from "react";
@@ -9,6 +9,7 @@ interface Props {
   authData: any;
   courseId: string;
   userId: string;
+  studentId: string;
 }
 
 const LiveProctoring: React.FC<Props> = (props): JSX.Element => {
@@ -52,7 +53,7 @@ const LiveProctoring: React.FC<Props> = (props): JSX.Element => {
       });
     axios
       .get(
-        `https://examd.us/student/api/v1/fetchCanvasEnrollmentsByCourseId/${props.courseId}`,
+        `https://examd.us/student/api/v1/fetchCanvasEnrollmentsByCourseId/${props.courseId}/${props.studentId}`,
         {
           headers: {
             Authorization: `Bearer ${props.authData.data.access_token}`,

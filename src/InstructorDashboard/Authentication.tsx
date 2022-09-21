@@ -14,6 +14,7 @@ interface Props {
   authData: any;
   userId: string;
   guid: string;
+  studentId: string;
 }
 
 const Authentication: React.FC<Props> = (props): JSX.Element => {
@@ -193,7 +194,7 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
 
   const fetchCourseEnrollments = async (courseId: string): Promise<void> => {
     axios
-      .get(ENROLLMENTS_BY_COURSE_ID_URL + props.courseId, {
+      .get(ENROLLMENTS_BY_COURSE_ID_URL + props.courseId + `/${props.studentId}`, {
         headers: {
           Authorization: `Bearer ${props.authData.data.access_token}`,
         },

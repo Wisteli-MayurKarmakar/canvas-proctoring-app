@@ -4,9 +4,7 @@ import React, { useEffect } from "react";
 import axios from "axios";
 import DummyPage from "./dummyPage";
 
-import InfoModal from "./infoModal";
 import Quizzes from "./quizzes";
-import ProctoringExam from "./quizReport";
 import InstructorMenu from "./instructorMenu";
 
 const getUuid = require("uuid-by-string");
@@ -28,7 +26,9 @@ function App() {
   let [toolConsumerGuid, setToolConsumerGuid] = React.useState<any>(null);
   const [quizId, setQuizId] = React.useState<any>(null);
   const [isNewTab, setIsNewTab] = React.useState<any>(false);
+  let [loginId, setLoginId] = React.useState<any>(null);
   let [studentId, setStudentId] = React.useState<any>(null);
+  let [accountId, setAccountId] = React.useState<any>(null);
 
   let [proctoringProps, setProctoringProps] = React.useState<Object | null>(
     null
@@ -38,51 +38,86 @@ function App() {
   const userName = "ca6a42188e970ab77fab0e34";
   const password = "e5aa447e19ee4180b5ba1364";
 
-  const getEndPoints = (): void => {
-    axios
-      .get("https://examd.us/cdn/urls/xproctor/1")
-      .then((res: any) => {
-        setEndPoints(res.data);
-        authenticateUser(res.data.auth_url as string);
-      })
-      .catch((err) => {});
+  const getEndPoints = async () => {
+    let response = await axios.get("https://examd.us/cdn/urls/xproctor/1");
+    if (response.data) {
+      setEndPoints(response.data);
+      authenticateUser(response.data.auth_url as string);
+    }
   };
 
-  const authenticateUser = (url: string): void => {
-    axios
-      .post(url, {
-        username: userName,
-        password: password,
-      })
-      .then((res) => {
-        setAuthData(res);
-        // window.ExamdAutoProctorJS.authToken = res.data.access_token;
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+  const authenticateUser = async (url: string) => {
+    let response = await axios.post(url, {
+      username: userName,
+      password: password,
+    });
+    // .then((res) => {
+    //   window.ExamdAutoProctorJS.authToken = res.data.access_token;
+    // })
+    // .catch((err) => {
+    //   console.log(err);
+    // });
+
+    if (response.data) {
+      setAuthData(response);
+    }
   };
 
-  const setUserId = (): void => {
+  const setUserRoleById = async (studId: string) => {
+    let role: string = "student";
+
+    let response: any = await axios.get(
+      `https://examd-dev.uc.r.appspot.com/student/api/v1/fetchCanvasEnrollmentsByCourseId/${courseId}/${studId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${authData.data.access_token}`,
+        },
+      }
+    );
+
+    if (response.data.length > 0) {
+      let data = response.data[0];
+      role = data.role;
+      if (role === "StudentEnrollment") {
+        setLoadFlag("N");
+        // setLoadFlag("Y");
+      } else {
+        setLoadFlag("Y");
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (authData && studentId) {
+      setUserRoleById(studentId);
+    }
+  }, [authData, studentId, courseId]);
+
+  const setUserId = async () => {
     let url_string = window.location.href;
     let url = new URL(url_string);
-    let loadInstructorPage = url.searchParams.get("loadInstructorPage");
     // let userId = url.searchParams.get("userId");
     // let courseId = url.searchParams.get("courseId");
     // let toolConsumerGuid = url.searchParams.get("toolConsumerGuid");
     // let loginId = url.searchParams.get("loginId");
     // let studentId = url.searchParams.get("studentId");
+    let accId = url.searchParams.get("accoundId");
     let quizId = url.searchParams.get("quizId");
     let newTab = url.searchParams.get("newTab");
     let isAuthed = url.searchParams.get("auth");
 
     //Test params
-    let studentId = "1";
+    let studentId = "41";
+
+    //Instructor -> set student 42; student -> set student 1/ 41
     let loginId = "ncghosh@gmail.com";
-    let courseId = "16";
+    let courseId = "23";
     let userId = "12";
     let toolConsumerGuid = "Examd";
-    setId(userId);
+
+    if (!accId) {
+      accId = "1";
+    }
 
     if (studentId) {
       setStudentId(studentId);
@@ -99,30 +134,28 @@ function App() {
     if (newTab === "true") {
       setIsNewTab(true);
     }
+
+    setId(userId);
+    setAccountId(accId);
     setToolConsumerGuid(toolConsumerGuid);
-    // setId(loginId);
-    // setId(getUuid(userId));
-    // setId(getUuid('1470923eea43f6bcab4326fee7047884cf84f374'));
+    setLoginId(loginId);
+    setId(getUuid(userId));
+    // setId(getUuid("1470923eea43f6bcab4326fee7047884cf84f374"));
     setCourseId(courseId as string);
 
     console.log(
-      `userId=${userId}, courseId=${courseId}, flag=${loadInstructorPage}, toolConsumerGuid=${toolConsumerGuid}, newTab=${newTab}, isNewTab=${isNewTab}, studentId=${studentId}`
+      `userId=${userId}, courseId=${courseId}, auth=${
+        authData ? "true" : "false"
+      }, toolConsumerGuid=${toolConsumerGuid}, studentId=${studentId}, courseId=${courseId}`
     );
-
-    if (loadInstructorPage === "Y") {
-      setLoadFlag("Instructor");
-    } else {
-      // setLoadFlag("Student");
-      setLoadFlag("Instructor");
-    }
   };
 
   useEffect(() => {
-    setUserId();
     getEndPoints();
+    setUserId();
   }, []);
 
-  if (loadFlag === "Instructor" && authData && id && toolConsumerGuid) {
+  if (loadFlag === "Y" && authData && id && toolConsumerGuid && studentId) {
     return (
       <InstructorMenu
         auth={authData}
@@ -130,15 +163,17 @@ function App() {
         id={id}
         courseId={courseId}
         toolConsumerGuid={toolConsumerGuid}
+        studentId={studentId}
       />
     );
   } else if (
-    loadFlag === "Student" &&
+    loadFlag === "N" &&
     authData &&
     id &&
     courseId &&
     toolConsumerGuid &&
-    studentId
+    studentId &&
+    accountId
   ) {
     return (
       <Quizzes
@@ -153,6 +188,7 @@ function App() {
         procData={proctoringProps}
         isAuthed={authed}
         studentId={studentId}
+        accountId={accountId}
       />
     );
   } else {

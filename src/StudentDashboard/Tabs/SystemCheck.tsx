@@ -118,13 +118,15 @@ const SystemCheck: React.FC<Props> = (props): JSX.Element => {
     }
   }, []);
   return (
-    <div className="text-center w-full">
+    <div className="flex flex-col justify-center h-full items-center gap-4">
       <Spin tip="Checking your system" size="large" spinning={spinning}>
-        <b className="text-2xl font-extrabold">
-          {" "}
-          Test your equipment before you start the quiz
-        </b>
-        <p className="font-bold">
+        <p className="text-center">
+          <b className="text-2xl font-extrabold">
+            {" "}
+            Test your equipment before you start the quiz
+          </b>
+        </p>
+        <p className="font-bold text-center text-lg">
           <span>
             <b className="flex flex-row justify-center items-center gap-4 text-xl">
               <FcSupport /> Please Note

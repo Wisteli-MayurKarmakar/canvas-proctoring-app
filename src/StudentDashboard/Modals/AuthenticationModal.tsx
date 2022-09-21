@@ -3,27 +3,27 @@ import React, { useEffect } from "react";
 import PrivacyPolicy from "../../StudentDashboard/Tabs/PrivacyPolicy";
 import QuizRules from "../../StudentDashboard/Tabs/QuizRules";
 import SystemCheck from "../../StudentDashboard/Tabs/SystemCheck";
-import Thanks from "../../StudentDashboard/Tabs/Thanks";
 import StudentAuthentication from "../../StudentDashboard/Tabs/StudentAuthentication";
+import { useStudentStore } from "../../store/globalStore";
+import { useWebCamStore } from "../../store/globalStore";
 
 interface Props {
   view: boolean;
   quizTitle: string;
-  close: (status: boolean) => void;
+  close: () => void;
   quizId: string;
   userId: string;
   userName: string;
   quizConfig: Object | any;
   authComplete: () => void;
   courseId: string;
-  getStuAuthStatus: (data: any) => void;
+  // getStuAuthStatus: (data: any) => void;
   authToken: any;
   guid: any;
   studentId: string;
 }
 
 const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
-  let { view, close, quizTitle } = props;
   const [stepName, setStepName] = React.useState<string>("System Check");
   const [stepNo, setStepNo] = React.useState<number>(0);
   const [buttonDisabled, setButtonDisabled] = React.useState<boolean>(true);
@@ -32,6 +32,8 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
   const [authConfigurations, setAuthConfigurations] =
     React.useState<Object | null>(null);
   const [socketInstance, setSocketInstance] = React.useState<any>(null);
+  let setStudAuthState = useStudentStore((state) => state.setQuizAuthObj);
+  let stream = useWebCamStore((state) => state.stream);
   let studIdWODash = props.courseId + "_" + props.quizId;
   let user = "chat_" + props.userId;
   let room = "rm_" + studIdWODash;
@@ -52,12 +54,6 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
       setButtonDisabled(true);
     }
   };
-
-  // useEffect(() => {
-  //   if (stepNo > 3) {
-  //     props.authComplete();
-  //   }
-  // }, [stepNo]);
 
   const sendStatus = (status: any) => {
     socketInstance.emit("chat", {
@@ -80,52 +76,8 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
     });
   };
 
-  // const sendSignal = (stage: any) => {
-  //   sendStatus(stage);
-
-  //   socketInstance.on("chat", (data: any) => {
-  //     console.log("AuthModal", data);
-  //   });
-  // };
-
   const handleSocketConnection = (socket: any) => {
     setSocketInstance(socket);
-    // socket.emit("chat", {
-    //   evt: "chat",
-    //   room: room,
-    //   text: JSON.stringify({
-    //     msgType: "STU_LIVE_REP",
-    //     msg: { stuId: props.userId, status: steps[stepNo].name },
-    //   }),
-    // });
-
-    // socket.on("chat", (data: any) => {
-    //   if (data.type === "chat") {
-    //     let msg = JSON.parse(data.message);
-    //     if (msg.msgType === "STU_LIVE_REQ") {
-    //       let stuIds = msg.msg.stuIds;
-    //       let stuId = stuIds.find((id: any) => id === props.userId);
-    //       if (stuId) {
-    //         socket.emit("chat", {
-    //           evt: "chat",
-    //           room: room,
-    //           text: JSON.stringify({
-    //             msgType: "STU_LIVE_REP",
-    //             msg: { stuId: props.userId, status: steps[stepNo].name },
-    //           }),
-    //         });
-    //       }
-    //     }
-
-    //     if (msg.msgType === "STU_AUTHED") {
-    //       let stuId = msg.msg.stuId;
-    //       if (stuId === props.userId) {
-    //         props.getStuAuthStatus({ status: "AUTHED", stuId: stuId });
-    //         setStuAuthenticated(true);
-    //       }
-    //     }
-    //   }
-    // });
   };
 
   const sendAuthStatus = (msgType: string, stepName: string, stuId: string) => {
@@ -139,17 +91,12 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
     });
   };
 
-  const handleStudentAuthed = (status: any) => {
-    if (status) {
-      setButtonDisabled(false);
-      setStuAuthenticated(true);
-    }
-  };
-
   const handleAuthStatus = (status: boolean) => {
     if (status) {
       setStuAuthenticated(status);
       setButtonDisabled(false);
+      setStudAuthState({ quizId: props.quizId, studentAuthState: true });
+      props.authComplete();
     }
   };
 
@@ -208,7 +155,6 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
               userId={props.userId}
               courseId={props.courseId}
               quizId={props.quizId}
-              isStudentAuthed={handleStudentAuthed}
               authToken={props.authToken}
               guid={props.guid}
               studentId={props.studentId}
@@ -239,8 +185,12 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
   };
 
   const closeWebCamResources = () => {
-    //enumerate devices and if any active close it
-    //close mediaStream
+    if (stream?.active) {
+      stream.getTracks().forEach((track) => {
+        track.stop();
+      });
+    }
+
     socketInstance.emit("chat", {
       evt: "chat",
       room: room,
@@ -255,20 +205,20 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
     <Modal
       title={
         <div className="flex flex-row gap-8">
-          <p>{quizTitle} - Authentication</p>
+          <p>{props.quizTitle} - Authentication</p>
           <p> ({stepName})</p>
         </div>
       }
-      visible={view}
+      visible={props.view}
       bodyStyle={{ maxHeight: "50%", height: 600, overflowY: "scroll" }}
       onCancel={() => {
         closeWebCamResources();
-        close(false);
+        props.close();
       }}
       footer={
         stepNo >= 0 && stepNo < quizSteps.length - 1
           ? [
-              <Button key="close" onClick={() => close(false)}>
+              <Button key="close" onClick={() => props.close()}>
                 Close
               </Button>,
               <Button key="next" onClick={handleNext} disabled={buttonDisabled}>
@@ -280,8 +230,8 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
                 key="close"
                 onClick={() => {
                   closeWebCamResources();
-                  close(false);
                   props.authComplete();
+                  props.close();
                 }}
                 disabled={stuAuthenticated ? false : true}
               >

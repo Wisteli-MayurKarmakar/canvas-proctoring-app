@@ -1,6 +1,7 @@
 import { message } from "antd";
-import axios, { AxiosResponse } from "axios";
+import axios from "axios";
 import React, { useEffect } from "react";
+import { useWebCamStore } from "../../store/globalStore";
 
 interface Props {
   authConfigs: any;
@@ -28,9 +29,8 @@ const StudentIdDlVerification: React.FC<Props> = (props): JSX.Element => {
   let [snapshotBlob, setSnapshotBlob] = React.useState<Blob | string>("");
   let [retryCount, setRetryCount] = React.useState<number>(0);
   let [isRetry, setIsRetry] = React.useState<boolean>(false);
-  let [waitIntervalCmplt, setWaitIntervalCmplt] =
-    React.useState<boolean>(false);
-  let [userDetails, setUserDetails] = React.useState<any>(null);
+  let [stream, setStream] = React.useState<MediaStream>();
+  let setStreamInStore = useWebCamStore((state) => state.setStream);
   let vidSrcRef: any = React.useRef<any>();
   let canvasRef: any = React.useRef<any>();
   const imgWidth: number = 320;
@@ -60,7 +60,7 @@ const StudentIdDlVerification: React.FC<Props> = (props): JSX.Element => {
     if (!canvasRef.current) return "";
     let context = canvasRef.current.getContext("2d");
     context.drawImage(vidSrcRef.current, 0, 0, imgWidth, imgHeight);
-    let data = canvasRef.current.toDataURL("image/webp");
+    let data = canvasRef.current.toDataURL("image/jpg");
     let b64: string = data.split(";")[1].split(",")[1];
     let snapshotBlob = convertBase64toBlob(b64, "image/jpg");
     return snapshotBlob;
@@ -78,12 +78,12 @@ const StudentIdDlVerification: React.FC<Props> = (props): JSX.Element => {
     formData.append(
       "images",
       proofBlob,
-      props.studentId + authType === "picture" ? "pic.png" : "dl.png"
+      props.studentId + authType === "picture" ? "pic.jpg" : "dl.jpg"
     );
-    formData.append("imaget", snapshotBlob, props.studentId + "2.png");
+    formData.append("imaget", snapshotBlob, props.studentId + "2.jpg");
     formData.append("name", props.studentId);
     let response = await axios.post(
-      `https://examd.online/ai/frame/match`,
+      `https://examd.us/ai/frame/match`,
       formData,
       {
         headers: {
@@ -109,8 +109,7 @@ const StudentIdDlVerification: React.FC<Props> = (props): JSX.Element => {
   const retry = async <T extends () => Promise<any>>(
     f: T,
     maxRetry: number,
-    delayBetweenRetries: number,
-    timeout: number
+    delayBetweenRetries: number
   ): Promise<boolean> => {
     return new Promise<boolean>((resolve, reject) => {
       (async () => {
@@ -119,8 +118,7 @@ const StudentIdDlVerification: React.FC<Props> = (props): JSX.Element => {
             await f();
             resolve(true);
             return;
-          } catch (e) {
-          }
+          } catch (e) {}
           await delay(delayBetweenRetries);
         }
         reject("failed to connect to");
@@ -136,6 +134,8 @@ const StudentIdDlVerification: React.FC<Props> = (props): JSX.Element => {
 
     if (vidSrcRef.current && stream) {
       vidSrcRef.current.srcObject = stream;
+      setStreamInStore(stream);
+      setStream(stream);
     }
 
     vidSrcRef.current.srcObject = stream;
@@ -171,8 +171,7 @@ const StudentIdDlVerification: React.FC<Props> = (props): JSX.Element => {
             }
           },
           3,
-          1,
-          30
+          1
         );
       }
 
@@ -191,8 +190,7 @@ const StudentIdDlVerification: React.FC<Props> = (props): JSX.Element => {
             }
           },
           3,
-          1,
-          30
+          1
         );
       }
 
@@ -236,18 +234,14 @@ const StudentIdDlVerification: React.FC<Props> = (props): JSX.Element => {
         setAuthStarted(false);
       }
 
-      vidSrcRef.current.srcObject
-        .getTracks()
-        .forEach((track: any) => track.stop());
+      stream.getTracks().forEach((track: any) => track.stop());
       setRetryInProgress(false);
       setIsRetry(false);
     } catch (e) {
       setAuthStarted(false);
       setStudentAuthed(false);
       setIsRetry(false);
-      vidSrcRef.current.srcObject
-        .getTracks()
-        .forEach((track: any) => track.stop());
+      stream.getTracks().forEach((track: any) => track.stop());
       setRetryInProgress(false);
     }
   };
@@ -346,7 +340,7 @@ const StudentIdDlVerification: React.FC<Props> = (props): JSX.Element => {
   }, [isRetry]);
 
   const handleRetry = () => {
-    if (retryCount > 3) {
+    if (retryCount > 2) {
       message.error("You have reached the maximum number of retries.");
       return;
     }
@@ -356,6 +350,12 @@ const StudentIdDlVerification: React.FC<Props> = (props): JSX.Element => {
 
   useEffect(() => {
     getStudentProofs();
+
+    return () => {
+      if (stream) {
+        stream.getTracks().forEach((track: any) => track.stop());
+      }
+    };
   }, []);
 
   return (
@@ -508,24 +508,30 @@ const StudentIdDlVerification: React.FC<Props> = (props): JSX.Element => {
                   <li>Make sure that your'e facing straight to the camera</li>
                   <li>Proper light conditions</li>
                   <li>
-                    Doesn't matches the ID/Picture with accessories like hat, glasses,
-                    beard etc.
+                    Doesn't matches the ID/Picture with accessories like hat,
+                    glasses, beard etc.
                   </li>
                 </ul>
               </div>
             </div>
-            <div className="flex space-x-2 gap-4 w-full items-center justify-center">
-              <p className="text-lg font-semibold pt-4">
-                To try again please click the button.
+            {retryCount < 3 ? (
+              <div className="flex space-x-2 gap-4 w-full items-center justify-center">
+                <p className="text-lg font-semibold">
+                  To try again please click the button.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => handleRetry()}
+                  className={`inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out`}
+                >
+                  Retry
+                </button>
+              </div>
+            ) : (
+              <p className="text-center text-lg font-semibold">
+                You have reached the maximum number of allowed retires.
               </p>
-              <button
-                type="button"
-                onClick={() => handleRetry()}
-                className={`inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out`}
-              >
-                Retry
-              </button>
-            </div>
+            )}
           </div>
         ))}
     </>

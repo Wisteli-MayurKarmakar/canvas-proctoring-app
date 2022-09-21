@@ -84,9 +84,9 @@ const Help: React.FC<Props> = (props): JSX.Element => {
     setIsLoading(true);
 
     axios
-      .post("https://examd.online/notification/api/v1/mail/sendEmail", reqData, {
+      .post("https://examd.us/notification/api/v1/mail/sendEmail", reqData, {
         headers: {
-          Authorization: props.authToken,
+          Authorization: `Bearer ${props.authToken}`,
         },
       })
       .then((res: any) => {
@@ -113,7 +113,7 @@ const Help: React.FC<Props> = (props): JSX.Element => {
         </Button>,
         <Button
           key="submit"
-          type="primary"
+          // type="primary"
           loading={isLoading}
           onClick={() => handleSubmit()}
         >

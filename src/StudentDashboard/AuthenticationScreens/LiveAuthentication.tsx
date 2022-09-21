@@ -79,10 +79,7 @@ const LiveAuthentication: React.FC<Props> = (props): JSX.Element => {
       let recieveChannel = event.channel;
       recieveChannel.onmessage = (msg: any) => {
         let data: DataProto = JSON.parse(msg.data);
-        if (
-          data.authStatus === "STU_AUTHED" &&
-          data.stuId === props.userId
-        ) {
+        if (data.authStatus === "STU_AUTHED" && data.stuId === props.userId) {
           message.success("You are successfully authenticated");
           props.isLiveAuthed(true);
 
@@ -93,13 +90,12 @@ const LiveAuthentication: React.FC<Props> = (props): JSX.Element => {
             });
           } else {
             //Get stream from videoSrc video element and strop the tracks
-            let stream = videoSrc.current.captureStream()
-            stream.getTracks().forEach((track: any) => {
-              track.stop();
-            });
             // vStream.getTracks().forEach((track: any) => {
             //   track.stop();
             // });
+            videoSrc.current.srcObject.getTracks().forEach((track: any) => {
+              track.stop();
+            });
           }
 
           //close peerConnection

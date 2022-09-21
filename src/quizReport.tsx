@@ -1,7 +1,7 @@
 import "antd/dist/antd.css";
-import { Button, message, Space, Table } from "antd";
+import { message, Table } from "antd";
 import React, { FunctionComponent, useEffect } from "react";
-import axios, { AxiosResponse } from "axios";
+import axios from "axios";
 import Report from "./report";
 import InfoModal from "./infoModal";
 
@@ -10,12 +10,10 @@ interface Props {
   courseId: string;
   reqToken: string;
   toolConsumerGuid: string;
+  studentId: string;
 }
 
 const ProctoringExam: FunctionComponent<Props> = (props): JSX.Element => {
-  const [noOfStudentsOfExam, setNoOfStudentsOfExam] = React.useState<
-    number | null
-  >(0);
   let [quizConfigs, setQuizConfigs] = React.useState<any>([]);
   let [row, setRow] = React.useState<any>(null);
   let [mediaFileName, setMediaFileName] = React.useState<string>("");
@@ -60,7 +58,7 @@ const ProctoringExam: FunctionComponent<Props> = (props): JSX.Element => {
   const getStudentsByCourseId = () => {
     axios
       .get(
-        `https://examd.us/student/api/v1/fetchCanvasEnrollmentsByCourseId/${props.courseId}`,
+        `https://examd.us/student/api/v1/fetchCanvasEnrollmentsByCourseId/${props.courseId}/${props.studentId}`,
         {
           headers: { Authorization: `Bearer ${props.reqToken}` },
         }
@@ -209,6 +207,12 @@ const ProctoringExam: FunctionComponent<Props> = (props): JSX.Element => {
   };
 
   const handleViewReport = (row: any) => {
+    if (selectedQuizConfig.lockdownBrowser) {
+      message.error(
+        "This Quiz/Test is configured as as Lock Down Browser. No report is available. Thank you."
+      );
+      return;
+    }
     setRow(row);
     getUserProfilePicture(row.user.id);
     getVideoRefId(selectedQuiz.id, selectedQuiz.all_dates.due_at, row.user.id);

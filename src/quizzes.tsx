@@ -8,7 +8,13 @@ import PrivacyPolicy from "./StudentDashboard/Tabs/PrivacyPolicy";
 import ImageMatchAuthentication from "./StudentDashboard/AuthenticationScreens/ImageMatchAuthentication";
 import Help from "./StudentDashboard/Tabs/Help";
 import UpdateProfile from "./StudentDashboard/Menu/UpdateProfile";
-import { Button, message, Modal } from "antd";
+import { Button, Modal, Tooltip } from "antd";
+import StudentHelpDocument from "./StudentDashboard/Modals/StudentHelpDocument";
+import { useStudentStore } from "./store/globalStore";
+import AuthenticationModal from "./StudentDashboard/Modals/AuthenticationModal";
+import { css } from "@emotion/react";
+//@ts-ignore
+import AddToCalendarHOC from "react-add-to-calendar-hoc";
 
 interface Props {
   courseId: string;
@@ -22,15 +28,21 @@ interface Props {
   isNewTab: boolean;
   isAuthed: boolean;
   studentId: string;
+  accountId: string;
 }
 
 const Quzzies: React.FC<Props> = (props) => {
   let [quizzes, setQuizzes] = React.useState<Object[] | null>(null);
+  let [quizConfig, setQuizConfig] = React.useState<any>(null);
   let [selectedQuiz, setSelectedQuiz] = React.useState<any>(null);
   let [quizObj, setQuizObj] = React.useState<Object | any>({});
   let [modalComponent, setModalComponent] = React.useState<any>(null);
   let [showOptionModal, setOptionModal] = React.useState<boolean>(false);
   let [modalTitle, setModalTitle] = React.useState<any>(null);
+  let [studentAuthed, setStudentAuthed] = React.useState<boolean>(false);
+  let [showStudentHelpDoc, setShowStudentHelpDoc] =
+    React.useState<boolean>(false);
+  let [showAuthModal, setShowAuthModal] = React.useState<boolean>(false);
   let [sebDownloadLink, setDownloadLink] = React.useState<string>(
     "https://storage.googleapis.com/exsebstore/SEB_3.3.2.413_SetupBundle.exe"
   );
@@ -41,11 +53,58 @@ const Quzzies: React.FC<Props> = (props) => {
   let [showHelpModal, setShowHelpModal] = React.useState<boolean>(false);
   let [showUpdateProfileModal, setShowUpdateProfileModal] =
     React.useState<boolean>(false);
+  let setQuizAuthObj = useStudentStore((state) => state.setQuizAuthObj);
+  let studentQuizAuthObject = useStudentStore(
+    (state) => state.studentQuizAuthObject
+  );
+  const AddToCalendar = AddToCalendarHOC(Button);
+
+  const startDatetime = moment().utc().add(2, "days");
+  const endDatetime = startDatetime.clone().add(2, "hours");
+  const duration = moment.duration(endDatetime.diff(startDatetime)).asHours();
+
+  let eventS = {
+    description:
+      "Description of event. Going to have a lot of fun doing things that we scheduled ahead of time.",
+    duration,
+    endDatetime: endDatetime.format("YYYYMMDDTHHmmssZ"),
+    location: "NYC",
+    startDatetime: startDatetime.format("YYYYMMDDTHHmmssZ"),
+    title: "Super Fun Event",
+  };
+
+  const componentStyles = css`
+    width: 100%;
+    margin: 0 auto;
+    text-align: center;
+    padding: 0 0 30px;
+    @media (min-width: 768px) {
+      width: 50%;
+    }
+  `;
+  const linkStyles = css`
+    text-decoration: none;
+    display: block;
+    color: #e42d2d;
+    font-size: 18px;
+    text-align: center;
+    padding: 6px;
+  `;
+
+  let items = [
+    { outlook: "Outlook" },
+    { outlookcom: "Outlook.com" },
+    { apple: "Apple Calendar" },
+    { yahoo: "Yahoo" },
+    { google: "Google" },
+  ];
+
+  let [isQuizProctored, setIsQuizProctored] = React.useState<boolean>(false);
 
   const updateUsersDetails = async () => {
     let students: Object[] = [];
     let response: any = await axios.get(
-      `https://examd.us/student/api/v1/fetchCanvasEnrollmentsByCourseId/${props.courseId}`,
+      `https://examd.us/student/api/v1/fetchCanvasEnrollmentsByCourseId/${props.courseId}/${props.studentId}`,
       {
         headers: {
           Authorization: `Bearer ${props.authToken}`,
@@ -102,6 +161,11 @@ const Quzzies: React.FC<Props> = (props) => {
         return false;
       }
     });
+
+    if (props.isAuthed) {
+      setStudentAuthed(true);
+    }
+
     axios
       .get(
         `https://examd-dev.uc.r.appspot.com/student/api/v1/fetchCanvasQuizzesByCourseId/${props.courseId}`,
@@ -129,6 +193,9 @@ const Quzzies: React.FC<Props> = (props) => {
       .catch((err) => {
         console.log(err);
       });
+    if (props.isNewTab) {
+      getQuizConfigs(props.quizId);
+    }
     updateUsersDetails();
     if (props.isNewTab) {
       setDisableDeSelect(true);
@@ -154,23 +221,71 @@ const Quzzies: React.FC<Props> = (props) => {
     );
 
     if (response.data) {
+      if (
+        response.data.recordAudio ||
+        response.data.recordScreen ||
+        response.data.recordWebcam
+      ) {
+        setIsQuizProctored(true);
+      }
+      setQuizConfig(response.data);
       if (response.data.lockdownBrowser) {
         setShowLDBDwnldOption(true);
+        setIsQuizProctored(true);
       } else {
         setShowLDBDwnldOption(false);
       }
     }
   };
 
-  const startQuizz = (quizz: Object | any) => {
+  useEffect(() => {
+    let authObj = [...studentQuizAuthObject];
+    authObj.forEach((item) => {
+      if (item.quizId === selectedQuiz.id) {
+        if (item.studentAuthState) {
+          setStudentAuthed(true);
+        } else {
+          setStudentAuthed(false);
+        }
+      }
+    });
+  }, [studentQuizAuthObject]);
+
+  const checkStoreForRecord = (quiz: {
+    [key: string]: string | number;
+  }): boolean => {
+    let authObj = [...studentQuizAuthObject];
+    let res: boolean = false;
+    authObj.forEach((item) => {
+      if (item.quizId === quiz.id) {
+        if (item.studentAuthState) {
+          setStudentAuthed(true);
+        } else {
+          setStudentAuthed(false);
+        }
+        res = true;
+        return;
+      }
+    });
+    return res;
+  };
+
+  const handleSelectQuiz = (quizz: Object | any) => {
+    let res: boolean = checkStoreForRecord(quizz);
+    if (!res) {
+      let quiz: {
+        [key: string]: string | boolean;
+      } = {
+        quizId: quizz.id,
+        studentAuthState: false,
+      };
+      setQuizAuthObj(quiz);
+    }
+    setQuizConfig(null);
+    setIsQuizProctored(false);
     setShowLDBDwnldOption(false);
     getQuizConfigs(quizz.id);
-    if (
-      moment(quizz.all_dates.due_at).isBefore(moment()) ||
-      Object.keys(quizz.all_dates).length === 0
-    ) {
-      return;
-    }
+
     let qObj: any = { ...quizObj };
 
     Object.keys(qObj).forEach((key: any) => {
@@ -244,6 +359,7 @@ const Quzzies: React.FC<Props> = (props) => {
 
     setQuizObj(qObj);
     setSelectedQuiz(null);
+    setQuizConfig(null);
   };
 
   const handleModalClose = () => {
@@ -257,7 +373,7 @@ const Quzzies: React.FC<Props> = (props) => {
       // <div className="flex flex-col justify-evenly pt-4">
       <div className="grid h-screen place-items-center">
         <div className="flex flex-row h-full w-full gap-4 px-2 justify-center items-center">
-          <div className="flex flex-col h-full w-4/12 gap-10 justify-center">
+          <div className="flex flex-col h-full w-3/12 gap-10 justify-center">
             <div className="flex space-x-2 justify-center">
               <button
                 type="button"
@@ -304,22 +420,43 @@ const Quzzies: React.FC<Props> = (props) => {
             className="relative -ml-0.4 top-2 w-0.5 bg-gray-600"
             style={{ height: "20rem" }}
           ></div>
-          <div className="flex flex-col gap-4 justify-center ml-4 items-center h-full w-full text-center text-lg ">
+          <div className="flex flex-col h-full justify-center gap-4 text-center text-lg">
+            <div className="flex justify-start">
+              <AddToCalendar
+                className={css`
+                  width: 100%;
+                  margin: 0 auto;
+                  text-align: center;
+                  padding: 0 0 30px;
+                  @media (min-width: 768px) {
+                    width: 50%;
+                  }
+                `}
+                linkProps={{
+                  className: linkStyles,
+                }}
+                event={eventS}
+              />
+            </div>
             <div className="flex flex-col w-full sm:gap-4 md:gap-4 justify-end">
-              <div className="flex flex-row h-full items-center justify-end gap-2">
+              <div className="flex flex-row h-full w-full items-center justify-end gap-2">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
                   fill="currentColor"
-                  className="bi bi-question-circle w-6 h-6"
+                  className="bi bi-question-circle-fill fill-blue-400 w-6 h-6"
                   viewBox="0 0 16 16"
                 >
-                  <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" />
-                  <path d="M5.255 5.786a.237.237 0 0 0 .241.247h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286zm1.557 5.763c0 .533.425.927 1.01.927.609 0 1.028-.394 1.028-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94z" />
+                  <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM5.496 6.033h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286a.237.237 0 0 0 .241.247zm2.325 6.443c.61 0 1.029-.394 1.029-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94 0 .533.425.927 1.01.927z" />
                 </svg>
-                <p className="lg:pt-4 font-bold pr-40 text-lg">Need Help ?</p>
+                <p className="font-bold pr-40 text-lg">Need Help?</p>
               </div>
               <div className="flex flex-row gap-1 w-full pt-1 justify-end">
-                <p className="cursor-not-allowed text-base font-semibold text-center pr-16 relative bottom-4 text-gray-400 left-10">
+                <p
+                  className="cursor-pointer text-base font-semibold text-center pr-16 relative bottom-4 left-10"
+                  onClick={() => setShowStudentHelpDoc(true)}
+                >
                   Document
                 </p>
                 <div className="relative w-0.5 bg-gray-600 h-6 bottom-4"></div>
@@ -335,12 +472,38 @@ const Quzzies: React.FC<Props> = (props) => {
                 </p>
               </div>
             </div>
-            <div
-              className="flex flex-col w-full text-sm text-blue-700 rounded-lg dark:bg-yellow-200 dark:text-blue-800"
-              role="alert"
-            >
-              {showLDBDwnldOption && selectedQuiz && (
-                <div className="flex flex-row w-full items-center justify-center">
+            {showLDBDwnldOption && selectedQuiz && (
+              <div
+                className="flex justify-center text-sm p-2 text-blue-700 rounded-lg bg-yellow-200 dark:text-blue-800"
+                role="alert"
+              >
+                <p className="flex h-full items-center lg:text-lg sm:text-base md:text-base font-semibold  text-black">
+                  {selectedQuiz.title} can only be taken in a lockdown browser.
+                  If not available download from &nbsp;
+                  <a
+                    href={sebDownloadLink}
+                    target="_blank"
+                    className="text-blue-400"
+                  >
+                    here.
+                  </a>
+                </p>
+              </div>
+            )}
+            {quizConfig && !isQuizProctored && (
+              <div className="flex justify-center bg-yellow-200 p-2 rounded-lg">
+                <p className="flex h-full items-center lg:text-lg sm:text-base md:text-base font-semibold text-black">
+                  This quiz is not proctored, please go to the quiz page and
+                  take the quiz.
+                </p>
+              </div>
+            )}
+            {!selectedQuiz ? (
+              <div className="w-2/5 self-center">
+                <div
+                  className="flex justify-center p-4 text-sm text-blue-700 bg-blue-100 rounded-lg dark:bg-blue-200 dark:text-blue-800"
+                  role="alert"
+                >
                   <svg
                     aria-hidden="true"
                     className="flex-shrink-0 inline w-8 h-8 mr-3"
@@ -355,98 +518,135 @@ const Quzzies: React.FC<Props> = (props) => {
                     ></path>
                   </svg>
                   <span className="sr-only">Info</span>
-                  <p className="lg:text-lg sm:text-baseline md:text-baseline font-semibold lg:pt-4 text-black">
-                    {selectedQuiz.title} can only be taken in a lockdown
-                    browser. If not available download from{" "}
-                    <a
-                      href={sebDownloadLink}
-                      target="_blank"
-                      className="text-blue-400"
-                    >
-                      here.
-                    </a>
-                  </p>
-                </div>
-              )}
-            </div>
-            {!selectedQuiz ? (
-              <div
-                className="flex p-4 mb-4 text-sm text-blue-700 bg-blue-100 rounded-lg dark:bg-blue-200 dark:text-blue-800"
-                role="alert"
-              >
-                <svg
-                  aria-hidden="true"
-                  className="flex-shrink-0 inline w-5 h-5 mr-3"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                    clipRule="evenodd"
-                  ></path>
-                </svg>
-                <span className="sr-only">Info</span>
-                <div>
-                  <span className="font-medium">Please Select a Quiz</span>
-                </div>
-              </div>
-            ) : (
-              <div className="flex flex-row gap-4">
-                <div
-                  className="flex p-4 mb-4 text-sm text-blue-700 bg-blue-100 rounded-lg dark:bg-blue-200 dark:text-blue-800"
-                  role="alert"
-                >
-                  <svg
-                    aria-hidden="true"
-                    className="flex-shrink-0 inline w-5 h-5 mr-3"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                      clipRule="evenodd"
-                    ></path>
-                  </svg>
-                  <span className="sr-only">Info</span>
                   <div>
-                    <span className="font-medium">
-                      Quiz selected: {selectedQuiz.title}
+                    <span className="text-lg font-medium">
+                      Please Select a Quiz
                     </span>
                   </div>
                 </div>
-                <div className="flex space-x-0 mb-4 h-10 items-center pt-4 justify-center">
-                  <button
-                    type="button"
-                    disabled={disableDeSelect}
-                    onClick={handleDeSelectQuiz}
-                    className={`inline-block ${
-                      disableDeSelect ? "cursor-not-allowed" : "cursor-pointer"
-                    } px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out`}
+              </div>
+            ) : (
+              <div className="flex flex-row justify-center gap-4">
+                {isQuizProctored ? (
+                  <div
+                    className="flex p-4 mb-4 text-medium text-blue-700 bg-blue-100 rounded-lg dark:bg-blue-200 dark:text-blue-800"
+                    role="alert"
                   >
-                    De-Select
-                  </button>
-                </div>
+                    <svg
+                      aria-hidden="true"
+                      className="flex-shrink-0 inline w-8 h-8 mr-3"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                        clipRule="evenodd"
+                      ></path>
+                    </svg>
+                    <span className="sr-only">Info</span>
+                    <div>
+                      <span className="font-lg">
+                        Quiz selected: {selectedQuiz.title}. Please tap{" "}
+                        {!studentAuthed ? (
+                          <b>Authenticate button</b>
+                        ) : (
+                          <b>Start Proctoring button</b>
+                        )}{" "}
+                        to continue.
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    className="flex p-4 mb-4 text-medium text-blue-700 bg-blue-100 rounded-lg dark:bg-blue-200 dark:text-blue-800"
+                    role="alert"
+                  >
+                    <svg
+                      aria-hidden="true"
+                      className="flex-shrink-0 inline w-8 h-8 mr-3"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                        clipRule="evenodd"
+                      ></path>
+                    </svg>
+                    <span className="sr-only">Info</span>
+                    <div>
+                      <span className="font-lg">
+                        Quiz selected: {selectedQuiz.title}.
+                      </span>
+                    </div>
+                  </div>
+                )}
+                {isQuizProctored && (
+                  <div className="flex space-x-0 mb-4 h-10 items-center pt-4 justify-center">
+                    <button
+                      type="button"
+                      disabled={disableDeSelect}
+                      onClick={handleDeSelectQuiz}
+                      className={`inline-block ${
+                        disableDeSelect
+                          ? "cursor-not-allowed"
+                          : "cursor-pointer"
+                      } px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out`}
+                    >
+                      De-Select
+                    </button>
+                  </div>
+                )}
               </div>
             )}
             <div className="flex flex-row flex-wrap gap-8">
-              {quizzes.map((quiz: any, index) => {
+              {quizzes.map((quiz: any, index: number) => {
+                if (
+                  moment(quiz.all_dates.due_at).isBefore(moment()) ||
+                  Object.keys(quiz.all_dates).length === 0
+                ) {
+                  return (
+                    <Tooltip
+                      key={index}
+                      placement="top"
+                      title={"Due date expired"}
+                    >
+                      <div
+                        // href="#"
+
+                        style={{
+                          cursor: "not-allowed",
+                        }}
+                        key={index}
+                        onClick={(e: any) => e.preventDefault()}
+                        className={`block p-6 max-w-sm bg-white rounded-lg border ${
+                          quizObj[quiz.id]
+                            ? "border-blue-600 border-4"
+                            : "border-gray-200 border-2"
+                        } hover:bg-gray-100 dark:${
+                          quizObj[quiz.id]
+                            ? "border-blue-600"
+                            : "border-gray-700"
+                        } dark:hover:bg-gray-300`}
+                      >
+                        <h1>{quiz.title}</h1>
+                        <p>Type: {quiz.quiz_type}</p>
+                      </div>
+                    </Tooltip>
+                  );
+                }
                 return (
                   <div
                     // href="#"
 
                     style={{
-                      cursor:
-                        moment(quiz.all_dates.due_at).isBefore(moment()) ||
-                        Object.keys(quiz.all_dates).length === 0
-                          ? "not-allowed"
-                          : "pointer",
+                      cursor: "pointer",
                     }}
                     key={index}
-                    onClick={() => startQuizz(quiz)}
+                    onClick={() => handleSelectQuiz(quiz)}
                     className={`block p-6 max-w-sm bg-white rounded-lg border ${
                       quizObj[quiz.id]
                         ? "border-blue-600 border-4"
@@ -461,19 +661,52 @@ const Quzzies: React.FC<Props> = (props) => {
                 );
               })}
             </div>
-            <VideoAndScreenRec
-              quiz={selectedQuiz}
-              username={props.username}
-              pass={props.pass}
-              procData={props.procData}
-              token={props.authToken}
-              id={props.id}
-              isNewTab={props.isNewTab}
-              courseId={props.courseId}
-              toolConsumerGuid={props.toolConsumerGuid}
-              isAuthed={props.isAuthed}
-              studentId={props.studentId}
-            />
+            {!studentAuthed && selectedQuiz && quizConfig && isQuizProctored && (
+              <div className="flex items-center justify-center">
+                <div className="flex space-x-2 justify-center">
+                  <button
+                    type="button"
+                    onClick={() => setShowAuthModal(true)}
+                    className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
+                  >
+                    Authecate
+                  </button>
+                </div>
+              </div>
+            )}
+            {studentAuthed && (
+              <VideoAndScreenRec
+                quiz={selectedQuiz}
+                username={props.username}
+                pass={props.pass}
+                procData={props.procData}
+                token={props.authToken}
+                id={props.id}
+                isNewTab={props.isNewTab}
+                courseId={props.courseId}
+                toolConsumerGuid={props.toolConsumerGuid}
+                isAuthed={props.isAuthed}
+                studentId={props.studentId}
+                quizConfig={quizConfig}
+                accountId={props.accountId}
+              />
+            )}
+            {showAuthModal && (
+              <AuthenticationModal
+                view={true}
+                quizTitle={selectedQuiz.title}
+                close={() => setShowAuthModal(false)}
+                quizId={selectedQuiz.id}
+                quizConfig={quizConfig}
+                userId={props.id}
+                studentId={props.studentId}
+                courseId={props.courseId}
+                guid={props.toolConsumerGuid}
+                authToken={props.authToken}
+                userName={props.username}
+                authComplete={() => true}
+              />
+            )}
           </div>
           {modalComponent && showOptionModal && (
             <Modal
@@ -523,6 +756,12 @@ const Quzzies: React.FC<Props> = (props) => {
               authToken={props.authToken}
               guid={props.toolConsumerGuid}
               userId={props.studentId}
+            />
+          )}
+          {showStudentHelpDoc && (
+            <StudentHelpDocument
+              show={showStudentHelpDoc}
+              close={() => setShowStudentHelpDoc(false)}
             />
           )}
         </div>

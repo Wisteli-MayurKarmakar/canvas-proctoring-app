@@ -4,6 +4,7 @@ import OtpVerification from "../AuthenticationScreens/OtpVerification";
 import RoomScan from "../AuthenticationScreens/RoomScan";
 import LiveAuthentication from "../AuthenticationScreens/LiveAuthentication";
 import StudentIdDlVerification from "../AuthenticationScreens/StudentIdDlVerification";
+import { useWebCamStore } from "../../store/globalStore";
 
 interface Props {
   authConfigs: any;
@@ -11,7 +12,6 @@ interface Props {
   userId: string;
   courseId: string;
   quizId: string;
-  isStudentAuthed: any;
   authToken: any;
   guid: any;
   studentId: string;
@@ -21,16 +21,23 @@ interface Props {
 
 const handleLiveAuthentication = (
   status: boolean,
-  isStudentAuthed: (flag: boolean) => void
+  authSteps: {
+    [key: string]: any;
+  }[],
+  currentStep: number,
+  authStatus: (flag: boolean) => void,
+  setCurrentStep: (step: number) => void,
 ) => {
-  if (status) {
-    isStudentAuthed(true);
+  if (currentStep === authSteps.length - 1) {
+    if (status) {
+      authStatus(true);
+    }
   } else {
-    isStudentAuthed(false);
+    setCurrentStep(authSteps.length - 1);
   }
 };
 
-const handleAuthStatus = (
+const handleAiAuthentication = (
   status: boolean,
   authSteps: {
     [key: string]: any;
@@ -141,14 +148,14 @@ const StudentAuthentication: React.FC<Props> = (props): JSX.Element => {
     }
 
     if (props.authConfigs.studentIdDl || props.authConfigs.studentPicture) {
-      let name: string = "Student Profile Picture Verification"
+      let name: string = "Student Profile Picture Verification";
 
       if (props.authConfigs.studentIdDl && props.authConfigs.studentPicture) {
-        name = "Student Profile Picture and ID/DL Verification"
+        name = "Student Profile Picture and ID/DL Verification";
       }
 
       if (!props.authConfigs.studentPicture && props.authConfigs.studentIdDl) {
-        name = "Student ID/ DL Verification"
+        name = "Student ID/ DL Verification";
       }
 
       steps.push({
@@ -162,7 +169,7 @@ const StudentAuthentication: React.FC<Props> = (props): JSX.Element => {
             guid={props.guid}
             studentId={props.studentId}
             handleAuth={(status) =>
-              handleAuthStatus(
+              handleAiAuthentication(
                 status,
                 steps,
                 currentStep,
@@ -186,7 +193,13 @@ const StudentAuthentication: React.FC<Props> = (props): JSX.Element => {
             userId={props.studentId}
             authConfigs={props.authConfigs}
             isLiveAuthed={(status) =>
-              handleLiveAuthentication(status, props.isStudentAuthed)
+              handleLiveAuthentication(
+                status,
+                steps,
+                currentStep,
+                props.authStatus,
+                setCurrentStep,
+              )
             }
           />
         ),

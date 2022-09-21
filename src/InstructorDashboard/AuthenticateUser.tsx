@@ -1,8 +1,8 @@
-import { Col, Divider, message, Row } from "antd";
+import { Col, Row } from "antd";
 import React, { useEffect } from "react";
 import InfoModal from "../infoModal";
 import { getWebSocketUrl } from "../APIs/apiservices";
-import axios from "axios";
+
 
 interface Props {
   authConfigs: any;

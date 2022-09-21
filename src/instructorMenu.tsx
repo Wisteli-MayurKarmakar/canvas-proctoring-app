@@ -12,6 +12,7 @@ interface Props {
   id: any;
   courseId: any;
   toolConsumerGuid: any;
+  studentId: string;
 }
 
 const InstructorMenu: React.FunctionComponent<Props> = (props): JSX.Element => {
@@ -35,10 +36,10 @@ const InstructorMenu: React.FunctionComponent<Props> = (props): JSX.Element => {
           />
         </TabPane>
         <TabPane tab="Authentication" key="2">
-          <Authentication courseId={props.courseId} authData={props.auth} userId={props.id} guid={props.toolConsumerGuid}/>
+          <Authentication courseId={props.courseId} authData={props.auth} userId={props.id} guid={props.toolConsumerGuid} studentId={props.studentId}/>
         </TabPane>
         <TabPane tab="Proctoring Exam" key="3">
-          <LiveProctoring authData={props.auth} courseId={props.courseId} userId={props.id}/>
+          <LiveProctoring authData={props.auth} courseId={props.courseId} userId={props.id} studentId={props.studentId}/>
         </TabPane>
         <TabPane tab="Quiz reports" key="4">
           <ProctoringExam
@@ -46,6 +47,7 @@ const InstructorMenu: React.FunctionComponent<Props> = (props): JSX.Element => {
             courseId={props.courseId}
             reqToken={props.auth.data.access_token}
             toolConsumerGuid={props.toolConsumerGuid}
+            studentId={props.studentId}
           />
         </TabPane>
       </Tabs>

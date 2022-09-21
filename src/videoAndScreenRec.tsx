@@ -1,10 +1,17 @@
-import { message, Modal, Popconfirm } from "antd";
+import { message, Modal } from "antd";
 import axios from "axios";
 import React, { FunctionComponent, useEffect } from "react";
-import AuthenticationModal from "./StudentDashboard/Modals/AuthenticationModal";
 import $ from "jquery";
 import { getWebSocketUrl } from "./APIs/apiservices";
 import ProctoringInfoModal from "./CommonUtilites/ProctoringInfoModal";
+import InfoModal from "./infoModal";
+import moment from "moment";
+import { useStudentStore } from "./store/globalStore";
+
+//@ts-ignore
+import SebConfigDev from "./assets/seb_settings/SebClientSettingsDev.seb";
+//@ts-ignore
+import SebConfigLocal from "./assets/seb_settings/SebClientSettingsLocal.seb";
 
 declare global {
   interface Window {
@@ -25,19 +32,19 @@ interface Props {
   isNewTab: boolean;
   isAuthed: boolean;
   studentId: string;
+  quizConfig: any;
+  accountId: string;
 }
 
 const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
   let [assignedId, setAssignedId] = React.useState<string | null>(null);
-  let [quizTitle, setQuizTitle] = React.useState<string | null>(null);
-  let [quizId, setQuizId] = React.useState<string | null>(null);
+  let [showWait, setShowWait] = React.useState<boolean>(false);
   let [alertUser, setAlertUser] = React.useState<boolean>(false);
-  let [alertMessage, setAlertMessage] = React.useState<string | null>(null);
-  let [showAuthModal, setShowAuthModal] = React.useState<boolean>(false);
+  let [onSeb, setOnSeb] = React.useState<boolean>(false);
   let [showCloseProcPrompt, setShowCloseProcPrompt] =
     React.useState<boolean>(false);
-  // let [video, setVideo] = React.useState<string>("0");
-  // let [screen, setScreen] = React.useState<string>("0");
+  let [video, setVideo] = React.useState<boolean>(false);
+  let [screen, setScreen] = React.useState<boolean>(false);
   const [examStarted, setExamStarted] = React.useState<boolean>(false);
   let [stuAuthenticated, setStuAuthenticated] = React.useState<boolean>(false);
   let [showProctoringAlert, setShowProctoringAlert] =
@@ -45,10 +52,14 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
   const [openNewTabPropmpt, setOpenNewTabPrompt] =
     React.useState<boolean>(false);
   const [quizConfig, setQuizConfig] = React.useState<any>(null);
+  let checkSubmissionInterval = null;
   let interval: any = null;
+  let completeQuizInterval: any = null;
   const socket = getWebSocketUrl();
-  const socket2 = getWebSocketUrl();
   let [room, setRoom] = React.useState<string | null>(null);
+  let studentQuizAuthObject = useStudentStore(
+    (state) => state.studentQuizAuthObject
+  );
   const user = "chat_" + props.studentId;
   var peerConnection: any = null;
   var stream: any = null;
@@ -93,19 +104,19 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
     }
   };
 
-  const handleAuthComplete = (): void => {
-    // setShowAuthModal(false);
-    setStuAuthenticated(true);
-    // startProctoring();
-    handleOpenQuizInNewTab();
-  };
+  useEffect(() => {
+    studentQuizAuthObject.forEach((item) => {
+      if (item.quizId === props.quiz.id) {
+        if (item.studentAuthState) {
+          setStuAuthenticated(true);
+        }
+        return;
+      }
+    });
+  }, [studentQuizAuthObject]);
 
   useEffect(() => {
     setConfigByQuizCourseGuid();
-    if (props.quiz) {
-      setQuizTitle(props.quiz.title);
-      setQuizId(props.quiz.id);
-    }
   }, [props]);
 
   const saveLTIPrctoringRef = (videoId: string): void => {
@@ -148,13 +159,11 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
     if (!props.quiz) {
       return;
     }
-    if (stuAuthenticated || props.isAuthed) {
-      startProctoring();
-    } else {
-      // alert("Please perform authentication first");
-      setShowAuthModal(true);
+    if (!props.quizConfig) {
+      setShowWait(true);
       return;
     }
+    startProctoring();
   };
 
   const sendMsgViaSocket = (msgType: any, data: any) => {
@@ -170,9 +179,20 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
   };
 
   const startProctoring = async () => {
-    if (!props.isNewTab && !stuAuthenticated) {
-      setOpenNewTabPrompt(true);
-      return;
+    let time = moment().add(parseInt(props.quiz["time_limit"]) + 5, "minutes");
+    let expTime: number = Math.round(
+      moment.duration(time.diff(moment())).asMilliseconds()
+    );
+    completeQuizInterval = setTimeout(() => {
+      handleOk();
+      clearTimeout(completeQuizInterval);
+    }, expTime);
+
+    if (props.quizConfig.lockdownBrowser) {
+      if (stuAuthenticated) {
+        openSEB();
+        return;
+      }
     }
 
     if (!props.isNewTab && stuAuthenticated) {
@@ -197,27 +217,16 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
         console.log(error);
       });
 
-    // Chile's API user/ pass for DEV
     window.ExamdAutoProctorJS.setCredentials(props.username, props.pass);
 
-    // Default Audio Video devices
     await window.ExamdAutoProctorJS.getDefaultAudioVideoSync()
       .then((resp: any) => {})
       .catch((error: any) => {});
 
-    // Open Audio Video devices channels
-    // let videoCap = video === "1" ? true : false;
-    // let screenCap = screen === "1" ? true : false;
-
-    // if (quizConfig) {
-    //   videoCap = quizConfig.recordWebcam;
-    //   screenCap = quizConfig.recordScreen;
-    // }
-
     await window.ExamdAutoProctorJS.openChannels(
+      props.quizConfig.recordWebcam || video,
       true,
-      true,
-      true,
+      props.quizConfig.recordScreen || screen,
       false,
       (msg: any) => {},
       (msg: any) => {
@@ -228,7 +237,6 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
     // Starts VDO + Audio recording
     try {
       await window.ExamdAutoProctorJS.startVideoRecording();
-
     } catch (e) {
       console.log("Error starting video recording");
     }
@@ -251,8 +259,6 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
 
   const handleEndExam = async () => {
     setShowCloseProcPrompt(true);
-
-    // window.close();
   };
 
   const handleStuAuthStatus = (data: any): void => {
@@ -347,34 +353,140 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
   }, [props.quiz]);
 
   useEffect(() => {
+    if (props.quizConfig) {
+      setShowWait(false);
+    }
+  }, [props.quizConfig]);
+
+  const checkQuizSubmission = () => {
+    checkSubmissionInterval = setInterval(async () => {
+      let response = await axios.get(
+        `https://examd-dev.uc.r.appspot.com/student/api/v1/getQuizSubmissionsStateFromCanvas/${props.courseId}/${props.quiz.id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${props.token}`,
+          },
+        }
+      );
+      if (response.data) {
+        
+      }
+    }, 10000);
+  };
+
+  useEffect(() => {
+    checkQuizSubmission();
+
+    let url_string = window.location.href;
+    let url = new URL(url_string);
+    let onSeb = url.searchParams.get("onSEBApp");
+    let video = url.searchParams.get("video");
+    let screen = url.searchParams.get("screen");
+    localStorage.removeItem("tabClose");
+    window.addEventListener("storage", (event: any) => {
+      let tabCloseStat: string | null = localStorage.getItem("tabClose");
+
+      if (tabCloseStat != null) {
+        completeQuizSubmission();
+      }
+    });
+
+    window.addEventListener("beforeunload", (event: any) => {
+      localStorage.setItem("tabClose", "true");
+    });
+    if (onSeb === "true") {
+      setOnSeb(true);
+    }
+    setVideo(video === "1" ? true : false);
+    setScreen(screen === "1" ? true : false);
     if (props.isNewTab) {
       startProctoring();
     }
   }, []);
 
   const handleOpenQuizInNewTab = () => {
+    const url = window.location.href;
+    const domain = url.split("/")[2].split(":")[0];
+    setOpenNewTabPrompt(false);
+
+    if (domain !== "localhost") {
+      window.open(
+        `https://examd.us/lti/config/index.html?userId=${props.id}&courseId=${
+          props.courseId
+        }&toolConsumerGuid=${props.toolConsumerGuid}&quizId=${
+          props.quiz.id
+        }&newTab=true&auth=1&studentId=${props.studentId}&video=${
+          quizConfig.recordWebcam ? "1" : "0"
+        }&screen=${quizConfig.recordScreen ? "1" : "0"}&accountId=${
+          props.accountId
+        }`,
+        "_blank"
+      );
+      return;
+    }
     window.open(
-      `https://examd.us/lti/config/index.html?userId=${props.id}&courseId=${props.courseId}&toolConsumerGuid=${props.toolConsumerGuid}&quizId=${props.quiz.id}&newTab=true&auth=1&studentId=${props.studentId}`,
+      `http://localhost:3000/lti/config?userId=${props.id}&courseId=${
+        props.courseId
+      }&toolConsumerGuid=${props.toolConsumerGuid}&quizId=${
+        props.quiz.id
+      }&newTab=true&auth=1&studentId=${props.studentId}&video=${
+        quizConfig.recordWebcam ? "1" : "0"
+      }&screen=${quizConfig.recordScreen ? "1" : "0"}&accountId=${
+        props.accountId
+      }`,
       "_blank"
     );
-    // window.open(
-    //   `http://localhost:3000/lti/config?userId=${props.id}&courseId=${
-    //     props.courseId
-    //   }&toolConsumerGuid=${props.toolConsumerGuid}&quizId=${
-    //     props.quiz.id
-    //   }&newTab=true&auth=1&studentId=${props.studentId}&video=${
-    //     quizConfig.recordWebcam ? "1" : "0"
-    //   }&screen=${quizConfig.recordScreen ? "1" : "0"}`
-    // );
-    setOpenNewTabPrompt(false);
   };
 
-  const handleOk = (): void => {
+  const openSEB = () => {
+    if (stuAuthenticated || props.isAuthed) {
+      let url = window.location.href.split("//")[1];
+      let urlSubStrings = url.split("/");
+      let sebConfig: any = SebConfigDev;
+      if (urlSubStrings[0] === "localhost:3000") {
+        sebConfig = SebConfigLocal;
+      }
+
+      let sebURL: string = `seb://${urlSubStrings[0]}${sebConfig}???userId=${props.id}&courseId=${props.courseId}&toolConsumerGuid=${props.toolConsumerGuid}&quizId=${props.quiz.id}&newTab=true&auth=1&studentId=${props.studentId}`;
+      window.location.href = sebURL;
+    }
+  };
+
+  const closeTab = () => {
+    if (onSeb) {
+      setExamStarted(false);
+      window.ExamdAutoProctorJS.stopRecording();
+      window.open("https://www.google.com/");
+      return;
+    }
     setExamStarted(false);
     setAlertUser(true);
-    setAlertMessage("Your exam has ended");
     window.ExamdAutoProctorJS.stopRecording();
     window.close();
+  };
+
+  const completeQuizSubmission = async (): Promise<boolean> => {
+    let response = await axios.get(
+      `https://examd-dev.uc.r.appspot.com/student/api/v1/completeCanvasQuizSubmission/1/${props.studentId}/${props.courseId}/${props.quiz.id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${props.token}`,
+        },
+      }
+    );
+
+    if (response.data.code === 200) {
+      message.success("Quiz submitted successfully");
+      closeTab();
+      return true;
+    }
+
+    message.error("Failed to submit the quiz");
+    return false;
+  };
+
+  const handleOk = () => {
+    completeQuizSubmission();
   };
 
   return (
@@ -398,9 +510,11 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
           End Proctoring
         </button>
       </div>
-      {showProctoringAlert && (
+      {showProctoringAlert && quizConfig && (
         <ProctoringInfoModal
           visible={showProctoringAlert}
+          quizConfig={quizConfig}
+          onSeb={onSeb}
           close={() => setShowProctoringAlert(false)}
         />
       )}
@@ -442,23 +556,6 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
           </div>
         </Modal>
       )}
-      {showAuthModal && quizTitle && quizId && quizConfig && (
-        <AuthenticationModal
-          view={showAuthModal}
-          quizTitle={quizTitle}
-          quizId={quizId}
-          close={() => setShowAuthModal(false)}
-          userId={props.id}
-          userName={props.username}
-          courseId={props.courseId}
-          getStuAuthStatus={handleStuAuthStatus}
-          authComplete={handleAuthComplete}
-          quizConfig={quizConfig}
-          authToken={props.token}
-          guid={props.toolConsumerGuid}
-          studentId={props.studentId}
-        />
-      )}
       {showCloseProcPrompt && (
         <Modal
           visible={showCloseProcPrompt}
@@ -469,11 +566,11 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
         >
           <div className="flex flex-col items-center h-full w-full gap-4">
             <p className="text-lg font-semibold">
-              Proctoring is in progress. Closing this tab automatically close
-              your test/quiz.
+              Proctoring is in progress. Closing this tab automatically submits
+              your ongoing test/ quiz.
             </p>
             <p className="text-lg font-semibold">
-              Are you sure you want to close the tab and close the test/quiz?
+              Are you sure you want to close the tab and close the test/ quiz?
             </p>
             <div className="flex flex-row gap-4">
               <div className="flex space-x-2 justify-center">
@@ -500,6 +597,7 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
           </div>
         </Modal>
       )}
+      {showWait && <InfoModal title="" message="Please wait..." />}
     </div>
   );
 };
