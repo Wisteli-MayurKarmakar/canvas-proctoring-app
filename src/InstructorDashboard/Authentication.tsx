@@ -239,8 +239,8 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
     }
 
     socket.on("chat", (data: any) => {
-      console.log("chat", data);
       if (data.type === "chat") {
+        console.log("chat data", data);
         let msg = JSON.parse(data.message);
         if (msg.msgType === "STU_LIVE_REP") {
           let stuId = msg.msg.stuId;

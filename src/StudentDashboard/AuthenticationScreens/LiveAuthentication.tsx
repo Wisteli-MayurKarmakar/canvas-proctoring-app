@@ -53,7 +53,7 @@ const LiveAuthentication: React.FC<Props> = (props): JSX.Element => {
   const createPeerConnection = async () => {
     peerConnection = new RTCPeerConnection(PC_CONFIG);
     let localStream: any = null;
-    if (!vdoStmSource) {
+    if (!vStream) {
       localStream = await navigator.mediaDevices.getUserMedia({
         audio: true,
         video: true,
@@ -62,9 +62,9 @@ const LiveAuthentication: React.FC<Props> = (props): JSX.Element => {
       setVdoStmSource(localStream);
       vStream = localStream;
     }
-    if (vdoStmSource) {
-      vdoStmSource.getTracks().forEach((track: any) => {
-        peerConnection.addTrack(track, vdoStmSource);
+    if (vStream) {
+      vStream.getTracks().forEach((track: any) => {
+        peerConnection.addTrack(track, vStream);
       });
     } else {
       localStream.getTracks().forEach((track: any) => {
@@ -83,20 +83,20 @@ const LiveAuthentication: React.FC<Props> = (props): JSX.Element => {
           message.success("You are successfully authenticated");
           props.isLiveAuthed(true);
 
-          //close vdoStmSource
-          if (vdoStmSource) {
-            vdoStmSource.getTracks().forEach((track: any) => {
-              track.stop();
-            });
-          } else {
-            //Get stream from videoSrc video element and strop the tracks
-            // vStream.getTracks().forEach((track: any) => {
-            //   track.stop();
-            // });
-            videoSrc.current.srcObject.getTracks().forEach((track: any) => {
-              track.stop();
-            });
-          }
+          vStream.getTracks().forEach((track: any) => {
+            track.stop();
+          });
+
+          // if (vdoStmSource) {
+          //   vdoStmSource.getTracks().forEach((track: any) => {
+          //     track.stop();
+          //   });
+          // } else {
+          //   videoSrc.current.srcObject.getTracks().forEach((track: any) => {
+          //     console.log(track.name);
+          //     track.stop();
+          //   });
+          // }
 
           //close peerConnection
           peerConnection.close();
@@ -138,7 +138,6 @@ const LiveAuthentication: React.FC<Props> = (props): JSX.Element => {
   };
 
   const sendActiveNotification = () => {
-    console.log("roomName: " + roomName);
     socket.connect();
     socket.emit("validate", {
       evt: "chat",
@@ -164,6 +163,10 @@ const LiveAuthentication: React.FC<Props> = (props): JSX.Element => {
         if (msg.msgType === "offer") {
           offer = msg.msg;
           createAnswer(msg.msg);
+        }
+
+        if (msg.msgType === "STU_LIVE_REQ") {
+          console.log("live request", msg.msg);
         }
         if (msg.msgType === "candidate") {
           addCandidate(msg.msg);

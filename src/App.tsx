@@ -6,7 +6,7 @@ import DummyPage from "./dummyPage";
 
 import Quizzes from "./quizzes";
 import InstructorMenu from "./instructorMenu";
-import emailjs from "@emailjs/browser";
+// import emailjs from "@emailjs/browser";
 
 import {
   getEndPoints as getEndPointsUrl,
@@ -93,8 +93,6 @@ function App() {
     } catch (err) {
       setLoadFlag("N");
     }
-
-    
   };
 
   useEffect(() => {
@@ -112,17 +110,17 @@ function App() {
     // let loginId = url.searchParams.get("loginId");
     // let studentId = url.searchParams.get("studentId");
     let accId = url.searchParams.get("accoundId");
-    let quizId = url.searchParams.get("quizId");
+    // let quizId = url.searchParams.get("quizId");
     let newTab = url.searchParams.get("newTab");
     let isAuthed = url.searchParams.get("auth");
 
-    //Test params
+    // Test params
     let studentId = "1";
 
-    //Instructor -> set student 42; student -> set student 1/ 41
+    // Instructor -> set student 42; student -> set student 1/ 41
     let loginId = "ncghosh@gmail.com";
     // let courseId = "23";
-    // let quizId = "35";
+    let quizId = "35";
     let courseId = "16";
     let userId = "1";
     let toolConsumerGuid = "Examd";
@@ -163,8 +161,16 @@ function App() {
   };
 
   const getCanvasToken = async () => {
+    let origin: string = window.location.origin;
+
+    if (origin === "http://192.64.80.61:3000") {
+      origin += "/";
+    } else if (origin === "http://localhost:3000") {
+      origin = "https://canvas.examd.online";
+    }
+
     let data = new FormData();
-    data.append("invokeUrl", "https://canvas.examd.online");
+    data.append("invokeUrl", origin);
     let response = await axios.post(getCanvasTokenUrl, data);
 
     if (response.status === 200) {

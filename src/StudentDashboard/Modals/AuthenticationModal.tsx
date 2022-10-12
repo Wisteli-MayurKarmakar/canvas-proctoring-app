@@ -73,7 +73,7 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
       let msg = JSON.parse(data.message);
 
       if (msg.msgType === "STU_LIVE_REQ") {
-        sendAuthStatus("STU_AUTH_STEP", quizSteps[stepNo].name, props.userId);
+        sendAuthStatus("STU_AUTH_STEP", quizSteps[stepNo].name, props.userId, props.quizId);
       }
     });
   };
@@ -82,13 +82,13 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
     setSocketInstance(socket);
   };
 
-  const sendAuthStatus = (msgType: string, stepName: string, stuId: string) => {
+  const sendAuthStatus = (msgType: string, stepName: string, stuId: string, quizId: string) => {
     socketInstance.emit("chat", {
       evt: "chat",
       room: room,
       text: JSON.stringify({
         msgType: msgType,
-        msg: { stuId: stuId, stepName: stepName },
+        msg: { stuId: stuId, stepName: stepName, quizId: quizId},
       }),
     });
   };
@@ -198,7 +198,8 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
     sendAuthStatus(
       "STU_AUTH_STEP",
       quizSteps[stepNo + 1].name,
-      props.studentId
+      props.studentId,
+      props.quizId,
     );
   };
 

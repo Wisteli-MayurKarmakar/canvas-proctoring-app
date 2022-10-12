@@ -236,11 +236,17 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
     await window.ExamdAutoProctorJS.getDefaultAudioVideoSync()
       .then((resp: any) => {})
       .catch((error: any) => {});
+    let url_string = window.location.href;
+    let url = new URL(url_string);
+    let video = url.searchParams.get("video");
+    let screen = url.searchParams.get("screen");
+
+    console.log(video, screen);
 
     await window.ExamdAutoProctorJS.openChannels(
-      props.quizConfig.recordWebcam || video,
+      props.quizConfig.recordWebcam || (video === "1" ? true : false),
       true,
-      props.quizConfig.recordScreen || screen,
+      props.quizConfig.recordScreen || (screen === "1" ? true : false),
       false,
       (msg: any) => {},
       (msg: any) => {
@@ -386,7 +392,7 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
 
   const checkQuizSubmission = async () => {
     let response = await axios.get(
-      `${getQuizSubmissionsStateFromCanvas}${props.courseId}/${props.quiz.id}/Y/${props.token}`,
+      `${getQuizSubmissionsStateFromCanvas}${props.courseId}/${props.quiz.id}/Y/${props.token}`
     );
     if (response.data.length > 0) {
       if (startTime.isAfter(moment.utc(response.data[0]["started_at"]))) {
@@ -410,18 +416,8 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
     let url_string = window.location.href;
     let url = new URL(url_string);
     let onSeb = url.searchParams.get("onSEBApp");
-    let video = url.searchParams.get("video");
-    let screen = url.searchParams.get("screen");
-    localStorage.removeItem("tabClose");
 
-    // if (!props.isNewTab) {
-    //   window.addEventListener("storage", (event: any) => {
-    //     let tabCloseStat: string | null = localStorage.getItem("tabClose");
-    //     if (tabCloseStat != null) {
-    //       completeQuizSubmission();
-    //     }
-    //   });
-    // }
+    localStorage.removeItem("tabClose");
 
     if (props.isNewTab) {
       window.addEventListener("beforeunload", (event: any) => {
@@ -432,8 +428,8 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
     if (onSeb === "true") {
       setOnSeb(true);
     }
-    setVideo(video === "1" ? true : false);
-    setScreen(screen === "1" ? true : false);
+    // setVideo(video === "1" ? true : false);
+    // setScreen(screen === "1" ? true : false);
     if (props.isNewTab) {
       checkSubmissionInterval = setInterval(() => {
         checkQuizSubmission();
