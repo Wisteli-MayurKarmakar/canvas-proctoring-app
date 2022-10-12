@@ -1,5 +1,5 @@
 import axios from "axios";
-import moment from "moment";
+import moment, { Moment } from "moment";
 import React, { useEffect, useState } from "react";
 import VideoAndScreenRec from "./videoAndScreenRec";
 import $ from "jquery";
@@ -8,18 +8,25 @@ import PrivacyPolicy from "./StudentDashboard/Tabs/PrivacyPolicy";
 import ImageMatchAuthentication from "./StudentDashboard/AuthenticationScreens/ImageMatchAuthentication";
 import Help from "./StudentDashboard/Tabs/Help";
 import UpdateProfile from "./StudentDashboard/Menu/UpdateProfile";
-import { Button, Modal, Tooltip } from "antd";
+import { Button, Modal, Tooltip, message } from "antd";
 import StudentHelpDocument from "./StudentDashboard/Modals/StudentHelpDocument";
 import { useStudentStore } from "./store/globalStore";
 import AuthenticationModal from "./StudentDashboard/Modals/AuthenticationModal";
-import { css } from "@emotion/react";
-//@ts-ignore
-import AddToCalendarHOC from "react-add-to-calendar-hoc";
+import AddToCalendarButton from "./CommonUtilites/AddToCalendarButton";
+import DateTimePicker from "./CommonUtilites/DateTimePicker";
+import emailjs from "@emailjs/browser";
+import {
+  fetchCanvasEnrollmentsByCourseId,
+  fetchCanvasQuizzesByCourseId,
+  getLtiCanvasConfigByGuidCourseIdQuizId,
+  saveLtiStudentProfile,
+  sendEmail as sendEmailUrl,
+} from "./apiConfigs";
 
 interface Props {
   courseId: string;
   authToken: string;
-  username: string;
+  student: any;
   pass: string;
   procData: any;
   id: string;
@@ -39,6 +46,7 @@ const Quzzies: React.FC<Props> = (props) => {
   let [modalComponent, setModalComponent] = React.useState<any>(null);
   let [showOptionModal, setOptionModal] = React.useState<boolean>(false);
   let [modalTitle, setModalTitle] = React.useState<any>(null);
+  let [showScheduler, setShowScheduler] = React.useState<boolean>(false);
   let [studentAuthed, setStudentAuthed] = React.useState<boolean>(false);
   let [showStudentHelpDoc, setShowStudentHelpDoc] =
     React.useState<boolean>(false);
@@ -57,59 +65,13 @@ const Quzzies: React.FC<Props> = (props) => {
   let studentQuizAuthObject = useStudentStore(
     (state) => state.studentQuizAuthObject
   );
-  const AddToCalendar = AddToCalendarHOC(Button);
 
-  const startDatetime = moment().utc().add(2, "days");
-  const endDatetime = startDatetime.clone().add(2, "hours");
-  const duration = moment.duration(endDatetime.diff(startDatetime)).asHours();
-
-  let eventS = {
-    description:
-      "Description of event. Going to have a lot of fun doing things that we scheduled ahead of time.",
-    duration,
-    endDatetime: endDatetime.format("YYYYMMDDTHHmmssZ"),
-    location: "NYC",
-    startDatetime: startDatetime.format("YYYYMMDDTHHmmssZ"),
-    title: "Super Fun Event",
-  };
-
-  const componentStyles = css`
-    width: 100%;
-    margin: 0 auto;
-    text-align: center;
-    padding: 0 0 30px;
-    @media (min-width: 768px) {
-      width: 50%;
-    }
-  `;
-  const linkStyles = css`
-    text-decoration: none;
-    display: block;
-    color: #e42d2d;
-    font-size: 18px;
-    text-align: center;
-    padding: 6px;
-  `;
-
-  let items = [
-    { outlook: "Outlook" },
-    { outlookcom: "Outlook.com" },
-    { apple: "Apple Calendar" },
-    { yahoo: "Yahoo" },
-    { google: "Google" },
-  ];
-
-  let [isQuizProctored, setIsQuizProctored] = React.useState<boolean>(false);
+  let [isQuizProctored, setIsQuizProctored] = React.useState<boolean>(true);
 
   const updateUsersDetails = async () => {
     let students: Object[] = [];
     let response: any = await axios.get(
-      `https://examd.us/student/api/v1/fetchCanvasEnrollmentsByCourseId/${props.courseId}/${props.studentId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${props.authToken}`,
-        },
-      }
+      `${fetchCanvasEnrollmentsByCourseId}${props.courseId}/${props.studentId}/${props.authToken}`
     );
 
     response.data.forEach((item: any) => {
@@ -144,18 +106,15 @@ const Quzzies: React.FC<Props> = (props) => {
     //   }
     // });
 
-    let stuSaveResponse = await axios.post(
-      `https://examd.us/student/api/v1/saveLtiStudentProfile`,
-      students,
-      {
-        headers: {
-          Authorization: `Bearer ${props.authToken}`,
-        },
-      }
-    );
+    let stuSaveResponse = await axios.post(saveLtiStudentProfile, students, {
+      headers: {
+        Authorization: `Bearer ${props.authToken}`,
+      },
+    });
   };
 
   useEffect(() => {
+    localStorage.removeItem("tabClose");
     $(document).bind("keyup keydown", function (e) {
       if (e.ctrlKey && e.keyCode == 80) {
         return false;
@@ -168,12 +127,7 @@ const Quzzies: React.FC<Props> = (props) => {
 
     axios
       .get(
-        `https://examd-dev.uc.r.appspot.com/student/api/v1/fetchCanvasQuizzesByCourseId/${props.courseId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${props.authToken}`,
-          },
-        }
+        `${fetchCanvasQuizzesByCourseId}${props.courseId}/${props.authToken}`
       )
       .then((res) => {
         let temp: any = {};
@@ -193,24 +147,35 @@ const Quzzies: React.FC<Props> = (props) => {
       .catch((err) => {
         console.log(err);
       });
+
     if (props.isNewTab) {
       getQuizConfigs(props.quizId);
     }
+
     updateUsersDetails();
+
     if (props.isNewTab) {
       setDisableDeSelect(true);
     }
-    let nav: any = navigator;
-    if (nav.userAgentData.platform !== "Windows") {
+
+    if (
+      navigator.platform.includes("Mac") ||
+      navigator.platform.includes("mac")
+    ) {
       setDownloadLink(
         "https://storage.googleapis.com/exsebstore/SafeExamBrowser-3.0.dmg"
       );
     }
+    return () => {
+      if (props.isNewTab) {
+        localStorage.removeItem("quiz");
+      }
+    };
   }, []);
 
   const getQuizConfigs = async (quizId: string) => {
     let response = await axios.get(
-      `https://examd-dev.uc.r.appspot.com/student/api/v1/getLtiCanvasConfigByGuidCourseIdQuizId?guid=${[
+      `${getLtiCanvasConfigByGuidCourseIdQuizId}?guid=${[
         props.toolConsumerGuid,
       ]}&courseId=${props.courseId}&quizId=${quizId}`,
       {
@@ -222,11 +187,11 @@ const Quzzies: React.FC<Props> = (props) => {
 
     if (response.data) {
       if (
-        response.data.recordAudio ||
-        response.data.recordScreen ||
-        response.data.recordWebcam
+        !response.data.recordAudio &&
+        !response.data.recordScreen &&
+        !response.data.recordWebcam
       ) {
-        setIsQuizProctored(true);
+        setIsQuizProctored(false);
       }
       setQuizConfig(response.data);
       if (response.data.lockdownBrowser) {
@@ -239,16 +204,18 @@ const Quzzies: React.FC<Props> = (props) => {
   };
 
   useEffect(() => {
-    let authObj = [...studentQuizAuthObject];
-    authObj.forEach((item) => {
-      if (item.quizId === selectedQuiz.id) {
-        if (item.studentAuthState) {
-          setStudentAuthed(true);
-        } else {
-          setStudentAuthed(false);
+    if (selectedQuiz) {
+      let authObj = [...studentQuizAuthObject];
+      authObj.forEach((item) => {
+        if (item.quizId === selectedQuiz.id) {
+          if (item.studentAuthState) {
+            setStudentAuthed(true);
+          } else {
+            setStudentAuthed(false);
+          }
         }
-      }
-    });
+      });
+    }
   }, [studentQuizAuthObject]);
 
   const checkStoreForRecord = (quiz: {
@@ -282,7 +249,7 @@ const Quzzies: React.FC<Props> = (props) => {
       setQuizAuthObj(quiz);
     }
     setQuizConfig(null);
-    setIsQuizProctored(false);
+    setIsQuizProctored(true);
     setShowLDBDwnldOption(false);
     getQuizConfigs(quizz.id);
 
@@ -350,17 +317,17 @@ const Quzzies: React.FC<Props> = (props) => {
     }
   };
 
-  const handleDeSelectQuiz = () => {
-    let qObj: any = { ...quizObj };
+  // const handleDeSelectQuiz = () => {
+  //   let qObj: any = { ...quizObj };
 
-    Object.keys(qObj).forEach((key: any) => {
-      qObj[key] = false;
-    });
+  //   Object.keys(qObj).forEach((key: any) => {
+  //     qObj[key] = false;
+  //   });
 
-    setQuizObj(qObj);
-    setSelectedQuiz(null);
-    setQuizConfig(null);
-  };
+  //   setQuizObj(qObj);
+  //   setSelectedQuiz(null);
+  //   setQuizConfig(null);
+  // };
 
   const handleModalClose = () => {
     setModalComponent(null);
@@ -368,76 +335,101 @@ const Quzzies: React.FC<Props> = (props) => {
     // window.location.reload();
   };
 
+  const handleDateTimePicker = () => {
+    setShowScheduler(true);
+  };
+
+  const sendMail = (date: Moment | null, time: Moment | null) => {
+    let serviceId: string = "service_2su5kx4";
+    let templateId: string = "template_iqbfsp2";
+    let pubKey: string = "qaGgmKlvzp5138RXC";
+    let messageBody: { [key: string]: string } = {
+      subject: `Schedule for ${selectedQuiz.title} - ${date?.format(
+        "DD/MMM/YYYY"
+      )}/ ${time?.format("hh:mm:ss A")}`,
+      recipent_name: `${props.student.user.name}`,
+      message: `Your quiz ${
+        selectedQuiz.title
+      } has been scheduled. Below are the scheduling details.<br>
+      Date - ${date?.format("DD/MMM/YYYY")}<br>
+      Time - ${time?.format("hh:mm:ss A")}
+      `,
+      send_to: `${props.student.user.login_id}`,
+      reply_to: "devshantanu@gmail.com",
+    };
+    emailjs
+      .send(serviceId, templateId, messageBody, pubKey)
+      .then((response) => {
+        message.success("Quiz has been scheduled successfully");
+      })
+      .catch((error) => {
+        message.error("Failed to schedule the quiz");
+      });
+  };
+
+  const handleSelectedDateTime = (date: Moment | null, time: Moment | null) => {
+    if (date && time) {
+      sendMail(date, time);
+    }
+  };
+
   if (quizzes) {
     return (
       // <div className="flex flex-col justify-evenly pt-4">
       <div className="grid h-screen place-items-center">
         <div className="flex flex-row h-full w-full gap-4 px-2 justify-center items-center">
-          <div className="flex flex-col h-full w-3/12 gap-10 justify-center">
-            <div className="flex space-x-2 justify-center">
-              <button
-                type="button"
-                onClick={() => showSideOptionModal("SystemCheck")}
-                className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight  rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
-              >
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;System
-                Check&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-              </button>
-            </div>
-            <div className="flex space-x-2 justify-center">
-              <button
-                type="button"
-                onClick={() => showSideOptionModal("Authentication")}
-                className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight  rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
-              >
-                Authentication Test
-              </button>
-            </div>
-            <div className="flex space-x-2 justify-center">
-              <button
-                type="button"
-                onClick={() => showSideOptionModal("PrivacyPolicy")}
-                className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight  rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
-              >
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Privacy
-                Policy&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-              </button>
-            </div>
-            <div className="flex space-x-2 justify-center">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowUpdateProfileModal(true);
-                }}
-                className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight  rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
-              >
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Update
-                Profile&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-              </button>
-            </div>
-          </div>
-          <div
-            className="relative -ml-0.4 top-2 w-0.5 bg-gray-600"
-            style={{ height: "20rem" }}
-          ></div>
-          <div className="flex flex-col h-full justify-center gap-4 text-center text-lg">
-            <div className="flex justify-start">
-              <AddToCalendar
-                className={css`
-                  width: 100%;
-                  margin: 0 auto;
-                  text-align: center;
-                  padding: 0 0 30px;
-                  @media (min-width: 768px) {
-                    width: 50%;
-                  }
-                `}
-                linkProps={{
-                  className: linkStyles,
-                }}
-                event={eventS}
-              />
-            </div>
+          {!props.isNewTab && (
+            <>
+              <div className="flex flex-col h-full w-3/12 gap-10 justify-center">
+                <div className="flex space-x-2 justify-center">
+                  <button
+                    type="button"
+                    onClick={() => showSideOptionModal("SystemCheck")}
+                    className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight  rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
+                  >
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;System
+                    Check&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                  </button>
+                </div>
+                <div className="flex space-x-2 justify-center">
+                  <button
+                    type="button"
+                    onClick={() => showSideOptionModal("Authentication")}
+                    className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight  rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
+                  >
+                    Authentication Test
+                  </button>
+                </div>
+                <div className="flex space-x-2 justify-center">
+                  <button
+                    type="button"
+                    onClick={() => showSideOptionModal("PrivacyPolicy")}
+                    className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight  rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
+                  >
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Privacy
+                    Policy&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                  </button>
+                </div>
+                <div className="flex space-x-2 justify-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowUpdateProfileModal(true);
+                    }}
+                    className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight  rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
+                  >
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Update
+                    Profile&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                  </button>
+                </div>
+              </div>
+              <div
+                className="relative -ml-0.4 top-2 w-0.5 bg-gray-600"
+                style={{ height: "20rem" }}
+              ></div>
+            </>
+          )}
+          <div className="flex flex-col h-full w-full justify-center gap-4 text-center text-lg">
             <div className="flex flex-col w-full sm:gap-4 md:gap-4 justify-end">
               <div className="flex flex-row h-full w-full items-center justify-end gap-2">
                 <svg
@@ -490,7 +482,7 @@ const Quzzies: React.FC<Props> = (props) => {
                 </p>
               </div>
             )}
-            {quizConfig && !isQuizProctored && (
+            {quizConfig && !isQuizProctored && studentAuthed && (
               <div className="flex justify-center bg-yellow-200 p-2 rounded-lg">
                 <p className="flex h-full items-center lg:text-lg sm:text-base md:text-base font-semibold text-black">
                   This quiz is not proctored, please go to the quiz page and
@@ -584,12 +576,12 @@ const Quzzies: React.FC<Props> = (props) => {
                     </div>
                   </div>
                 )}
-                {isQuizProctored && (
+                {selectedQuiz && (
                   <div className="flex space-x-0 mb-4 h-10 items-center pt-4 justify-center">
                     <button
                       type="button"
                       disabled={disableDeSelect}
-                      onClick={handleDeSelectQuiz}
+                      onClick={handleDateTimePicker}
                       className={`inline-block ${
                         disableDeSelect
                           ? "cursor-not-allowed"
@@ -602,7 +594,21 @@ const Quzzies: React.FC<Props> = (props) => {
                 )}
               </div>
             )}
-            <div className="flex flex-row flex-wrap gap-8">
+            {selectedQuiz && (
+              <div className="flex flex-row gap-4 justify-center">
+                <button
+                  type="button"
+                  onClick={handleDateTimePicker}
+                  className={
+                    "px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
+                  }
+                >
+                  Schedule
+                </button>
+                <AddToCalendarButton quiz={selectedQuiz} />
+              </div>
+            )}
+            <div className="flex flex-row justify-center flex-wrap gap-8">
               {quizzes.map((quiz: any, index: number) => {
                 if (
                   moment(quiz.all_dates.due_at).isBefore(moment()) ||
@@ -639,45 +645,45 @@ const Quzzies: React.FC<Props> = (props) => {
                   );
                 }
                 return (
-                  <div
-                    // href="#"
-
-                    style={{
-                      cursor: "pointer",
-                    }}
-                    key={index}
-                    onClick={() => handleSelectQuiz(quiz)}
-                    className={`block p-6 max-w-sm bg-white rounded-lg border ${
-                      quizObj[quiz.id]
-                        ? "border-blue-600 border-4"
-                        : "border-gray-200 border-2"
-                    } hover:bg-gray-100 dark:${
-                      quizObj[quiz.id] ? "border-blue-600" : "border-gray-700"
-                    } dark:hover:bg-gray-300`}
-                  >
-                    <h1>{quiz.title}</h1>
-                    <p>Type: {quiz.quiz_type}</p>
+                  <div className="flex flex-col gap-4" key={index}>
+                    <div
+                      style={{
+                        cursor: "pointer",
+                      }}
+                      key={index}
+                      onClick={() => handleSelectQuiz(quiz)}
+                      className={`block p-6 max-w-sm bg-white rounded-lg border ${
+                        quizObj[quiz.id]
+                          ? "border-blue-600 border-4"
+                          : "border-gray-200 border-2"
+                      } hover:bg-gray-100 dark:${
+                        quizObj[quiz.id] ? "border-blue-600" : "border-gray-700"
+                      } dark:hover:bg-gray-300`}
+                    >
+                      <h1>{quiz.title}</h1>
+                      <p>Type: {quiz.quiz_type}</p>
+                    </div>
                   </div>
                 );
               })}
             </div>
-            {!studentAuthed && selectedQuiz && quizConfig && isQuizProctored && (
-              <div className="flex items-center justify-center">
+            {!studentAuthed && selectedQuiz && quizConfig && (
+              <div className="flex mt-4 items-center justify-center">
                 <div className="flex space-x-2 justify-center">
                   <button
                     type="button"
                     onClick={() => setShowAuthModal(true)}
-                    className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
+                    className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
                   >
-                    Authecate
+                    Authenticate
                   </button>
                 </div>
               </div>
             )}
-            {studentAuthed && (
+            {studentAuthed && isQuizProctored && (
               <VideoAndScreenRec
                 quiz={selectedQuiz}
-                username={props.username}
+                username={props.student.user.name}
                 pass={props.pass}
                 procData={props.procData}
                 token={props.authToken}
@@ -703,11 +709,19 @@ const Quzzies: React.FC<Props> = (props) => {
                 courseId={props.courseId}
                 guid={props.toolConsumerGuid}
                 authToken={props.authToken}
-                userName={props.username}
-                authComplete={() => true}
+                userName={props.student.user.name}
+                authComplete={() => setStudentAuthed(true)}
+                student={props.student}
               />
             )}
           </div>
+          {showScheduler && (
+            <DateTimePicker
+              visible={showScheduler}
+              close={() => setShowScheduler(false)}
+              handleDateTimeSelect={handleSelectedDateTime}
+            />
+          )}
           {modalComponent && showOptionModal && (
             <Modal
               title={modalTitle}
@@ -747,6 +761,7 @@ const Quzzies: React.FC<Props> = (props) => {
               visible={showHelpModal}
               onCancel={() => setShowHelpModal(false)}
               authToken={props.authToken}
+              student={props.student}
             />
           )}
           {showUpdateProfileModal && (
@@ -771,7 +786,11 @@ const Quzzies: React.FC<Props> = (props) => {
   } else {
     return (
       <div className="flex gap-8 absolute top-2/4 left-2/4">
-        <p className="text-center">Fetching quizzes...</p>
+        {props.isNewTab ? (
+          <p className="text-center">Setting up proctoring. Please wait...</p>
+        ) : (
+          <p className="text-center">Fetching quizzes...</p>
+        )}
         <div role="status">
           <svg
             className="inline mr-2 w-4 h-4 text-gray-200 animate-spin dark:text-gray-600 fill-green-500 "

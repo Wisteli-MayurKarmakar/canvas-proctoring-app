@@ -6,6 +6,13 @@ import DummyPage from "./dummyPage";
 
 import Quizzes from "./quizzes";
 import InstructorMenu from "./instructorMenu";
+import emailjs from "@emailjs/browser";
+
+import {
+  getEndPoints as getEndPointsUrl,
+  fetchCanvasEnrollmentsByCourseId,
+  getCanvasTokenUrl,
+} from "./apiConfigs";
 
 const getUuid = require("uuid-by-string");
 
@@ -29,62 +36,65 @@ function App() {
   let [loginId, setLoginId] = React.useState<any>(null);
   let [studentId, setStudentId] = React.useState<any>(null);
   let [accountId, setAccountId] = React.useState<any>(null);
-
+  let [student, setStudent] = React.useState<any>(null);
   let [proctoringProps, setProctoringProps] = React.useState<Object | null>(
     null
   );
-  // let proctoringProps= {userId: id as string, configId: userSettings.idLtiCanvasConfig as string}
 
-  const userName = "ca6a42188e970ab77fab0e34";
-  const password = "e5aa447e19ee4180b5ba1364";
+  let userName = "ca6a42188e970ab77fab0e34";
+  let password = "e5aa447e19ee4180b5ba1364";
 
-  const getEndPoints = async () => {
-    let response = await axios.get("https://examd.us/cdn/urls/xproctor/1");
-    if (response.data) {
-      setEndPoints(response.data);
-      authenticateUser(response.data.auth_url as string);
-    }
-  };
+  if (process.env.NODE_ENV === "production") {
+    userName = "surabhi";
+    password = "Surabhi@890";
+  }
 
-  const authenticateUser = async (url: string) => {
-    let response = await axios.post(url, {
-      username: userName,
-      password: password,
-    });
-    // .then((res) => {
-    //   window.ExamdAutoProctorJS.authToken = res.data.access_token;
-    // })
-    // .catch((err) => {
-    //   console.log(err);
-    // });
+  // const getEndPoints = async () => {
+  //   let response = await axios.get(getEndPointsUrl);
+  //   if (response.data) {
+  //     setEndPoints(response.data);
+  //     authenticateUser(response.data.auth_url as string);
+  //   }
+  // };
 
-    if (response.data) {
-      setAuthData(response);
-    }
-  };
+  // const authenticateUser = async (url: string) => {
+  //   let response = await axios.post(url, {
+  //     username: userName,
+  //     password: password,
+  //   });
+
+  //   if (response.data) {
+  //     setAuthData(response);
+  //   }
+  // };
 
   const setUserRoleById = async (studId: string) => {
     let role: string = "student";
-
-    let response: any = await axios.get(
-      `https://examd-dev.uc.r.appspot.com/student/api/v1/fetchCanvasEnrollmentsByCourseId/${courseId}/${studId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${authData.data.access_token}`,
-        },
-      }
-    );
-
-    if (response.data.length > 0) {
-      let data = response.data[0];
-      role = data.role;
-      if (role === "StudentEnrollment") {
-        setLoadFlag("N");
-        // setLoadFlag("Y");
+    try {
+      let response: any = await axios.get(
+        `${fetchCanvasEnrollmentsByCourseId}${courseId}/${studId}/${authData.data.access_token}`
+      );
+      if (response.status === 200) {
+        if (response.data.length > 0) {
+          let data = response.data[0];
+          setStudent(data);
+          role = data.role;
+          if (role === "StudentEnrollment") {
+            setLoadFlag("N");
+            // setLoadFlag("Y");
+          } else {
+            setLoadFlag("Y");
+          }
+        }
       } else {
-        setLoadFlag("Y");
+        console.log("here");
+        setLoadFlag("N");
       }
+    } catch (err) {
+      setLoadFlag("N");
     }
+
+    
   };
 
   useEffect(() => {
@@ -107,12 +117,14 @@ function App() {
     let isAuthed = url.searchParams.get("auth");
 
     //Test params
-    let studentId = "41";
+    let studentId = "1";
 
     //Instructor -> set student 42; student -> set student 1/ 41
     let loginId = "ncghosh@gmail.com";
-    let courseId = "23";
-    let userId = "12";
+    // let courseId = "23";
+    // let quizId = "35";
+    let courseId = "16";
+    let userId = "1";
     let toolConsumerGuid = "Examd";
 
     if (!accId) {
@@ -139,8 +151,8 @@ function App() {
     setAccountId(accId);
     setToolConsumerGuid(toolConsumerGuid);
     setLoginId(loginId);
-    setId(getUuid(userId));
-    // setId(getUuid("1470923eea43f6bcab4326fee7047884cf84f374"));
+    // setId(getUuid(userId));
+    setId(getUuid("1470923eea43f6bcab4326fee7047884cf84f374"));
     setCourseId(courseId as string);
 
     console.log(
@@ -150,8 +162,22 @@ function App() {
     );
   };
 
+  const getCanvasToken = async () => {
+    let data = new FormData();
+    data.append("invokeUrl", "https://canvas.examd.online");
+    let response = await axios.post(getCanvasTokenUrl, data);
+
+    if (response.status === 200) {
+      let authData: { [key: string]: string } = { ...response.data };
+      authData["access_token"] = response.data.lmsAccessToken;
+      response.data = { ...authData };
+      setAuthData(response);
+    }
+  };
+
   useEffect(() => {
-    getEndPoints();
+    // getEndPoints();
+    getCanvasToken();
     setUserId();
   }, []);
 
@@ -179,7 +205,7 @@ function App() {
       <Quizzes
         courseId={courseId}
         authToken={authData.data.access_token}
-        username={userName}
+        student={student}
         quizId={quizId}
         pass={password}
         id={id}

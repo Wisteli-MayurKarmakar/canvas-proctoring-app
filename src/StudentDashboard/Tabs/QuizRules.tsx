@@ -149,11 +149,11 @@ const QuizRules: React.FC<Props> = (props) => {
       let obj = configAbbrs[item[0]];
       cols.push(
         <Col span={4} key={index}>
-          <Row gutter={24} className="mt-4 mb-4" key={index}>
-            <Col span={18}>
+          <Row gutter={24} className="mt-4 mb-4" key={index.toString()+"a"}>
+            <Col span={18} key={index.toString()+"b"}>
               <p className="font-bold">{obj && obj.fullName}</p>
             </Col>
-            <Col span={4}>
+            <Col span={4} key={index.toString()+"c"}>
               <p>{item[1] ? <CheckOutlined /> : <CloseOutlined />}</p>
             </Col>
           </Row>

@@ -4,6 +4,10 @@ import moment from "moment";
 import React, { useEffect } from "react";
 import { getWebSocketUrl } from "../../APIs/apiservices";
 import LiveSreaming from "../Modals/LiveStreaming";
+import {
+  fetchCanvasQuizzesByCourseId,
+  fetchCanvasEnrollmentsByCourseId,
+} from "../../apiConfigs";
 
 interface Props {
   authData: any;
@@ -33,12 +37,7 @@ const LiveProctoring: React.FC<Props> = (props): JSX.Element => {
   useEffect(() => {
     axios
       .get(
-        `https://examd-dev.uc.r.appspot.com/student/api/v1/fetchCanvasQuizzesByCourseId/${props.courseId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${props.authData.data.access_token}`,
-          },
-        }
+        `${fetchCanvasQuizzesByCourseId}${props.courseId}/${props.authData.data.access_token}`
       )
       .then((res) => {
         let temp: any = {};
@@ -53,12 +52,7 @@ const LiveProctoring: React.FC<Props> = (props): JSX.Element => {
       });
     axios
       .get(
-        `https://examd.us/student/api/v1/fetchCanvasEnrollmentsByCourseId/${props.courseId}/${props.studentId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${props.authData.data.access_token}`,
-          },
-        }
+        `${fetchCanvasEnrollmentsByCourseId}${props.courseId}/${props.studentId}/${props.authData.data.access_token}`
       )
       .then((res) => {
         let temp: any = {};
@@ -136,10 +130,11 @@ const LiveProctoring: React.FC<Props> = (props): JSX.Element => {
                 }
                 key={index}
                 style={{ cursor: "pointer" }}
+                onClick={() => handleQuizClick(quizz)}
               >
                 <div
-                  className="flex flex-col text-center"
-                  onClick={() => handleQuizClick(quizz)}
+                  className="flex flex-col h-full w-full items-center justify-center"
+                  key={index.toString() + "a"}
                 >
                   <p className="text-xl font-semibold">{quizz.title}</p>
                   <p className="font-semibold">
@@ -162,6 +157,7 @@ const LiveProctoring: React.FC<Props> = (props): JSX.Element => {
                 enrollments.map((enrollment: any, index: number) => {
                   return (
                     <div
+                      key={index}
                       className={`box-border h-72 w-72 text-center p-2 border-2 ${
                         enrollmentLiveStatus[enrollment.user.id] === 0
                           ? onNotJoinColorCode

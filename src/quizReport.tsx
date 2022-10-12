@@ -4,6 +4,15 @@ import React, { FunctionComponent, useEffect } from "react";
 import axios from "axios";
 import Report from "./report";
 import InfoModal from "./infoModal";
+import {
+  fetchCanvasQuizzesByCourseId,
+  fetchCanvasEnrollmentsByCourseId,
+  getLtiCanvasConfigByGuidCourseIdQuizId,
+  fetchCanvasCourseDetailsByCourseId,
+  viewCanvasProfile,
+  getExceptions as getExceptionsUrl,
+  getLtiCVideoRef,
+} from "./apiConfigs";
 
 interface Props {
   userId: string;
@@ -37,12 +46,7 @@ const ProctoringExam: FunctionComponent<Props> = (props): JSX.Element => {
 
   const getCourseQuizesById = () => {
     axios
-      .get(
-        `https://examd.us/student/api/v1/fetchCanvasQuizzesByCourseId/${props.courseId}`,
-        {
-          headers: { Authorization: `Bearer ${props.reqToken}` },
-        }
-      )
+      .get(`${fetchCanvasQuizzesByCourseId}${props.courseId}/${props.reqToken}`)
       .then((res: any) => {
         let data = res.data.map((item: any) => ({
           ...item,
@@ -58,10 +62,7 @@ const ProctoringExam: FunctionComponent<Props> = (props): JSX.Element => {
   const getStudentsByCourseId = () => {
     axios
       .get(
-        `https://examd.us/student/api/v1/fetchCanvasEnrollmentsByCourseId/${props.courseId}/${props.studentId}`,
-        {
-          headers: { Authorization: `Bearer ${props.reqToken}` },
-        }
+        `${fetchCanvasEnrollmentsByCourseId}${props.courseId}/${props.studentId}/${props.reqToken}`
       )
       .then((res: any) => {
         let data = res.data.map((item: any) => ({
@@ -78,10 +79,7 @@ const ProctoringExam: FunctionComponent<Props> = (props): JSX.Element => {
   const getCourseDetails = () => {
     axios
       .get(
-        `https://examd.us/student/api/v1/fetchCanvasCourseDetailsByCourseId/${props.courseId}`,
-        {
-          headers: { Authorization: `Bearer ${props.reqToken}` },
-        }
+        `${fetchCanvasCourseDetailsByCourseId}${props.courseId}/${props.reqToken}`
       )
       .then((res: any) => {
         setCourseDetails(res.data[0]);
@@ -93,7 +91,7 @@ const ProctoringExam: FunctionComponent<Props> = (props): JSX.Element => {
 
   const getQuizConfigs = async (id: string) => {
     let config = await axios.get(
-      `https://examd-dev.uc.r.appspot.com/student/api/v1/getLtiCanvasConfigByGuidCourseIdQuizId?guid=${[
+      `${getLtiCanvasConfigByGuidCourseIdQuizId}?guid=${[
         props.toolConsumerGuid,
       ]}&courseId=${props.courseId}&quizId=${id}`
     );
@@ -140,7 +138,7 @@ const ProctoringExam: FunctionComponent<Props> = (props): JSX.Element => {
     let ltiVidRefResponse = null;
     try {
       ltiVidRefResponse = await axios.post(
-        "https://examd-dev.uc.r.appspot.com/student/api/v1/getLtiCVideoRef",
+        getLtiCVideoRef,
         {
           idUser: id,
           idExam: quizId,
@@ -167,14 +165,11 @@ const ProctoringExam: FunctionComponent<Props> = (props): JSX.Element => {
   };
 
   const getExceptions = async (fileId: string) => {
-    let exceptions = await axios.get(
-      `https://examd.online/ai/db/excp/list/ex/${fileId}`,
-      {
-        headers: {
-          Authorization: "Basic VEl4QXBaZTdNQ29zVzY6cFUxVVJ6akdrWThRVkM=",
-        },
-      }
-    );
+    let exceptions = await axios.get(`${getExceptionsUrl}${fileId}`, {
+      headers: {
+        Authorization: "Basic VEl4QXBaZTdNQ29zVzY6cFUxVVJ6akdrWThRVkM=",
+      },
+    });
 
     if (exceptions.data.data) {
       setExceptions(exceptions.data.data);
@@ -183,7 +178,7 @@ const ProctoringExam: FunctionComponent<Props> = (props): JSX.Element => {
 
   const getUserProfilePicture = async (studentId: string) => {
     let response = await axios.get(
-      `https://examd-dev.uc.r.appspot.com/student/api/v1/viewCanvasProfile/${props.toolConsumerGuid}/${studentId}`,
+      `${viewCanvasProfile}${props.toolConsumerGuid}/${studentId}`,
       {
         headers: {
           Authorization: `Bearer ${props.reqToken}`,

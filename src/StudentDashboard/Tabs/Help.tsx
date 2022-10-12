@@ -1,11 +1,14 @@
 import { Button, message, Modal } from "antd";
 import axios from "axios";
 import React from "react";
+import { sendEmail } from "../../apiConfigs";
+import emailjs from "@emailjs/browser";
 
 interface Props {
   visible: boolean;
   onCancel: () => void;
   authToken: string;
+  student: any;
 }
 
 const Help: React.FC<Props> = (props): JSX.Element => {
@@ -83,21 +86,48 @@ const Help: React.FC<Props> = (props): JSX.Element => {
 
     setIsLoading(true);
 
-    axios
-      .post("https://examd.us/notification/api/v1/mail/sendEmail", reqData, {
-        headers: {
-          Authorization: `Bearer ${props.authToken}`,
-        },
-      })
-      .then((res: any) => {
-        setIsLoading(false);
+    let serviceId: string = "service_2su5kx4";
+    let templateId: string = "template_iqbfsp2";
+    let pubKey: string = "qaGgmKlvzp5138RXC";
+
+    let messageBody: { [key: string]: string } = {
+      subject: `${helpType} request from ${props?.student.user.name}`,
+      recipent_name: "help@examd.co",
+      message: `${props?.student.user.name} needs ${helpType}. Below are the details to reach out to ${props?.student.user.name}:<br>
+      Phone: ${phoneNumber}<br>
+      Email: ${email}<br><br><br>
+      Thanks
+      `,
+      send_to: helpMail,
+      reply_to: "devshantanu@gmail.com",
+    };
+
+    emailjs
+      .send(serviceId, templateId, messageBody, pubKey)
+      .then((response) => {
         message.success("Your request has been sent");
+        setIsLoading(false);
         props.onCancel();
       })
-      .catch((err: any) => {
-        setIsLoading(false);
+      .catch((error) => {
         message.error("Something went wrong. Please try again");
+        setIsLoading(false);
+        props.onCancel();
       });
+    // axios
+    //   .post(sendEmail, reqData, {
+    //     headers: {
+    //       Authorization: `Bearer ${props.authToken}`,
+    //     },
+    //   })
+    //   .then((res: any) => {
+    //     message.success("Your request has been sent");
+    //     props.onCancel();
+    //   })
+    //   .catch((err: any) => {
+    //     setIsLoading(false);
+    //     message.error("Something went wrong. Please try again");
+    //   });
   };
 
   return (

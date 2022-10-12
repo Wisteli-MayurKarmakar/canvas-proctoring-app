@@ -2,6 +2,7 @@ import { message } from "antd";
 import axios from "axios";
 import React, { useEffect } from "react";
 import { useWebCamStore } from "../../store/globalStore";
+import {aiMatch, viewCanvasProfile, downloadDL} from "../../apiConfigs"
 
 interface Props {
   authConfigs: any;
@@ -83,7 +84,7 @@ const StudentIdDlVerification: React.FC<Props> = (props): JSX.Element => {
     formData.append("imaget", snapshotBlob, props.studentId + "2.jpg");
     formData.append("name", props.studentId);
     let response = await axios.post(
-      `https://examd.us/ai/frame/match`,
+      `${aiMatch}`,
       formData,
       {
         headers: {
@@ -255,7 +256,7 @@ const StudentIdDlVerification: React.FC<Props> = (props): JSX.Element => {
   const getStudentProofs = async () => {
     if (props.authConfigs.studentPicture) {
       let responsePicture = await axios.get(
-        `https://examd-dev.uc.r.appspot.com/student/api/v1/viewCanvasProfile/${props.guid}/${props.studentId}`,
+        `${viewCanvasProfile}${props.guid}/${props.studentId}`,
         {
           headers: {
             Authorization: `Bearer ${props.authToken}`,
@@ -280,7 +281,7 @@ const StudentIdDlVerification: React.FC<Props> = (props): JSX.Element => {
 
     if (props.authConfigs.studentIdDl) {
       let responseId = await axios.get(
-        `https://examd-dev.uc.r.appspot.com/student/api/v1/downloadDL/${props.guid}/${props.studentId}`,
+        `${downloadDL}${props.guid}/${props.studentId}`,
         {
           headers: {
             Authorization: `Bearer ${props.authToken}`,

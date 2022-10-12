@@ -1,10 +1,9 @@
-import axios from "axios";
-import React, { useCallback, useEffect } from "react";
+
+import React from "react";
 import OtpVerification from "../AuthenticationScreens/OtpVerification";
 import RoomScan from "../AuthenticationScreens/RoomScan";
 import LiveAuthentication from "../AuthenticationScreens/LiveAuthentication";
 import StudentIdDlVerification from "../AuthenticationScreens/StudentIdDlVerification";
-import { useWebCamStore } from "../../store/globalStore";
 
 interface Props {
   authConfigs: any;
@@ -15,6 +14,7 @@ interface Props {
   authToken: any;
   guid: any;
   studentId: string;
+  student: any;
   authStatus: (status: boolean) => void;
   // socket: any;
 }
@@ -133,6 +133,8 @@ const StudentAuthentication: React.FC<Props> = (props): JSX.Element => {
             authToken={props.authToken}
             guid={props.guid}
             studentId={props.studentId}
+            student={props.student}
+            quizTitle={props.quizTitle}
             otpVerified={(status) =>
               handleOtpVerification(
                 status,

@@ -1,7 +1,7 @@
 import { Button, message, Modal } from "antd";
 import axios from "axios";
-import React, { useEffect, useState } from "react";
-import { getUserDetails } from "../../APIs/apiservices";
+import React, { useEffect } from "react";
+import {uploadCanvasDL, uploadCanvasProfile, viewCanvasProfile, downloadDL, getLtiStudentProfileDetails} from "../../apiConfigs"
 
 interface Props {
   show: boolean;
@@ -36,7 +36,7 @@ const UpdateProfile: React.FC<Props> = (props): JSX.Element => {
   const getUserProfileDetails = () => {
     axios
       .post(
-        `https://examd.us/student/api/v1/getLtiStudentProfileDetails/${props.guid}/${props.userId}`,
+        `${getLtiStudentProfileDetails}${props.guid}/${props.userId}`,
         {
           headers: {
             Authorization: `Bearer ${props.authToken}`,
@@ -287,10 +287,10 @@ const UpdateProfile: React.FC<Props> = (props): JSX.Element => {
         break;
     }
 
-    let uploadUrl = `https://examd-dev.uc.r.appspot.com/student/api/v1/uploadCanvasProfile/${props.guid}/${props.userId}`;
+    let uploadUrl = `${uploadCanvasProfile}${props.guid}/${props.userId}`;
 
     if (proofType === "proof2") {
-      uploadUrl = `https://examd-dev.uc.r.appspot.com/student/api/v1/uploadCanvasDL/${props.guid}/${props.userId}`;
+      uploadUrl = `${uploadCanvasDL}${props.guid}/${props.userId}`;
     }
 
     let uploadResponse: any = await axios.post(uploadUrl, formData, {
@@ -351,7 +351,7 @@ const UpdateProfile: React.FC<Props> = (props): JSX.Element => {
     let picFlag: boolean = false;
     let idFlag: boolean = false;
     let picProof = await axios.get(
-      `https://examd-dev.uc.r.appspot.com/student/api/v1/viewCanvasProfile/${props.guid}/${props.userId}`,
+      `${viewCanvasProfile}${props.guid}/${props.userId}`,
       {
         headers: {
           Authorization: `Bearer ${props.authToken}`,
@@ -374,7 +374,7 @@ const UpdateProfile: React.FC<Props> = (props): JSX.Element => {
       setStudentPhotos(URL.createObjectURL(blob));
     }
     let idProof = await axios.get(
-      `https://examd-dev.uc.r.appspot.com/student/api/v1/downloadDL/${props.guid}/${props.userId}`,
+      `${downloadDL}${props.guid}/${props.userId}`,
       {
         headers: {
           Authorization: `Bearer ${props.authToken}`,

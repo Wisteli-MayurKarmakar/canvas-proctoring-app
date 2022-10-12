@@ -18,6 +18,7 @@ interface Props {
   authComplete: () => void;
   courseId: string;
   // getStuAuthStatus: (data: any) => void;
+  student: any;
   authToken: any;
   guid: any;
   studentId: string;
@@ -33,11 +34,12 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
     React.useState<Object | null>(null);
   const [socketInstance, setSocketInstance] = React.useState<any>(null);
   let setStudAuthState = useStudentStore((state) => state.setQuizAuthObj);
+  let authStepsCount = useStudentStore((state) => state.authStepsCount);
+  let setAuthStepsCount = useStudentStore((state) => state.setAuthStepsCount);
   let stream = useWebCamStore((state) => state.stream);
   let studIdWODash = props.courseId + "_" + props.quizId;
   let user = "chat_" + props.userId;
   let room = "rm_" + studIdWODash;
-  let [mediaStream, setMediaStream] = React.useState<any>(null);
 
   const getSystemCheckStatus = (status: boolean) => {
     if (status) {
@@ -159,6 +161,7 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
               guid={props.guid}
               studentId={props.studentId}
               authStatus={handleAuthStatus}
+              student={props.student}
               // socket={socketInstance}
             />
           ),
@@ -166,11 +169,26 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
       }
       // setQuizSteps(steps);
     }
+
+    setAuthStepsCount(steps.length - 1);
+
     if (steps.length <= 4) {
       setQuizSteps(steps);
       setAuthConfigurations(config);
     }
   }, []);
+
+  useEffect(() => {
+    if (authStepsCount === stepNo) {
+      if (!buttonDisabled) {
+        props.authComplete();
+        setStudAuthState({ quizId: props.quizId, studentAuthState: true });
+        setStuAuthenticated(true);
+      } else {
+        setStuAuthenticated(false);
+      }
+    }
+  }, [authStepsCount, stepNo, buttonDisabled]);
 
   const handleNext = () => {
     sendStatus(quizSteps[stepNo + 1].name);

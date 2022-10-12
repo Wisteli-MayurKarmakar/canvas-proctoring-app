@@ -1,6 +1,5 @@
 import { Button, Col, Divider, Modal, Row } from "antd";
 import React, { useEffect } from "react";
-import { io } from "socket.io-client";
 import { getWebSocketUrl } from "../../APIs/apiservices";
 
 interface Props {

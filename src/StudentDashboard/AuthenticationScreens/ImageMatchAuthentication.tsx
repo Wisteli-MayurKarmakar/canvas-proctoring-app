@@ -1,7 +1,7 @@
 import { message } from "antd";
-import axios, { AxiosResponse } from "axios";
+import axios from "axios";
 import React, { useEffect } from "react";
-import Webcam from "react-webcam";
+import {aiMatch, viewCanvasProfile, getLtiStudentProfileDetails} from "../../apiConfigs"
 
 interface Props {
   studentId: any;
@@ -65,7 +65,7 @@ const ImageMatchAuthentication: React.FC<Props> = (props): JSX.Element => {
     formData.append("imaget", snapshotBlob, props.studentId + "_2.jpg");
     formData.append("name", props.studentId);
     let response = await axios.post(
-      `https://examd.us/ai/frame/match`,
+      `${aiMatch}`,
       formData,
       {
         headers: {
@@ -171,7 +171,7 @@ const ImageMatchAuthentication: React.FC<Props> = (props): JSX.Element => {
     setFetching(true);
     axios
       .get(
-        `https://examd-dev.uc.r.appspot.com/student/api/v1/viewCanvasProfile/${props.guid}/${props.studentId}`,
+        `${viewCanvasProfile}${props.guid}/${props.studentId}`,
         {
           headers: {
             Authorization: `Bearer ${props.authToken}`,
@@ -198,7 +198,7 @@ const ImageMatchAuthentication: React.FC<Props> = (props): JSX.Element => {
   const getStudentDetails = () => {
     axios
       .post(
-        `https://examd.us/student/api/v1/getLtiStudentProfileDetails/${props.guid}/${props.studentId}`,
+        `${getLtiStudentProfileDetails}${props.guid}/${props.studentId}`,
         {
           headers: {
             Authorization: `Bearer ${props.authToken}`,

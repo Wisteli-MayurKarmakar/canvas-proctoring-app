@@ -8,6 +8,7 @@ import Modal from "antd/lib/modal/Modal";
 import { Button } from "antd";
 import { getWebSocketUrl } from "../APIs/apiservices";
 import InfoModal from "../infoModal";
+import { viewCanvasProfile, downloadDL } from "../apiConfigs";
 
 interface Props {
   courseId: string;
@@ -114,7 +115,7 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
 
   const getStudentProofs = async (studentId: string) => {
     let picProof = await axios.get(
-      `https://examd-dev.uc.r.appspot.com/student/api/v1/viewCanvasProfile/${props.guid}/${studentId}`,
+      `${viewCanvasProfile}${props.guid}/${studentId}`,
       {
         headers: {
           Authorization: `Bearer ${props.authData.data.access_token}`,
@@ -136,15 +137,12 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
       setStudentPhoto(URL.createObjectURL(blob));
     }
 
-    let idProof = await axios.get(
-      `https://examd-dev.uc.r.appspot.com/student/api/v1/downloadDL/${props.guid}/${studentId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${props.authData.data.access_token}`,
-        },
-        responseType: "arraybuffer",
-      }
-    );
+    let idProof = await axios.get(`${downloadDL}${props.guid}/${studentId}`, {
+      headers: {
+        Authorization: `Bearer ${props.authData.data.access_token}`,
+      },
+      responseType: "arraybuffer",
+    });
 
     if (
       idProof.headers["content-type"] === "image/jpeg" ||
@@ -176,11 +174,12 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
 
   const fetchQuizzesByCourseId = async (courseId: string): Promise<void> => {
     axios
-      .get(COURSES_BY_QUIZ_ID_URL + courseId, {
-        headers: {
-          Authorization: `Bearer ${props.authData.data.access_token}`,
-        },
-      })
+      .get(
+        COURSES_BY_QUIZ_ID_URL +
+          courseId +
+          "/" +
+          props.authData.data.access_token
+      )
       .then((response) => {
         response.data.forEach((quiz: any) => {
           quiz.key = quiz.id;
@@ -194,11 +193,11 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
 
   const fetchCourseEnrollments = async (courseId: string): Promise<void> => {
     axios
-      .get(ENROLLMENTS_BY_COURSE_ID_URL + props.courseId + `/${props.studentId}`, {
-        headers: {
-          Authorization: `Bearer ${props.authData.data.access_token}`,
-        },
-      })
+      .get(
+        ENROLLMENTS_BY_COURSE_ID_URL +
+          props.courseId +
+          `/${props.studentId}/${props.authData.data.access_token}`
+      )
       .then((response) => {
         let temp: any = {};
         response.data.forEach((enrollment: any) => {

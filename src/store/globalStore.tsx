@@ -1,4 +1,5 @@
 import produce from "immer";
+import moment from "moment";
 import create from "zustand";
 import { devtools } from "zustand/middleware";
 
@@ -11,7 +12,11 @@ type StudentStore = {
   studentQuizAuthObject: {
     [key: string]: string | boolean;
   }[];
+  currentTime: any;
+  authStepsCount: number;
+  setAuthStepsCount: (count: number) => void;
   setQuizAuthObj: (data: { [key: string]: string | boolean }) => void;
+  setCurrentTime: () => void;
 };
 
 export const useWebCamStore = create<WebCamStore>()(
@@ -28,6 +33,8 @@ export const useStudentStore = create<StudentStore>()(
   devtools(
     (set) => ({
       studentQuizAuthObject: [],
+      currentTime: new Date(),
+      authStepsCount: 0,
       setQuizAuthObj: (data) =>
         set(
           produce((draft) => {
@@ -45,6 +52,19 @@ export const useStudentStore = create<StudentStore>()(
             }
           })
         ),
+      setCurrentTime: () =>
+        set(
+          produce((draft) => {
+            draft.currentTime = moment();
+          })
+        ),
+      setAuthStepsCount: (count: number) => {
+        set(
+          produce((draft) => {
+            draft.authStepsCount = count;
+          })
+        );
+      },
     }),
     { name: "StudentStore" }
   )

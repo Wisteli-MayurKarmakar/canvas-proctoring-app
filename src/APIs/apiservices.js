@@ -1,6 +1,11 @@
 import axios from "axios";
 import { io } from "socket.io-client";
-let webSocketUrl = "https://examd.us:4921/";
+
+let env = process.env.NODE_ENV;
+let webSocketUrl =
+  env === "development"
+    ? "https://examd.us:4921/"
+    : "https://examd.online:4921/";
 
 export const getWebSocketUrl = () => {
   const socket = io(webSocketUrl, {

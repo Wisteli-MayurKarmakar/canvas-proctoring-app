@@ -1,12 +1,19 @@
 import { message } from "antd";
 import axios from "axios";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
+import {
+  generateOtpForCanvasQuiz,
+  validateOtpForCanvasQuiz,
+} from "../../apiConfigs";
+import emailjs from "@emailjs/browser";
 
 interface Props {
   authToken: string;
   guid: string;
   studentId: string;
+  student: any;
   otpVerified: (falg: boolean) => void;
+  quizTitle: string;
 }
 
 const OtpVerification: React.FC<Props> = (props) => {
@@ -16,9 +23,31 @@ const OtpVerification: React.FC<Props> = (props) => {
     null
   );
 
+  const sendOtpOnMail = (otp: string) => {
+    let serviceId: string = "service_2su5kx4";
+    let templateId: string = "template_iqbfsp2";
+    let pubKey: string = "qaGgmKlvzp5138RXC";
+    let messageBody: { [key: string]: string } = {
+      subject: `Otp for ${props.quizTitle} Authentication`,
+      recipent_name: `${props.student.user.name}`,
+      message: `Your Otp (One Time passcode/ password) to authenticate is ${otp}
+      `,
+      send_to: `${props.student.user.login_id}`,
+      reply_to: "devshantanu@gmail.com",
+    };
+    emailjs
+      .send(serviceId, templateId, messageBody, pubKey)
+      .then((response) => {
+        message.success("Otp sent successfully");
+      })
+      .catch((error) => {
+        message.error("Error sending otp. Please try again");
+      });
+  };
+
   const generateOpt: any = async () => {
     let response = await axios.get(
-      `https://examd-dev.uc.r.appspot.com/student/api/v1/generateOtpForCanvasQuiz/${props.guid}/${props.studentId}`,
+      `${generateOtpForCanvasQuiz}${props.guid}/${props.studentId}`,
       {
         headers: {
           Authorization: `Bearer ${props.authToken}`,
@@ -28,6 +57,7 @@ const OtpVerification: React.FC<Props> = (props) => {
 
     if (response.data.code === 200) {
       console.log("OTP::", response.data.message);
+      // sendOtpOnMail(response.data.message);
     }
   };
 
@@ -54,7 +84,7 @@ const OtpVerification: React.FC<Props> = (props) => {
 
     try {
       let response = await axios.get(
-        `https://examd-dev.uc.r.appspot.com/student/api/v1/validateOtpForCanvasQuiz/${props.guid}/${props.studentId}/${otpInput}`,
+        `${validateOtpForCanvasQuiz}${props.guid}/${props.studentId}/${otpInput}`,
         {
           headers: {
             Authorization: `Bearer ${props.authToken}`,

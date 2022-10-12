@@ -28,7 +28,7 @@ import axios from "axios";
 import InfoModal from "./infoModal";
 import { defaultProcSettings } from "./CommonUtilites/ProctorSettingDefaults";
 import "./configuration.css";
-import SettingsModal from "./settingsModal";
+import {autoCompleteSetup, saveLtiCanvasConfig, getLtiCanvasConfigByGuidCourseIdQuizId, fetchCanvasQuizzesByCourseId} from "./apiConfigs"
 import { message } from "antd";
 
 interface Props {
@@ -233,6 +233,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
   const [quizzes, setQuizzes] = React.useState<any>(null);
   const [selectedQuiz, setSelectedQuiz] = React.useState<any>(null);
   let [quizSettings, setQuizSettings] = React.useState<any>(null);
+  let [noQuizConfig, setNoQuizConfig] = React.useState<boolean>(false);
   let [configSaveStatus, setConfigSaveStatus] = React.useState<boolean>(false);
   let [defaultSettingsOptionsChecked, setDefaultSettingsOptionsChecked] =
     React.useState<any>(null);
@@ -275,49 +276,6 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
     }
     setChecked(checks);
   };
-
-  // const checkIfVerificationOptSelected = (): boolean => {
-  //   let flag: boolean = false;
-  //   let verificationOpt: optionCheckedProto = {
-  //     ...(checked["Verification Options"] as {}),
-  //   };
-  //   for (let key in verificationOpt) {
-  //     if (verificationOpt[key]) {
-  //       flag = true;
-  //     }
-  //   }
-  //   if (flag) {
-  //     alert(
-  //       "Please disable all AI authentication options before enabling Examd Live Launch"
-  //     );
-  //     return true;
-  //   }
-  //   return false;
-  // };
-
-  // const checkIfProctorOptionsSelected = () => {
-  //   let flag: boolean = false;
-  //   let proctorOptions: optionCheckedProto = {
-  //     ...(checked["Proctor Options"] as {}),
-  //   };
-
-  //   Object.keys(proctorOptions).forEach((key) => {
-  //     if (key === "examdLiveLaunch") {
-  //       if (proctorOptions[key]) {
-  //         flag = true;
-  //       }
-  //     }
-  //   });
-
-  //   if (flag) {
-  //     alert(
-  //       "Please disable Examd Live Launch options before enabling an AI Authenction option"
-  //     );
-  //     return true;
-  //   }
-
-  //   return false;
-  // };
 
   const handleOptionClick = (option: string, subOption: string) => {
     if (optionsStatus[option] === false) {
@@ -422,6 +380,21 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
     );
   }
 
+  const handleAutoCompleteSetup = () => {
+    axios
+      .get(
+        `${autoCompleteSetup}${props.courseId}/${selectedQuiz.title}/${selectedQuiz.id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${props.auth.data.access_token}`,
+          },
+        }
+      )
+      .then((response) => {
+        message.success("Successfully setuped the quiz");
+      });
+  };
+
   const handleSubmit = () => {
     if (!selectedQuiz) {
       alert("Please select a quiz");
@@ -473,13 +446,16 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
 
     axios
       .post(
-        "https://examd-dev.uc.r.appspot.com/student/api/v1/saveLtiCanvasConfig",
+        saveLtiCanvasConfig,
         allOptions,
         {
           headers: { Authorization: `Bearer ${props.auth.data.access_token}` },
         }
       )
       .then((res) => {
+        if (noQuizConfig) {
+          handleAutoCompleteSetup();
+        }
         message.success("Configurations saved successfully");
         setConfigSaveStatus(true);
       })
@@ -557,7 +533,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
   const getUserSettings = (quizId: string | ""): void => {
     axios
       .get(
-        `https://examd-dev.uc.r.appspot.com/student/api/v1/getLtiCanvasConfigByGuidCourseIdQuizId?guid=${[
+        `${getLtiCanvasConfigByGuidCourseIdQuizId}?guid=${[
           props.toolConsumerGuid,
         ]}&courseId=${props.courseId}&quizId=${quizId}`,
         {
@@ -567,13 +543,14 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
         }
       )
       .then((res) => {
+        setNoQuizConfig(false);
         setUserSettings(res.data);
         setQuizSettings(res.data);
         applyUserSettings(res.data);
         setApplySettings(false);
       })
       .catch((err) => {
-        console.log(err);
+        setNoQuizConfig(true);
         setOptionsEnableSwitchStatus();
         setDefaultCheckedStatus();
       });
@@ -581,12 +558,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
   const getQuizzesByCourseId = (id: string): void => {
     axios
       .get(
-        `https://examd-dev.uc.r.appspot.com/student/api/v1/fetchCanvasQuizzesByCourseId/${id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${props.reqToken}`,
-          },
-        }
+        `${fetchCanvasQuizzesByCourseId}${id}/${props.reqToken}`
       )
       .then((res) => {
         let quizzesStatus: any = {};
@@ -614,7 +586,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
     getQuizzesByCourseId(props.courseId);
     setOptionsEnableSwitchStatus();
     setDefaultCheckedStatus();
-    getUserSettings("");
+    // getUserSettings("");
     prepareDefaultSettingsOptionsChecked();
   }, []);
 
@@ -628,6 +600,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
 
     quizStat[quiz.title] = true;
     setQuizzesStat(quizStat);
+    setNoQuizConfig(true);
     getUserSettings(quiz.id);
     setIsReset(false);
   };
@@ -722,7 +695,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
 
   return (
     <div className="flex flex-col gap-5 justify-center items-center mt-5 text-center container text-lg">
-      <div className="flex flex-row flex-wrap gap-10">
+      <div className="flex flex-row flex-wrap gap-10 justify-center">
         {quizzes ? (
           quizzes.map((quiz: any, index: number) => {
             return (
