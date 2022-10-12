@@ -22,6 +22,7 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
   let [quizzes, setQuizzes] = React.useState<Object | null>(null);
   const [enrollments, setEnrollments] = React.useState<Object | null>(null);
   const [showAuthModal, setShowAuthModal] = React.useState<boolean>(false);
+  const [authForQuizId, setAuthForQuizId] = React.useState<string | null>(null);
   let [studentPhoto, setStudentPhoto] = React.useState<any>(null);
   let [studentId, setStudentId] = React.useState<any>(null);
   const [quizId, setQuizId] = React.useState<string | null>(null);
@@ -242,6 +243,7 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
       if (data.type === "chat") {
         console.log("chat data", data);
         let msg = JSON.parse(data.message);
+        setAuthForQuizId(msg.quizId)
         if (msg.msgType === "STU_LIVE_REP") {
           let stuId = msg.msg.stuId;
           let stage = msg.msg.status;
@@ -288,6 +290,7 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
         <Grid
           data={quizzes}
           nestedTable={true}
+          authQuizId={authForQuizId}
           enableAuth={doAuth}
           nestedTableData={enrollments}
           pagination={true}

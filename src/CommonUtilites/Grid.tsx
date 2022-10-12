@@ -9,6 +9,7 @@ interface Props {
   mainTableColumns: any;
   nestedTableColumns: any;
   childTableActions: any;
+  authQuizId?: any;
   mainTableActions: any;
   expandedRow: (row: any) => void;
   enableAuth: any;
@@ -30,6 +31,8 @@ const Grid: React.FunctionComponent<Props> = (props): JSX.Element => {
                 type="link"
                 key={row.id}
                 disabled={
+                  props.authQuizId &&
+                  props.authQuizId === selectedQuizId &&
                   props.enableAuth &&
                   props.enableAuth.step === "Authentication" &&
                   props.enableAuth.studId === row.user.id
