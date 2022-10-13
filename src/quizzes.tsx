@@ -317,17 +317,17 @@ const Quzzies: React.FC<Props> = (props) => {
     }
   };
 
-  // const handleDeSelectQuiz = () => {
-  //   let qObj: any = { ...quizObj };
+  const handleDeSelectQuiz = () => {
+    let qObj: any = { ...quizObj };
 
-  //   Object.keys(qObj).forEach((key: any) => {
-  //     qObj[key] = false;
-  //   });
+    Object.keys(qObj).forEach((key: any) => {
+      qObj[key] = false;
+    });
 
-  //   setQuizObj(qObj);
-  //   setSelectedQuiz(null);
-  //   setQuizConfig(null);
-  // };
+    setQuizObj(qObj);
+    setSelectedQuiz(null);
+    setQuizConfig(null);
+  };
 
   const handleModalClose = () => {
     setModalComponent(null);
@@ -581,7 +581,7 @@ const Quzzies: React.FC<Props> = (props) => {
                     <button
                       type="button"
                       disabled={disableDeSelect}
-                      onClick={handleDateTimePicker}
+                      onClick={handleDeSelectQuiz}
                       className={`inline-block ${
                         disableDeSelect
                           ? "cursor-not-allowed"

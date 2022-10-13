@@ -11,7 +11,7 @@ ExamdAutoProctorJS = {
   policy_url: null,
   rules_url: null,
   media_url: null,
-  update_url: "https://examd.us/cdn/urls/xproctor/1",
+  update_url: "https://examd.online/cdn/urls/xproctor/1",
   htvdofeed_url: null,
   socketEp: null,
 

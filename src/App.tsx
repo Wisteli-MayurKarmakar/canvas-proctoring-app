@@ -37,6 +37,7 @@ function App() {
   let [studentId, setStudentId] = React.useState<any>(null);
   let [accountId, setAccountId] = React.useState<any>(null);
   let [student, setStudent] = React.useState<any>(null);
+  let [invokeUrl, setInvokeUrl] = React.useState<any>(null);
   let [proctoringProps, setProctoringProps] = React.useState<Object | null>(
     null
   );
@@ -104,26 +105,29 @@ function App() {
   const setUserId = async () => {
     let url_string = window.location.href;
     let url = new URL(url_string);
-    // let userId = url.searchParams.get("userId");
-    // let courseId = url.searchParams.get("courseId");
-    // let toolConsumerGuid = url.searchParams.get("toolConsumerGuid");
-    // let loginId = url.searchParams.get("loginId");
-    // let studentId = url.searchParams.get("studentId");
+    let userId = url.searchParams.get("userId");
+    let courseId = url.searchParams.get("courseId");
+    let toolConsumerGuid = url.searchParams.get("toolConsumerGuid");
+    let loginId = url.searchParams.get("loginId");
+    let studentId = url.searchParams.get("studentId");
     let accId = url.searchParams.get("accoundId");
-    // let quizId = url.searchParams.get("quizId");
+    let quizId = url.searchParams.get("quizId");
     let newTab = url.searchParams.get("newTab");
     let isAuthed = url.searchParams.get("auth");
+    let invokeUrl = url.searchParams.get("invokeUrl");
 
     // Test params
-    let studentId = "1";
+    // let studentId = "1";
 
     // Instructor -> set student 42; student -> set student 1/ 41
-    let loginId = "ncghosh@gmail.com";
+    // let loginId = "ncghosh@gmail.com";
     // let courseId = "23";
-    let quizId = "35";
-    let courseId = "16";
-    let userId = "1";
-    let toolConsumerGuid = "Examd";
+    // let quizId = "35";
+    // let courseId = "16";
+    // let userId = "1";
+    // let toolConsumerGuid = "Examd";
+    // let invokeUrl: string =
+    //   "https://canvas.examd.online/courses/16/external_content/success/external_tool_redirect";
 
     if (!accId) {
       accId = "1";
@@ -144,33 +148,32 @@ function App() {
     if (newTab === "true") {
       setIsNewTab(true);
     }
+    console.log(
+      `userId=${userId}, courseId=${courseId}, auth=${
+        authData ? "true" : "false"
+      }, toolConsumerGuid=${toolConsumerGuid}, studentId=${studentId}, courseId=${courseId}, invokeUrl=${invokeUrl}`
+    );
 
+    setInvokeUrl(invokeUrl);
     setId(userId);
     setAccountId(accId);
     setToolConsumerGuid(toolConsumerGuid);
     setLoginId(loginId);
-    // setId(getUuid(userId));
-    setId(getUuid("1470923eea43f6bcab4326fee7047884cf84f374"));
+    setId(getUuid(userId));
+    // setId(getUuid("1470923eea43f6bcab4326fee7047884cf84f374"));
     setCourseId(courseId as string);
-
-    console.log(
-      `userId=${userId}, courseId=${courseId}, auth=${
-        authData ? "true" : "false"
-      }, toolConsumerGuid=${toolConsumerGuid}, studentId=${studentId}, courseId=${courseId}`
-    );
   };
 
   const getCanvasToken = async () => {
-    let origin: string = window.location.origin;
-
-    if (origin === "http://192.64.80.61:3000") {
-      origin += "/";
-    } else if (origin === "http://localhost:3000") {
-      origin = "https://canvas.examd.online";
+    if (!invokeUrl) {
+      return;
     }
 
+    let url = new URL(invokeUrl);
+    let invokeUrlOrigin: string = url.origin;
+
     let data = new FormData();
-    data.append("invokeUrl", origin);
+    data.append("invokeUrl", invokeUrlOrigin);
     let response = await axios.post(getCanvasTokenUrl, data);
 
     if (response.status === 200) {
@@ -182,10 +185,9 @@ function App() {
   };
 
   useEffect(() => {
-    // getEndPoints();
     getCanvasToken();
     setUserId();
-  }, []);
+  }, [invokeUrl]);
 
   if (loadFlag === "Y" && authData && id && toolConsumerGuid && studentId) {
     return (
@@ -224,7 +226,7 @@ function App() {
       />
     );
   } else {
-    return <DummyPage />;
+    return <DummyPage />
   }
 }
 
