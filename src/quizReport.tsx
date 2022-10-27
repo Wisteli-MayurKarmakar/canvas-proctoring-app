@@ -8,11 +8,13 @@ import {
   fetchCanvasQuizzesByCourseId,
   fetchCanvasEnrollmentsByCourseId,
   getLtiCanvasConfigByGuidCourseIdQuizId,
+  fetchAccountsByIdAndEnrollemntType,
   fetchCanvasCourseDetailsByCourseId,
   viewCanvasProfile,
   getExceptions as getExceptionsUrl,
   getLtiCVideoRef,
 } from "./apiConfigs";
+import { userAuthenticationStore } from "./store/autheticationStore";
 
 interface Props {
   userId: string;
@@ -20,9 +22,11 @@ interface Props {
   reqToken: string;
   toolConsumerGuid: string;
   studentId: string;
+  invokeUrl: string;
+  accountId: string;
 }
 
-const ProctoringExam: FunctionComponent<Props> = (props): JSX.Element => {
+const QuizReports: FunctionComponent<Props> = (props): JSX.Element => {
   let [quizConfigs, setQuizConfigs] = React.useState<any>([]);
   let [row, setRow] = React.useState<any>(null);
   let [mediaFileName, setMediaFileName] = React.useState<string>("");
@@ -35,18 +39,23 @@ const ProctoringExam: FunctionComponent<Props> = (props): JSX.Element => {
   const [courseDetails, setCourseDetails] = React.useState<any>(null);
   const [showRepModal, setShowRepModal] = React.useState<boolean>(false);
   const [studList, setStudList] = React.useState<any>(null);
+  const origin: string = new URL(props.invokeUrl).origin;
 
   const [quizData, setQuizData] = React.useState<any[]>([]);
   const [isFetchingReport, setIsFetchingReport] =
     React.useState<boolean>(false);
   let [selectedQuiz, setSelectedQuiz] = React.useState<any>(null);
-
+  const authenticationData = userAuthenticationStore(
+    (state) => state.authenticationData
+  );
   const userName = "ca6a42188e970ab77fab0e34";
   const password = "e5aa447e19ee4180b5ba1364";
 
   const getCourseQuizesById = () => {
     axios
-      .get(`${fetchCanvasQuizzesByCourseId}${props.courseId}/${props.reqToken}`)
+      .get(
+        `${fetchCanvasQuizzesByCourseId}${props.courseId}/${props.reqToken}/${authenticationData?.instituteId}`
+      )
       .then((res: any) => {
         let data = res.data.map((item: any) => ({
           ...item,
@@ -62,13 +71,14 @@ const ProctoringExam: FunctionComponent<Props> = (props): JSX.Element => {
   const getStudentsByCourseId = () => {
     axios
       .get(
-        `${fetchCanvasEnrollmentsByCourseId}${props.courseId}/${props.studentId}/${props.reqToken}`
+        `${fetchAccountsByIdAndEnrollemntType}/${props.accountId}/student/${authenticationData?.instituteId}/${props.reqToken}`
       )
       .then((res: any) => {
         let data = res.data.map((item: any) => ({
           ...item,
           key: item.id,
         }));
+        console.log("data", data);
         setStudList(data);
       })
       .catch((err) => {
@@ -79,7 +89,7 @@ const ProctoringExam: FunctionComponent<Props> = (props): JSX.Element => {
   const getCourseDetails = () => {
     axios
       .get(
-        `${fetchCanvasCourseDetailsByCourseId}${props.courseId}/${props.reqToken}`
+        `${fetchCanvasCourseDetailsByCourseId}${props.courseId}/${props.reqToken}/${authenticationData?.instituteId}`
       )
       .then((res: any) => {
         setCourseDetails(res.data[0]);
@@ -113,7 +123,6 @@ const ProctoringExam: FunctionComponent<Props> = (props): JSX.Element => {
   };
 
   useEffect(() => {
-    // getEndPoints();
     getCourseDetails();
     getCourseQuizesById();
     getStudentsByCourseId();
@@ -130,7 +139,8 @@ const ProctoringExam: FunctionComponent<Props> = (props): JSX.Element => {
         configObj = config.config;
       }
     });
-    if (!selectedQuiz.all_dates.due_at) {
+    console.log("selectedQuiz", selectedQuiz);
+    if (!selectedQuiz.all_dates[0].due_at) {
       message.error("Something went wrong. Please try again later");
       return;
     }
@@ -209,8 +219,10 @@ const ProctoringExam: FunctionComponent<Props> = (props): JSX.Element => {
       return;
     }
     setRow(row);
-    getUserProfilePicture(row.user.id);
-    getVideoRefId(selectedQuiz.id, selectedQuiz.all_dates.due_at, row.user.id);
+    // getUserProfilePicture(row.user.id);
+    getUserProfilePicture(row.id);
+    // getVideoRefId(selectedQuiz.id, selectedQuiz.all_dates.due_at, row.user.id);
+    getVideoRefId(selectedQuiz.id, selectedQuiz.all_dates[0].due_at, row.id);
   };
 
   const handleRefreshTable = () => {
@@ -224,7 +236,10 @@ const ProctoringExam: FunctionComponent<Props> = (props): JSX.Element => {
       key: "",
       title: `Name`,
       render: (row: any) => {
-        return row.user.name;
+        if ("name" in row) {
+          return row.name;
+        }
+        return "un-named";
       },
     },
     {
@@ -378,7 +393,8 @@ const ProctoringExam: FunctionComponent<Props> = (props): JSX.Element => {
           data={null}
           exceptions={exceptions}
           profilePic={profilePic}
-          studentId={row.user.id}
+          // studentId={row.user.id}
+          studentId={row.id}
           quizId={selectedQuiz.id}
           courseId={props.courseId}
           guid={props.toolConsumerGuid}
@@ -393,4 +409,4 @@ const ProctoringExam: FunctionComponent<Props> = (props): JSX.Element => {
   );
 };
 
-export default ProctoringExam;
+export default QuizReports;

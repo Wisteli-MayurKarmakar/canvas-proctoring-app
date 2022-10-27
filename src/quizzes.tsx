@@ -15,9 +15,11 @@ import AuthenticationModal from "./StudentDashboard/Modals/AuthenticationModal";
 import AddToCalendarButton from "./CommonUtilites/AddToCalendarButton";
 import DateTimePicker from "./CommonUtilites/DateTimePicker";
 import emailjs from "@emailjs/browser";
+import { userAuthenticationStore } from "./store/autheticationStore";
+
 import {
+  fetchCanvasAssignmentsByCourseId,
   fetchCanvasEnrollmentsByCourseId,
-  fetchCanvasQuizzesByCourseId,
   getLtiCanvasConfigByGuidCourseIdQuizId,
   saveLtiStudentProfile,
   sendEmail as sendEmailUrl,
@@ -31,17 +33,18 @@ interface Props {
   procData: any;
   id: string;
   toolConsumerGuid: string;
-  quizId: string;
+  assignmentId: string;
   isNewTab: boolean;
   isAuthed: boolean;
   studentId: string;
   accountId: string;
+  invokeUrl: string;
 }
 
 const Quzzies: React.FC<Props> = (props) => {
-  let [quizzes, setQuizzes] = React.useState<Object[] | null>(null);
+  let [assignments, setAssignments] = React.useState<Object[] | null>(null);
   let [quizConfig, setQuizConfig] = React.useState<any>(null);
-  let [selectedQuiz, setSelectedQuiz] = React.useState<any>(null);
+  let [selectedAssignment, setSelectedAssignment] = React.useState<any>(null);
   let [quizObj, setQuizObj] = React.useState<Object | any>({});
   let [modalComponent, setModalComponent] = React.useState<any>(null);
   let [showOptionModal, setOptionModal] = React.useState<boolean>(false);
@@ -65,13 +68,16 @@ const Quzzies: React.FC<Props> = (props) => {
   let studentQuizAuthObject = useStudentStore(
     (state) => state.studentQuizAuthObject
   );
-
-  let [isQuizProctored, setIsQuizProctored] = React.useState<boolean>(true);
+  const authenticationData = userAuthenticationStore(
+    (state) => state.authenticationData
+  );
+  let [isAssignmentProctored, setIsAssignmentProctored] =
+    React.useState<boolean>(false);
 
   const updateUsersDetails = async () => {
     let students: Object[] = [];
     let response: any = await axios.get(
-      `${fetchCanvasEnrollmentsByCourseId}${props.courseId}/${props.studentId}/${props.authToken}`
+      `${fetchCanvasEnrollmentsByCourseId}${props.courseId}/${props.studentId}/${props.authToken}/${authenticationData?.instituteId}`
     );
 
     response.data.forEach((item: any) => {
@@ -126,21 +132,22 @@ const Quzzies: React.FC<Props> = (props) => {
     }
 
     axios
-      .get(
-        `${fetchCanvasQuizzesByCourseId}${props.courseId}/${props.authToken}`
+      .post(
+        // `${fetchCanvasassignmentsByCourseId}${props.courseId}/${props.authToken}/${authenticationData?.instituteId}`
+        `${fetchCanvasAssignmentsByCourseId}/${props.courseId}/${authenticationData?.instituteId}/${props.authToken}`
       )
       .then((res) => {
         let temp: any = {};
         res.data.forEach((item: any) => {
           temp[item.id] = false;
         });
-        setQuizzes(res.data);
+        setAssignments(res.data);
         setQuizObj(temp);
-        if (props.quizId) {
-          let x = { [props.quizId]: true };
+        if (props.assignmentId) {
+          let x = { [props.assignmentId]: true };
           setQuizObj(x);
-          setSelectedQuiz(
-            res.data.find((item: any) => item.id === props.quizId)
+          setSelectedAssignment(
+            res.data.find((item: any) => item.id === props.assignmentId)
           );
         }
       })
@@ -149,7 +156,7 @@ const Quzzies: React.FC<Props> = (props) => {
       });
 
     if (props.isNewTab) {
-      getQuizConfigs(props.quizId);
+      getQuizConfigs(props.assignmentId);
     }
 
     updateUsersDetails();
@@ -174,40 +181,44 @@ const Quzzies: React.FC<Props> = (props) => {
   }, []);
 
   const getQuizConfigs = async (quizId: string) => {
-    let response = await axios.get(
-      `${getLtiCanvasConfigByGuidCourseIdQuizId}?guid=${[
-        props.toolConsumerGuid,
-      ]}&courseId=${props.courseId}&quizId=${quizId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${props.authToken}`,
-        },
-      }
-    );
+    try {
+      let response = await axios.get(
+        `${getLtiCanvasConfigByGuidCourseIdQuizId}?guid=${[
+          props.toolConsumerGuid,
+        ]}&courseId=${props.courseId}&quizId=${quizId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${props.authToken}`,
+          },
+        }
+      );
 
-    if (response.data) {
-      if (
-        !response.data.recordAudio &&
-        !response.data.recordScreen &&
-        !response.data.recordWebcam
-      ) {
-        setIsQuizProctored(false);
+      if (response.data) {
+        if (
+          response.data.recordAudio ||
+          response.data.recordScreen ||
+          response.data.recordWebcam
+        ) {
+          setIsAssignmentProctored(true);
+        }
+        setQuizConfig(response.data);
+        if (response.data.lockdownBrowser) {
+          setShowLDBDwnldOption(true);
+          setIsAssignmentProctored(true);
+        } else {
+          setShowLDBDwnldOption(false);
+        }
       }
-      setQuizConfig(response.data);
-      if (response.data.lockdownBrowser) {
-        setShowLDBDwnldOption(true);
-        setIsQuizProctored(true);
-      } else {
-        setShowLDBDwnldOption(false);
-      }
+    } catch (err) {
+      setIsAssignmentProctored(false);
     }
   };
 
   useEffect(() => {
-    if (selectedQuiz) {
+    if (selectedAssignment) {
       let authObj = [...studentQuizAuthObject];
       authObj.forEach((item) => {
-        if (item.quizId === selectedQuiz.id) {
+        if (item.quizId === selectedAssignment.id) {
           if (item.studentAuthState) {
             setStudentAuthed(true);
           } else {
@@ -249,7 +260,7 @@ const Quzzies: React.FC<Props> = (props) => {
       setQuizAuthObj(quiz);
     }
     setQuizConfig(null);
-    setIsQuizProctored(true);
+    setIsAssignmentProctored(false);
     setShowLDBDwnldOption(false);
     getQuizConfigs(quizz.id);
 
@@ -261,7 +272,7 @@ const Quzzies: React.FC<Props> = (props) => {
 
     qObj[quizz.id] = true;
     setQuizObj(qObj);
-    setSelectedQuiz(quizz);
+    setSelectedAssignment(quizz);
   };
 
   const handleShowHelpModal = () => {
@@ -325,11 +336,13 @@ const Quzzies: React.FC<Props> = (props) => {
     });
 
     setQuizObj(qObj);
-    setSelectedQuiz(null);
+    setSelectedAssignment(null);
     setQuizConfig(null);
   };
 
-  const handleModalClose = () => {
+  const handleModalClose = async () => {
+    if (modalTitle === "Authentication") {
+    }
     setModalComponent(null);
     setOptionModal(false);
     // window.location.reload();
@@ -344,12 +357,12 @@ const Quzzies: React.FC<Props> = (props) => {
     let templateId: string = "template_iqbfsp2";
     let pubKey: string = "qaGgmKlvzp5138RXC";
     let messageBody: { [key: string]: string } = {
-      subject: `Schedule for ${selectedQuiz.title} - ${date?.format(
+      subject: `Schedule for ${selectedAssignment.name} - ${date?.format(
         "DD/MMM/YYYY"
       )}/ ${time?.format("hh:mm:ss A")}`,
       recipent_name: `${props.student.user.name}`,
       message: `Your quiz ${
-        selectedQuiz.title
+        selectedAssignment.name
       } has been scheduled. Below are the scheduling details.<br>
       Date - ${date?.format("DD/MMM/YYYY")}<br>
       Time - ${time?.format("hh:mm:ss A")}
@@ -373,7 +386,7 @@ const Quzzies: React.FC<Props> = (props) => {
     }
   };
 
-  if (quizzes) {
+  if (assignments) {
     return (
       // <div className="flex flex-col justify-evenly pt-4">
       <div className="grid h-screen place-items-center">
@@ -429,22 +442,22 @@ const Quzzies: React.FC<Props> = (props) => {
               ></div>
             </>
           )}
-          <div className="flex flex-col h-full w-full justify-center gap-4 text-center text-lg">
-            <div className="flex flex-col w-full sm:gap-4 md:gap-4 justify-end">
-              <div className="flex flex-row h-full w-full items-center justify-end gap-2">
+          <div className="flex flex-col h-full w-full justify-center gap-4 text-lg">
+            <div className="flex flex-col w-full gap-4 justify-center">
+              <div className="flex flex-row h-full w-full items-center justify-center gap-2 pb-2">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="16"
                   height="16"
                   fill="currentColor"
-                  className="bi bi-question-circle-fill fill-blue-400 w-6 h-6"
+                  className=" bi bi-question-circle-fill fill-blue-400 w-6 h-6"
                   viewBox="0 0 16 16"
                 >
                   <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM5.496 6.033h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286a.237.237 0 0 0 .241.247zm2.325 6.443c.61 0 1.029-.394 1.029-.927 0-.552-.42-.94-1.029-.94-.584 0-1.009.388-1.009.94 0 .533.425.927 1.01.927z" />
                 </svg>
-                <p className="font-bold pr-40 text-lg">Need Help?</p>
+                <p className="font-bold text-lg text-center">Need Help?</p>
               </div>
-              <div className="flex flex-row gap-1 w-full pt-1 justify-end">
+              <div className="flex flex-row gap-1 w-full pt-1 justify-center">
                 <p
                   className="cursor-pointer text-base font-semibold text-center pr-16 relative bottom-4 left-10"
                   onClick={() => setShowStudentHelpDoc(true)}
@@ -464,14 +477,14 @@ const Quzzies: React.FC<Props> = (props) => {
                 </p>
               </div>
             </div>
-            {showLDBDwnldOption && selectedQuiz && (
+            {showLDBDwnldOption && selectedAssignment && (
               <div
                 className="flex justify-center text-sm p-2 text-blue-700 rounded-lg bg-yellow-200 dark:text-blue-800"
                 role="alert"
               >
                 <p className="flex h-full items-center lg:text-lg sm:text-base md:text-base font-semibold  text-black">
-                  {selectedQuiz.title} can only be taken in a lockdown browser.
-                  If not available download from &nbsp;
+                  {selectedAssignment.name} can only be taken in a lockdown
+                  browser. If not available download from &nbsp;
                   <a
                     href={sebDownloadLink}
                     target="_blank"
@@ -482,15 +495,15 @@ const Quzzies: React.FC<Props> = (props) => {
                 </p>
               </div>
             )}
-            {quizConfig && !isQuizProctored && studentAuthed && (
+            {quizConfig && !isAssignmentProctored && studentAuthed && (
               <div className="flex justify-center bg-yellow-200 p-2 rounded-lg">
                 <p className="flex h-full items-center lg:text-lg sm:text-base md:text-base font-semibold text-black">
-                  This quiz is not proctored, please go to the quiz page and
-                  take the quiz.
+                  This assignment has no proctoring configuration, please go to
+                  the quiz page and take the quiz.
                 </p>
               </div>
             )}
-            {!selectedQuiz ? (
+            {!selectedAssignment ? (
               <div className="w-2/5 self-center">
                 <div
                   className="flex justify-center p-4 text-sm text-blue-700 bg-blue-100 rounded-lg dark:bg-blue-200 dark:text-blue-800"
@@ -512,14 +525,14 @@ const Quzzies: React.FC<Props> = (props) => {
                   <span className="sr-only">Info</span>
                   <div>
                     <span className="text-lg font-medium">
-                      Please Select a Quiz
+                      Please Select an assignment
                     </span>
                   </div>
                 </div>
               </div>
             ) : (
               <div className="flex flex-row justify-center gap-4">
-                {isQuizProctored ? (
+                {isAssignmentProctored ? (
                   <div
                     className="flex p-4 mb-4 text-medium text-blue-700 bg-blue-100 rounded-lg dark:bg-blue-200 dark:text-blue-800"
                     role="alert"
@@ -539,15 +552,23 @@ const Quzzies: React.FC<Props> = (props) => {
                     </svg>
                     <span className="sr-only">Info</span>
                     <div>
-                      <span className="font-lg">
-                        Quiz selected: {selectedQuiz.title}. Please tap{" "}
-                        {!studentAuthed ? (
-                          <b>Authenticate button</b>
-                        ) : (
-                          <b>Start Proctoring button</b>
-                        )}{" "}
-                        to continue.
-                      </span>
+                      {!props.isNewTab ? (
+                        <span className="font-lg">
+                          Assignment selected: {selectedAssignment.name}. Please
+                          tap{" "}
+                          {!studentAuthed ? (
+                            <b>Authenticate button</b>
+                          ) : (
+                            <b>Start Proctoring button</b>
+                          )}{" "}
+                          to continue.
+                        </span>
+                      ) : (
+                        <span className="font-lg font-semibold">
+                          Assignment selected: {selectedAssignment.name}.
+                          Proctoring is in progress.
+                        </span>
+                      )}
                     </div>
                   </div>
                 ) : (
@@ -571,48 +592,22 @@ const Quzzies: React.FC<Props> = (props) => {
                     <span className="sr-only">Info</span>
                     <div>
                       <span className="font-lg">
-                        Quiz selected: {selectedQuiz.title}.
+                        Assignment selected: {selectedAssignment.name}.
                       </span>
                     </div>
                   </div>
                 )}
-                {selectedQuiz && (
-                  <div className="flex space-x-0 mb-4 h-10 items-center pt-4 justify-center">
-                    <button
-                      type="button"
-                      disabled={disableDeSelect}
-                      onClick={handleDeSelectQuiz}
-                      className={`inline-block ${
-                        disableDeSelect
-                          ? "cursor-not-allowed"
-                          : "cursor-pointer"
-                      } px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out`}
-                    >
-                      De-Select
-                    </button>
-                  </div>
-                )}
               </div>
             )}
-            {selectedQuiz && (
-              <div className="flex flex-row gap-4 justify-center">
-                <button
-                  type="button"
-                  onClick={handleDateTimePicker}
-                  className={
-                    "px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
-                  }
-                >
-                  Schedule
-                </button>
-                <AddToCalendarButton quiz={selectedQuiz} />
-              </div>
+            {selectedAssignment && !props.isNewTab && (
+              <AddToCalendarButton assignment={selectedAssignment} />
             )}
-            <div className="flex flex-row justify-center flex-wrap gap-8">
-              {quizzes.map((quiz: any, index: number) => {
+            <div className="flex flex-row justify-center flex-wrap gap-8 max-h-72 overflow-y-scroll">
+              {assignments.map((assignment: any, index: number) => {
                 if (
-                  moment(quiz.all_dates.due_at).isBefore(moment()) ||
-                  Object.keys(quiz.all_dates).length === 0
+                  "due_at" in assignment &&
+                  moment(assignment.due_at).isBefore(moment())
+                  // || Object.keys(assignment.all_dates).length === 0
                 ) {
                   return (
                     <Tooltip
@@ -628,61 +623,103 @@ const Quzzies: React.FC<Props> = (props) => {
                         }}
                         key={index}
                         onClick={(e: any) => e.preventDefault()}
-                        className={`block p-6 max-w-sm bg-white rounded-lg border ${
-                          quizObj[quiz.id]
+                        className={`block p-6 max-w-sm bg-white rounded-lg border text-center ${
+                          quizObj[assignment.id]
                             ? "border-blue-600 border-4"
                             : "border-gray-200 border-2"
                         } hover:bg-gray-100 dark:${
-                          quizObj[quiz.id]
+                          quizObj[assignment.id]
                             ? "border-blue-600"
                             : "border-gray-700"
                         } dark:hover:bg-gray-300`}
                       >
-                        <h1>{quiz.title}</h1>
-                        <p>Type: {quiz.quiz_type}</p>
+                        <h1>{assignment.name}</h1>
                       </div>
                     </Tooltip>
                   );
                 }
                 return (
-                  <div className="flex flex-col gap-4" key={index}>
-                    <div
-                      style={{
-                        cursor: "pointer",
-                      }}
-                      key={index}
-                      onClick={() => handleSelectQuiz(quiz)}
-                      className={`block p-6 max-w-sm bg-white rounded-lg border ${
-                        quizObj[quiz.id]
-                          ? "border-blue-600 border-4"
-                          : "border-gray-200 border-2"
-                      } hover:bg-gray-100 dark:${
-                        quizObj[quiz.id] ? "border-blue-600" : "border-gray-700"
-                      } dark:hover:bg-gray-300`}
-                    >
-                      <h1>{quiz.title}</h1>
-                      <p>Type: {quiz.quiz_type}</p>
+                  <Tooltip
+                    key={index}
+                    placement="top"
+                    title={`${
+                      "due_at" in assignment
+                        ? "Due date - " +
+                          moment(assignment.due_at).format(
+                            "MM/ DD/ YYYY HH:MM a"
+                          )
+                        : "No due date"
+                    }`}
+                  >
+                    <div className="flex flex-col gap-4" key={index}>
+                      <div
+                        style={{
+                          cursor: "pointer",
+                        }}
+                        key={index}
+                        onClick={() => handleSelectQuiz(assignment)}
+                        className={`block p-6 max-w-sm bg-white rounded-lg border text-center ${
+                          quizObj[assignment.id]
+                            ? "border-blue-600 border-4"
+                            : "border-gray-200 border-2"
+                        } hover:bg-gray-100 dark:${
+                          quizObj[assignment.id]
+                            ? "border-blue-600"
+                            : "border-gray-700"
+                        } dark:hover:bg-gray-300`}
+                      >
+                        <h1>{assignment.name}</h1>
+                      </div>
                     </div>
-                  </div>
+                  </Tooltip>
                 );
               })}
             </div>
-            {!studentAuthed && selectedQuiz && quizConfig && (
-              <div className="flex mt-4 items-center justify-center">
-                <div className="flex space-x-2 justify-center">
+            <div className="flex flex-row w-full justify-center mt-4 gap-4">
+              {selectedAssignment && !props.isNewTab && (
+                <div className="flex items-center justify-center">
                   <button
                     type="button"
-                    onClick={() => setShowAuthModal(true)}
-                    className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
+                    onClick={handleDateTimePicker}
+                    className={
+                      "px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
+                    }
                   >
-                    Authenticate
+                    Schedule
                   </button>
                 </div>
-              </div>
-            )}
-            {studentAuthed && isQuizProctored && (
+              )}
+              {!studentAuthed && selectedAssignment && quizConfig && (
+                <div className="flex items-center justify-center">
+                  <div className="flex space-x-2 justify-center">
+                    <button
+                      type="button"
+                      onClick={() => setShowAuthModal(true)}
+                      className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
+                    >
+                      Authenticate
+                    </button>
+                  </div>
+                </div>
+              )}
+              {selectedAssignment && !props.isNewTab && (
+                <div className="flex space-x-0 mb-4 h-10 items-center pt-4 justify-center">
+                  <button
+                    type="button"
+                    disabled={disableDeSelect}
+                    onClick={handleDeSelectQuiz}
+                    className={`inline-block ${
+                      disableDeSelect ? "cursor-not-allowed" : "cursor-pointer"
+                    } px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out`}
+                  >
+                    De-Select
+                  </button>
+                </div>
+              )}
+            </div>
+            {studentAuthed && isAssignmentProctored && (
               <VideoAndScreenRec
-                quiz={selectedQuiz}
+                assignment={selectedAssignment}
                 username={props.student.user.name}
                 pass={props.pass}
                 procData={props.procData}
@@ -695,14 +732,15 @@ const Quzzies: React.FC<Props> = (props) => {
                 studentId={props.studentId}
                 quizConfig={quizConfig}
                 accountId={props.accountId}
+                invokeUrl={props.invokeUrl}
               />
             )}
             {showAuthModal && (
               <AuthenticationModal
                 view={true}
-                quizTitle={selectedQuiz.title}
+                quizTitle={selectedAssignment.name}
                 close={() => setShowAuthModal(false)}
-                quizId={selectedQuiz.id}
+                quizId={selectedAssignment.id}
                 quizConfig={quizConfig}
                 userId={props.id}
                 studentId={props.studentId}
@@ -736,18 +774,9 @@ const Quzzies: React.FC<Props> = (props) => {
                 handleModalClose();
               }}
               footer={[
-                modalTitle === "Help" ? (
+                modalTitle === "Help" && (
                   <Button key="submit" loading={true}>
                     Submit
-                  </Button>
-                ) : (
-                  <Button
-                    key="close"
-                    onClick={() => {
-                      handleModalClose();
-                    }}
-                  >
-                    Close
                   </Button>
                 ),
               ]}
@@ -785,11 +814,13 @@ const Quzzies: React.FC<Props> = (props) => {
     );
   } else {
     return (
-      <div className="flex gap-8 absolute top-2/4 left-2/4">
+      <div className="flex flex-row h-screen w-full gap-4 items-center justify-center">
         {props.isNewTab ? (
-          <p className="text-center">Setting up proctoring. Please wait...</p>
+          <p className="text-center text-lg">
+            Setting up proctoring. Please wait...
+          </p>
         ) : (
-          <p className="text-center">Fetching quizzes...</p>
+          <p className="text-center text-lg">Fetching assignments...</p>
         )}
         <div role="status">
           <svg

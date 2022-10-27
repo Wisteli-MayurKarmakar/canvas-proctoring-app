@@ -167,13 +167,19 @@ const uploadCanvasDL: string = `${baseUrl}student/api/v1/uploadCanvasDL/`;
 
 const fetchCanvasCourseDetailsByCourseId: string = `${baseUrl}student/api/v1/fetchCanvasCourseDetailsByCourseId/`;
 
-const getLtiCVideoRef: string = `${baseUrl}student/api/v1/getLtiCVideoRef`;
+const getLtiCVideoRef: string = `${baseUrl}student/api/v1/getLtiCanvasVideoRef`;
 
 const getExceptions: string = `${baseUrl}ai/db/excp/list/ex/`;
 
 const saveLtiStudentProfile: string = `${baseUrl}student/api/v1/saveLtiStudentProfile`;
 
 const getCanvasTokenUrl: string = `${baseUrl}student/api/v1/getCanvasToken`;
+
+const fetchAccountsByIdAndEnrollemntType: string = `${baseUrl}student/api/v1/fetchAccountsByIdAndEnrollemntType`;
+
+const submitAssignment: string = `${baseUrl}student/api/v1/submitAssignment`;
+
+const fetchCanvasAssignmentsByCourseId: string = `${baseUrl}student/api/v1/fetchCanvasAssignmentsByCourseId`;
 
 export {
   getEndPoints,
@@ -201,4 +207,7 @@ export {
   getExceptions,
   saveLtiStudentProfile,
   getCanvasTokenUrl,
+  fetchAccountsByIdAndEnrollemntType,
+  submitAssignment,
+  fetchCanvasAssignmentsByCourseId
 };

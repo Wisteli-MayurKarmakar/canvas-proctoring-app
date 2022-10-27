@@ -1,7 +1,12 @@
 import { message } from "antd";
 import axios from "axios";
 import React, { useEffect } from "react";
-import {aiMatch, viewCanvasProfile, getLtiStudentProfileDetails} from "../../apiConfigs"
+import { useWebCamStore } from "../../store/globalStore";
+import {
+  aiMatch,
+  viewCanvasProfile,
+  getLtiStudentProfileDetails,
+} from "../../apiConfigs";
 
 interface Props {
   studentId: any;
@@ -17,8 +22,6 @@ const ImageMatchAuthentication: React.FC<Props> = (props): JSX.Element => {
   let [fetching, setFetching] = React.useState<boolean>(false);
   let [userDetails, setUserDetails] = React.useState<any>(null);
   let [proofBlob, setProofBlob] = React.useState<Blob | null>(null);
-  let [isPostAuthMessageVisible, setPostAuthMessageVisible] =
-    React.useState<boolean>(false);
   let [retryInProgress, setRetryInProgress] = React.useState<boolean>(true);
   let videoRef: any = React.useRef<any>();
   let canvasRef: any = React.useRef<any>();
@@ -27,6 +30,12 @@ const ImageMatchAuthentication: React.FC<Props> = (props): JSX.Element => {
   let [studentAuthed, setStudentAuthed] = React.useState<boolean>(false);
   let [retryCount, setRetryCount] = React.useState<number>(0);
   let [isRetry, setIsRetry] = React.useState<boolean>(false);
+  const stream = useWebCamStore((state) => state.stream);
+  const closeWebCamResouce = useWebCamStore(
+    (state) => state.closeWebCamResouce
+  );
+  const initWebCam = useWebCamStore((state) => state.initWebCam);
+  const isWebCamActive = useWebCamStore((state) => state.isWebCamActive);
 
   function convertBase64toBlob(
     b64Data: string,
@@ -64,17 +73,13 @@ const ImageMatchAuthentication: React.FC<Props> = (props): JSX.Element => {
     }
     formData.append("imaget", snapshotBlob, props.studentId + "_2.jpg");
     formData.append("name", props.studentId);
-    let response = await axios.post(
-      `${aiMatch}`,
-      formData,
-      {
-        headers: {
-          Accept: "*/*",
-          "Content-Type": "multipart/form-data",
-          Authorization: `Basic ${btoa("TIxApZe7MCosW6:pU1URzjGkY8QVC")}`,
-        },
-      }
-    );
+    let response = await axios.post(`${aiMatch}`, formData, {
+      headers: {
+        Accept: "*/*",
+        "Content-Type": "multipart/form-data",
+        Authorization: `Basic ${btoa("TIxApZe7MCosW6:pU1URzjGkY8QVC")}`,
+      },
+    });
 
     if (response.data.data) {
       return true;
@@ -99,7 +104,6 @@ const ImageMatchAuthentication: React.FC<Props> = (props): JSX.Element => {
 
       (async () => {
         for (let i = 0; i < maxRetry; i++) {
-          console.log(`retry ${i + 1}`);
           if (cancel) {
             return;
           }
@@ -111,25 +115,23 @@ const ImageMatchAuthentication: React.FC<Props> = (props): JSX.Element => {
             resolve();
             return;
           } catch (e) {
-            console.log(e);
           }
           await delay(delayBetweenRetries);
         }
 
         // clearTimeout(timeoutId);
-        console.log("retries failed due to max retries");
         reject("failed to connect to");
       })();
     });
   };
 
   const startVideo = async () => {
-    let stream = await navigator.mediaDevices.getUserMedia({
-      video: true,
-      audio: false,
-    });
+    // let stream = await navigator.mediaDevices.getUserMedia({
+    //   video: true,
+    //   audio: false,
+    // });
 
-    if (videoRef.current && stream) {
+    if (stream) {
       videoRef.current.srcObject = stream;
     }
 
@@ -152,17 +154,24 @@ const ImageMatchAuthentication: React.FC<Props> = (props): JSX.Element => {
       setStudentAuthed(true);
       setWaitCompleted(true);
       setAuthStarted(false);
-      videoRef.current.srcObject.getTracks().forEach((track: any) => {
-        track.stop();
-      });
+      // videoRef.current.srcObject.getTracks().forEach((track: any) => {
+      //   track.stop();
+      // });
+      if (isWebCamActive) {
+        closeWebCamResouce();
+      }
+
       setRetryInProgress(false);
     } catch (err) {
       setWaitCompleted(true);
       setStudentAuthed(false);
       setAuthStarted(false);
-      videoRef.current.srcObject.getTracks().forEach((track: any) => {
-        track.stop();
-      });
+      // videoRef.current.srcObject.getTracks().forEach((track: any) => {
+      //   track.stop();
+      // });
+      if (isWebCamActive) {
+        closeWebCamResouce();
+      }
       setRetryInProgress(false);
     }
   };
@@ -170,15 +179,12 @@ const ImageMatchAuthentication: React.FC<Props> = (props): JSX.Element => {
   const getStudentProof = () => {
     setFetching(true);
     axios
-      .get(
-        `${viewCanvasProfile}${props.guid}/${props.studentId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${props.authToken}`,
-          },
-          responseType: "arraybuffer",
-        }
-      )
+      .get(`${viewCanvasProfile}${props.guid}/${props.studentId}`, {
+        headers: {
+          Authorization: `Bearer ${props.authToken}`,
+        },
+        responseType: "arraybuffer",
+      })
       .then((response: any) => {
         setFetching(false);
         if (response.headers["content-type"] === "application/json") {
@@ -188,6 +194,7 @@ const ImageMatchAuthentication: React.FC<Props> = (props): JSX.Element => {
           type: response.headers["content-type"],
         });
         setStudentPicture(URL.createObjectURL(blob));
+        initWebCam();
         setProofBlob(blob);
       })
       .catch((error: any) => {
@@ -197,14 +204,11 @@ const ImageMatchAuthentication: React.FC<Props> = (props): JSX.Element => {
 
   const getStudentDetails = () => {
     axios
-      .post(
-        `${getLtiStudentProfileDetails}${props.guid}/${props.studentId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${props.authToken}`,
-          },
-        }
-      )
+      .post(`${getLtiStudentProfileDetails}${props.guid}/${props.studentId}`, {
+        headers: {
+          Authorization: `Bearer ${props.authToken}`,
+        },
+      })
       .then((resp) => {
         setUserDetails(resp.data);
       })
@@ -214,11 +218,11 @@ const ImageMatchAuthentication: React.FC<Props> = (props): JSX.Element => {
   };
 
   useEffect(() => {
-    if (studentPicture) {
+    if (studentPicture && stream) {
       setRetryInProgress(true);
       startVideo();
     }
-  }, [studentPicture]);
+  }, [studentPicture, stream]);
 
   useEffect(() => {
     if (isRetry) {
@@ -242,6 +246,9 @@ const ImageMatchAuthentication: React.FC<Props> = (props): JSX.Element => {
   useEffect(() => {
     getStudentDetails();
     getStudentProof();
+    return () => {
+      closeWebCamResouce();
+    }
   }, []);
 
   return (
@@ -301,7 +308,9 @@ const ImageMatchAuthentication: React.FC<Props> = (props): JSX.Element => {
             needed for quizzes configured with authentication . Thanks
           </div>
           <div className="flex flex-row gap-4 items-center">
-            <p className="text-lg font-semibold pt-4">Upload profile picture/ id?</p>
+            <p className="text-lg font-semibold pt-4">
+              Upload profile picture/ id?
+            </p>
             <button
               type="button"
               onClick={() => props.openUpdateProfile(true)}
@@ -341,9 +350,9 @@ const ImageMatchAuthentication: React.FC<Props> = (props): JSX.Element => {
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
-                    fill-rule="evenodd"
+                    fillRule="evenodd"
                     d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                    clip-rule="evenodd"
+                    clipRule="evenodd"
                   ></path>
                 </svg>
                 <span className="sr-only">Danger</span>

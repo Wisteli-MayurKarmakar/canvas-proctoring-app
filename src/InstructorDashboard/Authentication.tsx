@@ -1,14 +1,21 @@
 import React, { useEffect } from "react";
 import Grid from "../CommonUtilites/Grid";
 import axios from "axios";
-import { COURSES_BY_QUIZ_ID_URL } from "../APIs/Constants";
-import { ENROLLMENTS_BY_COURSE_ID_URL } from "../APIs/Constants";
+// import { COURSES_BY_QUIZ_ID_URL } from "../APIs/Constants";
+// import { ENROLLMENTS_BY_COURSE_ID_URL } from "../APIs/Constants";
 import AuthenticateUser from "./AuthenticateUser";
 import Modal from "antd/lib/modal/Modal";
 import { Button } from "antd";
 import { getWebSocketUrl } from "../APIs/apiservices";
 import InfoModal from "../infoModal";
-import { viewCanvasProfile, downloadDL } from "../apiConfigs";
+import {
+  viewCanvasProfile,
+  downloadDL,
+  fetchCanvasQuizzesByCourseId,
+  fetchCanvasEnrollmentsByCourseId,
+  fetchAccountsByIdAndEnrollemntType,
+} from "../apiConfigs";
+import { userAuthenticationStore } from "../store/autheticationStore";
 
 interface Props {
   courseId: string;
@@ -16,6 +23,7 @@ interface Props {
   userId: string;
   guid: string;
   studentId: string;
+  accountId: string;
 }
 
 const Authentication: React.FC<Props> = (props): JSX.Element => {
@@ -34,6 +42,9 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
     string | null
   >(null);
   const socket = getWebSocketUrl();
+  const authenticationData = userAuthenticationStore(
+    (state) => state.authenticationData
+  );
 
   const quizzesColumns = [
     {
@@ -69,7 +80,11 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
       key: "name",
       title: `Name`,
       render: (row: any) => {
-        return row.user.name;
+        console.log("row", row);
+        if ("name" in row) {
+          return row.user.name;
+        }
+        return "Un-named";
       },
     },
     {
@@ -95,7 +110,8 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
       title: `Live Status`,
       render: (row: any) => {
         if (Object.keys(row).length > 0) {
-          return <span>{stuLiveStatusObj[row.user.id]}</span>;
+          // return <span>{stuLiveStatusObj[row.user.id]}</span>;
+          return <span>{stuLiveStatusObj[row.id]}</span>;
         } else {
           return false;
         }
@@ -176,10 +192,12 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
   const fetchQuizzesByCourseId = async (courseId: string): Promise<void> => {
     axios
       .get(
-        COURSES_BY_QUIZ_ID_URL +
+        fetchCanvasQuizzesByCourseId +
           courseId +
           "/" +
-          props.authData.data.access_token
+          props.authData.data.access_token +
+          "/" +
+          authenticationData?.instituteId
       )
       .then((response) => {
         response.data.forEach((quiz: any) => {
@@ -195,10 +213,15 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
   const fetchCourseEnrollments = async (courseId: string): Promise<void> => {
     axios
       .get(
-        ENROLLMENTS_BY_COURSE_ID_URL +
-          props.courseId +
-          `/${props.studentId}/${props.authData.data.access_token}`
+        `${fetchAccountsByIdAndEnrollemntType}/${props.accountId}/student/${authenticationData?.instituteId}/${props.authData.data.access_token}`
       )
+      // axios
+      //   .get(
+      //     fetchAccountsByIdAndEnrollemntType +
+      //       "/" +
+      //       props.accountId +
+      //       `/${props.studentId}/${props.authData.data.access_token}/${authenticationData?.instituteId}`
+      //   )
       .then((response) => {
         let temp: any = {};
         response.data.forEach((enrollment: any) => {
@@ -243,7 +266,7 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
       if (data.type === "chat") {
         console.log("chat data", data);
         let msg = JSON.parse(data.message);
-        setAuthForQuizId(msg.quizId)
+        setAuthForQuizId(msg.quizId);
         if (msg.msgType === "STU_LIVE_REP") {
           let stuId = msg.msg.stuId;
           let stage = msg.msg.status;

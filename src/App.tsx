@@ -6,6 +6,7 @@ import DummyPage from "./dummyPage";
 
 import Quizzes from "./quizzes";
 import InstructorMenu from "./instructorMenu";
+import { userAuthenticationStore } from "./store/autheticationStore";
 // import emailjs from "@emailjs/browser";
 
 import {
@@ -31,7 +32,7 @@ function App() {
   let [authData, setAuthData] = React.useState<any>(null);
   let [endPoints, setEndPoints] = React.useState<any>(null);
   let [toolConsumerGuid, setToolConsumerGuid] = React.useState<any>(null);
-  const [quizId, setQuizId] = React.useState<any>(null);
+  const [assignmentId, setAssignmentId] = React.useState<any>(null);
   const [isNewTab, setIsNewTab] = React.useState<any>(false);
   let [loginId, setLoginId] = React.useState<any>(null);
   let [studentId, setStudentId] = React.useState<any>(null);
@@ -40,6 +41,9 @@ function App() {
   let [invokeUrl, setInvokeUrl] = React.useState<any>(null);
   let [proctoringProps, setProctoringProps] = React.useState<Object | null>(
     null
+  );
+  const setAuthenticationData = userAuthenticationStore(
+    (state) => state.setAuthenticationData
   );
 
   let userName = "ca6a42188e970ab77fab0e34";
@@ -50,32 +54,18 @@ function App() {
     password = "Surabhi@890";
   }
 
-  // const getEndPoints = async () => {
-  //   let response = await axios.get(getEndPointsUrl);
-  //   if (response.data) {
-  //     setEndPoints(response.data);
-  //     authenticateUser(response.data.auth_url as string);
-  //   }
-  // };
-
-  // const authenticateUser = async (url: string) => {
-  //   let response = await axios.post(url, {
-  //     username: userName,
-  //     password: password,
-  //   });
-
-  //   if (response.data) {
-  //     setAuthData(response);
-  //   }
-  // };
-
   const setUserRoleById = async (studId: string) => {
     let role: string = "student";
     try {
       let response: any = await axios.get(
-        `${fetchCanvasEnrollmentsByCourseId}${courseId}/${studId}/${authData.data.access_token}`
+        `${fetchCanvasEnrollmentsByCourseId}${courseId}/${studId}/${authData.data.access_token}/${authData.data.instituteId}`
       );
       if (response.status === 200) {
+
+        // test enrollment
+        response.data = [
+          { role: "StudentEnrollment", user: { name: "TestUser", id: "1" } },
+        ];
         if (response.data.length > 0) {
           let data = response.data[0];
           setStudent(data);
@@ -88,7 +78,6 @@ function App() {
           }
         }
       } else {
-        console.log("here");
         setLoadFlag("N");
       }
     } catch (err) {
@@ -105,29 +94,29 @@ function App() {
   const setUserId = async () => {
     let url_string = window.location.href;
     let url = new URL(url_string);
-    let userId = url.searchParams.get("userId");
-    let courseId = url.searchParams.get("courseId");
-    let toolConsumerGuid = url.searchParams.get("toolConsumerGuid");
-    let loginId = url.searchParams.get("loginId");
-    let studentId = url.searchParams.get("studentId");
+    // let userId = url.searchParams.get("userId");
+    // let courseId = url.searchParams.get("courseId");
+    // let toolConsumerGuid = url.searchParams.get("toolConsumerGuid");
+    // let loginId = url.searchParams.get("loginId");
+    // let studentId = url.searchParams.get("studentId");
     let accId = url.searchParams.get("accoundId");
-    let quizId = url.searchParams.get("quizId");
+    let assignmentId = url.searchParams.get("assignmentId");
     let newTab = url.searchParams.get("newTab");
     let isAuthed = url.searchParams.get("auth");
-    let invokeUrl = url.searchParams.get("invokeUrl");
+    // let invokeUrl = url.searchParams.get("invokeUrl");
 
     // Test params
-    // let studentId = "1";
+    let studentId = "1";
 
     // Instructor -> set student 42; student -> set student 1/ 41
-    // let loginId = "ncghosh@gmail.com";
+    let loginId = "ncghosh@gmail.com";
     // let courseId = "23";
-    // let quizId = "35";
-    // let courseId = "16";
-    // let userId = "1";
-    // let toolConsumerGuid = "Examd";
-    // let invokeUrl: string =
-    //   "https://canvas.examd.online/courses/16/external_content/success/external_tool_redirect";
+    // let quizId = "67";
+    let courseId = "16";
+    let userId = "1";
+    let toolConsumerGuid = "Examd";
+    let invokeUrl: string =
+      "https://canvas.examd.online/courses/16/external_content/success/external_tool_redirect";
 
     if (!accId) {
       accId = "1";
@@ -141,8 +130,8 @@ function App() {
       setAuthed(true);
     }
 
-    if (quizId) {
-      setQuizId(quizId);
+    if (assignmentId) {
+      setAssignmentId(assignmentId);
     }
 
     if (newTab === "true") {
@@ -159,8 +148,8 @@ function App() {
     setAccountId(accId);
     setToolConsumerGuid(toolConsumerGuid);
     setLoginId(loginId);
-    setId(getUuid(userId));
-    // setId(getUuid("1470923eea43f6bcab4326fee7047884cf84f374"));
+    // setId(getUuid(userId));
+    setId(getUuid("1470923eea43f6bcab4326fee7047884cf84f374"));
     setCourseId(courseId as string);
   };
 
@@ -181,6 +170,7 @@ function App() {
       authData["access_token"] = response.data.lmsAccessToken;
       response.data = { ...authData };
       setAuthData(response);
+      setAuthenticationData(response.data);
     }
   };
 
@@ -189,7 +179,15 @@ function App() {
     setUserId();
   }, [invokeUrl]);
 
-  if (loadFlag === "Y" && authData && id && toolConsumerGuid && studentId) {
+  if (
+    loadFlag === "Y" &&
+    authData &&
+    id &&
+    toolConsumerGuid &&
+    studentId &&
+    invokeUrl && 
+    accountId
+  ) {
     return (
       <InstructorMenu
         auth={authData}
@@ -198,6 +196,8 @@ function App() {
         courseId={courseId}
         toolConsumerGuid={toolConsumerGuid}
         studentId={studentId}
+        invokeUrl={invokeUrl}
+        accountId={accountId}
       />
     );
   } else if (
@@ -207,14 +207,15 @@ function App() {
     courseId &&
     toolConsumerGuid &&
     studentId &&
-    accountId
+    accountId &&
+    invokeUrl
   ) {
     return (
       <Quizzes
         courseId={courseId}
         authToken={authData.data.access_token}
         student={student}
-        quizId={quizId}
+        assignmentId={assignmentId}
         pass={password}
         id={id}
         isNewTab={isNewTab}
@@ -223,10 +224,11 @@ function App() {
         isAuthed={authed}
         studentId={studentId}
         accountId={accountId}
+        invokeUrl={invokeUrl}
       />
     );
   } else {
-    return <DummyPage />
+    return <DummyPage />;
   }
 }
 

@@ -7,12 +7,15 @@ import LiveSreaming from "../Modals/LiveStreaming";
 import {
   fetchCanvasQuizzesByCourseId,
   fetchCanvasEnrollmentsByCourseId,
+  fetchAccountsByIdAndEnrollemntType,
 } from "../../apiConfigs";
+import { userAuthenticationStore } from "../../store/autheticationStore";
 
 interface Props {
   authData: any;
   courseId: string;
   userId: string;
+  accountId: string;
   studentId: string;
 }
 
@@ -29,6 +32,9 @@ const LiveProctoring: React.FC<Props> = (props): JSX.Element => {
   const [socketUser, setSocketUser] = React.useState<any>(
     "chat_" + props.userId
   );
+  const authenticationData = userAuthenticationStore(
+    (state) => state.authenticationData
+  );
   const socket = getWebSocketUrl();
   const onJoinColorCode = "border-green-400";
   const onNotJoinColorCode = "border-yellow-400";
@@ -37,7 +43,7 @@ const LiveProctoring: React.FC<Props> = (props): JSX.Element => {
   useEffect(() => {
     axios
       .get(
-        `${fetchCanvasQuizzesByCourseId}${props.courseId}/${props.authData.data.access_token}`
+        `${fetchCanvasQuizzesByCourseId}${props.courseId}/${props.authData.data.access_token}/${authenticationData?.instituteId}`
       )
       .then((res) => {
         let temp: any = {};
@@ -52,12 +58,12 @@ const LiveProctoring: React.FC<Props> = (props): JSX.Element => {
       });
     axios
       .get(
-        `${fetchCanvasEnrollmentsByCourseId}${props.courseId}/${props.studentId}/${props.authData.data.access_token}`
+        `${fetchAccountsByIdAndEnrollemntType}/${props.accountId}/student/${authenticationData?.instituteId}/${props.authData.data.access_token}`
       )
       .then((res) => {
         let temp: any = {};
         res.data.forEach((item: any) => {
-          temp[item.user.id] = 0;
+          temp[item.id] = 0;
         });
         setEnrollmentLiveStatus(temp);
         setEnrollments(res.data);
@@ -66,10 +72,6 @@ const LiveProctoring: React.FC<Props> = (props): JSX.Element => {
         console.log(err);
       });
   }, []);
-
-  const sendDataViaSocket = (channel: any, data: any) => {
-    socket.emit(channel, data);
-  };
 
   const connectSocket = () => {
     socket.connect();
@@ -125,8 +127,8 @@ const LiveProctoring: React.FC<Props> = (props): JSX.Element => {
               <div
                 className={
                   qzSelectTrack[quizz.id]
-                    ? `box-border h-32 w-48  p-4 border-4 rounded hover:bg-slate-300 border-blue-800`
-                    : `box-border h-32 w-48  p-4 border-4 rounded hover:bg-slate-300 border-slate-300`
+                    ? `box-border h-32 w-48  p-4 border-4 rounded-lg hover:bg-slate-300 border-blue-400`
+                    : `box-border h-32 w-48  p-4 border-4 rounded-lg hover:bg-slate-300 border-slate-300`
                 }
                 key={index}
                 style={{ cursor: "pointer" }}
@@ -159,16 +161,17 @@ const LiveProctoring: React.FC<Props> = (props): JSX.Element => {
                     <div
                       key={index}
                       className={`box-border h-72 w-72 text-center p-2 border-2 ${
-                        enrollmentLiveStatus[enrollment.user.id] === 0
+                        enrollmentLiveStatus[enrollment.id] === 0
                           ? onNotJoinColorCode
-                          : enrollmentLiveStatus[enrollment.user.id] === 1
+                          : enrollmentLiveStatus[enrollment.id] === 1
                           ? onJoinColorCode
                           : onViolationsColorCode
                       } rounded`}
                     >
                       <div className="flex flex-col h-full w-full justify-center items-center">
                         <p className="text-center font-semibold">
-                          {enrollment.user.name}
+                          {/* {enrollment.user.name} */}
+                          {enrollment.id}
                         </p>
                         <div className="box-border h-60 mb-3 w-60 border-2 rounded border-blue-400 overflow-y-scroll"></div>
                         <button

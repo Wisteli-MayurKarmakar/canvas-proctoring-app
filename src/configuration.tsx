@@ -28,8 +28,16 @@ import axios from "axios";
 import InfoModal from "./infoModal";
 import { defaultProcSettings } from "./CommonUtilites/ProctorSettingDefaults";
 import "./configuration.css";
-import {autoCompleteSetup, saveLtiCanvasConfig, getLtiCanvasConfigByGuidCourseIdQuizId, fetchCanvasQuizzesByCourseId} from "./apiConfigs"
+import {
+  autoCompleteSetup,
+  saveLtiCanvasConfig,
+  getLtiCanvasConfigByGuidCourseIdQuizId,
+  fetchCanvasQuizzesByCourseId,
+  fetchCanvasAssignmentsByCourseId,
+} from "./apiConfigs";
 import { message } from "antd";
+import { userAuthenticationStore } from "./store/autheticationStore";
+import moment from "moment";
 
 interface Props {
   auth: Object | any;
@@ -238,6 +246,9 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
   let [defaultSettingsOptionsChecked, setDefaultSettingsOptionsChecked] =
     React.useState<any>(null);
   let [isReset, setIsReset] = React.useState<boolean>(false);
+  const authenticationData = userAuthenticationStore(
+    (state) => state.authenticationData
+  );
 
   const borderColorOnSelect = "#12b0ff";
   const defaultBorderColor = "#949799";
@@ -329,22 +340,6 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
         }
       }
     }
-    // if (subOption === "examdLiveLaunch") {
-    //   let res = checkIfVerificationOptSelected();
-    //   if (res) {
-    //     let checkedOptions: optionCheckedProto = { ...(optionsStatus as {}) };
-    //     checkedOptions[option] = false;
-    //     setOptionsStatus(checkedOptions);
-    //     return;
-    //   }
-    // }
-
-    // if (option === "Verification Options") {
-    //   let res = checkIfProctorOptionsSelected();
-    //   if (res) {
-    //     return;
-    //   }
-    // }
 
     let options: optionCheckedProto = { ...(checked[option] as {}) };
     let flag = true;
@@ -381,14 +376,14 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
   }
 
   const handleAutoCompleteSetup = () => {
+    console.log("selected assgn", selectedQuiz);
     axios
       .get(
-        `${autoCompleteSetup}${props.courseId}/${selectedQuiz.title}/${selectedQuiz.id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${props.auth.data.access_token}`,
-          },
-        }
+        `${autoCompleteSetup}${props.courseId}/${encodeURIComponent(
+          selectedQuiz.name
+        )}/${selectedQuiz.id}/${props.auth.data.access_token}/${
+          authenticationData?.instituteId
+        }`
       )
       .then((response) => {
         message.success("Successfully setuped the quiz");
@@ -445,17 +440,13 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
     allOptions["courseId"] = props.courseId;
 
     axios
-      .post(
-        saveLtiCanvasConfig,
-        allOptions,
-        {
-          headers: { Authorization: `Bearer ${props.auth.data.access_token}` },
-        }
-      )
+      .post(saveLtiCanvasConfig, allOptions, {
+        headers: { Authorization: `Bearer ${props.auth.data.access_token}` },
+      })
       .then((res) => {
         if (noQuizConfig) {
-          handleAutoCompleteSetup();
         }
+        handleAutoCompleteSetup();
         message.success("Configurations saved successfully");
         setConfigSaveStatus(true);
       })
@@ -558,10 +549,11 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
   const getQuizzesByCourseId = (id: string): void => {
     axios
       .get(
-        `${fetchCanvasQuizzesByCourseId}${id}/${props.reqToken}`
+        `${fetchCanvasQuizzesByCourseId}${id}/${props.reqToken}/${authenticationData?.instituteId}`
       )
       .then((res) => {
         let quizzesStatus: any = {};
+
         res.data.forEach((quiz: any) => {
           quizzesStatus[quiz.title] = false;
         });
@@ -571,6 +563,22 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
       .catch((err) => {
         console.log(err);
       });
+  };
+
+  const getAssignmentsByCourseId = async (courseId: string): Promise<void> => {
+    let response = await axios.post(
+      `${fetchCanvasAssignmentsByCourseId}/${courseId}/${authenticationData?.instituteId}/${props.reqToken}`
+    );
+
+    if (response.status === 200) {
+      let assignmentsStatus: any = {};
+
+      response.data.forEach((assignment: any) => {
+        assignmentsStatus[assignment.name] = false;
+      });
+      setQuizzes(response.data);
+      setQuizzesStat(assignmentsStatus);
+    }
   };
 
   const prepareDefaultSettingsOptionsChecked = (): void => {
@@ -583,7 +591,8 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
   };
 
   useEffect(() => {
-    getQuizzesByCourseId(props.courseId);
+    // getQuizzesByCourseId(props.courseId);
+    getAssignmentsByCourseId(props.courseId);
     setOptionsEnableSwitchStatus();
     setDefaultCheckedStatus();
     // getUserSettings("");
@@ -598,7 +607,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
       quizStat[key] = false;
     });
 
-    quizStat[quiz.title] = true;
+    quizStat[quiz.name] = true;
     setQuizzesStat(quizStat);
     setNoQuizConfig(true);
     getUserSettings(quiz.id);
@@ -706,17 +715,15 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
                 key={index}
                 onClick={() => handleSelectQuiz(quiz)}
                 className={`block p-6 max-w-sm bg-white rounded-lg border ${
-                  quizzesStat[quiz.title]
+                  quizzesStat[quiz.name]
                     ? "border-blue-400 border-4"
                     : "border-gray-200"
                 } hover:bg-gray-100 dark:${
-                  quizzesStat[quiz.title]
-                    ? "border-blue-400"
-                    : "border-gray-700"
+                  quizzesStat[quiz.name] ? "border-blue-400" : "border-gray-700"
                 } dark:hover:bg-gray-300`}
               >
-                <h1>{quiz.title}</h1>
-                <p>Type: {quiz.quiz_type}</p>
+                <h1>{quiz.name}</h1>
+                {/* <p>Type: {quiz.quiz_type}</p> */}
               </div>
             );
           })

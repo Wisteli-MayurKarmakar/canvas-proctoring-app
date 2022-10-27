@@ -13,12 +13,14 @@ import ProctoringEndInfoModal from "./ProctoringEndInfoModal";
 import SebConfigDev from "./assets/seb_settings/SebClientSettingsDev.seb";
 //@ts-ignore
 import SebConfigLocal from "./assets/seb_settings/SebClientSettingsLocal.seb";
+import { userAuthenticationStore } from "./store/autheticationStore";
 import {
   getLtiCanvasConfigByGuidCourseIdQuizId,
   getQuizSubmissionsStateFromCanvas,
   newTabQuizUrl,
   saveLtiVideoRef,
   completeCanvasQuizSubmission as completeCanvasQuizSubmissionUrl,
+  submitAssignment,
 } from "./apiConfigs";
 
 declare global {
@@ -29,7 +31,7 @@ declare global {
 }
 
 interface Props {
-  quiz: Object | any;
+  assignment: Object | any;
   username: string;
   pass: string;
   procData: any;
@@ -42,6 +44,7 @@ interface Props {
   studentId: string;
   quizConfig: any;
   accountId: string;
+  invokeUrl: string;
 }
 
 useStudentStore.getState().setCurrentTime();
@@ -76,6 +79,9 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
   var peerConnection: any = null;
   var stream: any = null;
   var offer: any = null;
+  const authenticationData = userAuthenticationStore(
+    (state) => state.authenticationData
+  );
   const TURN_SERVER_URL = "turn:examd.us:3478?transport=tcp";
   const TURN_SERVER_USERNAME = "webRtcUser";
   const TURN_SERVER_CREDENTIAL = "C0pp$r567";
@@ -93,11 +99,11 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
   };
 
   const setConfigByQuizCourseGuid = async () => {
-    if (props.quiz) {
+    if (props.assignment) {
       let response = await axios.get(
         `${getLtiCanvasConfigByGuidCourseIdQuizId}?guid=${[
           props.toolConsumerGuid,
-        ]}&courseId=${props.courseId}&quizId=${props.quiz.id}`,
+        ]}&courseId=${props.courseId}&quizId=${props.assignment.id}`,
         {
           headers: {
             Authorization: `Bearer ${props.token}`,
@@ -118,7 +124,7 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
 
   useEffect(() => {
     studentQuizAuthObject.forEach((item) => {
-      if (item.quizId === props.quiz.id) {
+      if (item.quizId === props.assignment.id) {
         if (item.studentAuthState) {
           setStuAuthenticated(true);
         }
@@ -139,11 +145,11 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
         idUser: props.studentId,
         idInstructor: "",
         idReference: videoId,
-        idExam: props.quiz.id,
+        idExam: props.assignment.id,
         status: 1,
         courseId: props.courseId,
         toolConsumerInstanceGuid: props.toolConsumerGuid,
-        examDate: new Date(props.quiz.all_dates.due_at).toISOString(),
+        examDate: new Date(props.assignment.due_at).toISOString(),
       },
       {
         headers: {
@@ -168,7 +174,7 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
   }, [alertUser]);
 
   const handleStartExam = (): void => {
-    if (!props.quiz) {
+    if (!props.assignment) {
       return;
     }
     if (!props.quizConfig) {
@@ -186,13 +192,46 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
     };
     socket.emit("chat", {
       evt: "chat",
-      room: "rm_" + props.courseId + "_" + props.quiz.id + "rtc",
+      room: "rm_" + props.courseId + "_" + props.assignment.id + "rtc",
       text: JSON.stringify(payload),
     });
   };
 
+  const openChannels = async (
+    video: boolean,
+    screen: boolean
+  ): Promise<boolean> => {
+    let res: {
+      status: number;
+      message: string;
+    } = await window.ExamdAutoProctorJS.openChannels(
+      props.quizConfig.recordWebcam || video,
+      true,
+      props.quizConfig.recordScreen || screen,
+      false,
+      (msg: any) => {},
+      (msg: any) => {}
+    );
+
+    if (res.status === 1) {
+      return false;
+    }
+    return true;
+  };
+
+  const submitQuizAssignment = async () => {
+    let response = await axios.post(
+      `${submitAssignment}/${props.courseId}/${authenticationData?.instituteId}/${props.quizConfig.assignmentId}/${props.token}`
+    );
+
+    console.log("assgn resp", response);
+  };
+
   const startProctoring = async () => {
-    let time = moment().add(parseInt(props.quiz["time_limit"]) + 5, "minutes");
+    let time = moment().add(
+      parseInt(props.assignment["time_limit"]) + 5,
+      "minutes"
+    );
     let expTime: number = Math.round(
       moment.duration(time.diff(moment())).asMilliseconds()
     );
@@ -214,7 +253,7 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
       return;
     }
 
-    if (props.quiz === null) {
+    if (props.assignment === null) {
       message.warn("Please select a quiz");
       return;
     }
@@ -240,19 +279,23 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
     let url = new URL(url_string);
     let video = url.searchParams.get("video");
     let screen = url.searchParams.get("screen");
+    let channelsOpened: boolean = false;
 
-    console.log(video, screen);
-
-    await window.ExamdAutoProctorJS.openChannels(
-      props.quizConfig.recordWebcam || (video === "1" ? true : false),
-      true,
-      props.quizConfig.recordScreen || (screen === "1" ? true : false),
-      false,
-      (msg: any) => {},
-      (msg: any) => {
-        console.log("log message", msg);
+    while (!channelsOpened) {
+      let res: boolean = await openChannels(
+        video === "1" ? true : false,
+        screen === "1" ? true : false
+      );
+      if (!res) {
+        message.error(
+          `${props.assignment.title} is a proctored quiz. Please grant the permissions to continue.`
+        );
+      } else {
+        submitQuizAssignment();
       }
-    );
+
+      channelsOpened = res;
+    }
 
     // Starts VDO + Audio recording
     try {
@@ -277,13 +320,12 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
     if (vidEle) {
       stream.getTracks().forEach((track: any) => {});
     }
-    console.log(window.ExamdAutoProctorJS.randomExamId);
     saveLTIPrctoringRef(window.ExamdAutoProctorJS.randomExamId);
   };
 
   const handleEndExam = async () => {
     const response = await axios.get(
-      `${getQuizSubmissionsStateFromCanvas}${props.courseId}/${props.quiz.id}/Y/${props.token}`
+      `${getQuizSubmissionsStateFromCanvas}${props.courseId}/${props.assignment.id}/Y/${props.token}/${authenticationData?.instituteId}`
       // {
       //   headers: {
       //     Authorization: `Bearer ${props.token}`,
@@ -354,7 +396,7 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
 
     sendMsgViaSocket("QUIZ_STARTED", {
       stuId: props.id,
-      quizId: props.quiz.id,
+      quizId: props.assignment.id,
       courseId: props.courseId,
     });
 
@@ -379,10 +421,10 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
   }, [room]);
 
   useEffect(() => {
-    if (props.quiz) {
-      setRoom("rm_" + props.courseId + "_" + props.quiz.id + "rtc");
+    if (props.assignment) {
+      setRoom("rm_" + props.courseId + "_" + props.assignment.id + "rtc");
     }
-  }, [props.quiz]);
+  }, [props.assignment]);
 
   useEffect(() => {
     if (props.quizConfig) {
@@ -392,7 +434,7 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
 
   const checkQuizSubmission = async () => {
     let response = await axios.get(
-      `${getQuizSubmissionsStateFromCanvas}${props.courseId}/${props.quiz.id}/Y/${props.token}`
+      `${getQuizSubmissionsStateFromCanvas}${props.courseId}/${props.assignment.id}/Y/${props.token}/${authenticationData?.instituteId}`
     );
     if (response.data.length > 0) {
       if (startTime.isAfter(moment.utc(response.data[0]["started_at"]))) {
@@ -452,13 +494,13 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
       window.open(
         `${newTabQuizUrl}userId=${props.id}&courseId=${
           props.courseId
-        }&toolConsumerGuid=${props.toolConsumerGuid}&quizId=${
-          props.quiz.id
+        }&toolConsumerGuid=${props.toolConsumerGuid}&assignmentId=${
+          props.assignment.id
         }&newTab=true&auth=1&studentId=${props.studentId}&video=${
           quizConfig.recordWebcam ? "1" : "0"
         }&screen=${quizConfig.recordScreen ? "1" : "0"}&accountId=${
           props.accountId
-        }`,
+        }&invokeUrl=${props.invokeUrl}`,
         "_blank"
       );
       return;
@@ -466,8 +508,8 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
     window.open(
       `http://localhost:3000/lti/config?userId=${props.id}&courseId=${
         props.courseId
-      }&toolConsumerGuid=${props.toolConsumerGuid}&quizId=${
-        props.quiz.id
+      }&toolConsumerGuid=${props.toolConsumerGuid}&assignmentId=${
+        props.assignment.id
       }&newTab=true&auth=1&studentId=${props.studentId}&video=${
         quizConfig.recordWebcam ? "1" : "0"
       }&screen=${quizConfig.recordScreen ? "1" : "0"}&accountId=${
@@ -486,7 +528,7 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
         sebConfig = SebConfigLocal;
       }
 
-      let sebURL: string = `seb://${urlSubStrings[0]}${sebConfig}???userId=${props.id}&courseId=${props.courseId}&toolConsumerGuid=${props.toolConsumerGuid}&quizId=${props.quiz.id}&newTab=true&auth=1&studentId=${props.studentId}`;
+      let sebURL: string = `seb://${urlSubStrings[0]}${sebConfig}???userId=${props.id}&courseId=${props.courseId}&toolConsumerGuid=${props.toolConsumerGuid}&assignmentId=${props.assignment.id}&newTab=true&auth=1&studentId=${props.studentId}`;
       window.location.href = sebURL;
     }
   };
@@ -506,10 +548,7 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
   const completeQuizSubmission = async () => {
     $.ajax({
       async: false,
-      url: `${completeCanvasQuizSubmissionUrl}${props.studentId}/${props.courseId}/${props.quiz.id}`,
-      headers: {
-        Authorization: `Bearer ${props.token}`,
-      },
+      url: `${completeCanvasQuizSubmissionUrl}${props.studentId}/${props.courseId}/${props.assignment.id}/${props.token}`,
     });
   };
 
@@ -528,14 +567,16 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
     <div className="flex flex-col items-center justify-center">
       <div id="xmedia" className="flex flex-row"></div>
       <div className="container text-center flex justify-center gap-8 h-full items-center">
-        <button
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 border border-blue-700 rounded mt-4"
-          onClick={handleStartExam}
-          disabled={!props.quiz}
-          style={{ cursor: props.quiz ? "pointer" : "not-allowed" }}
-        >
-          Start Proctoring
-        </button>
+        {!props.isNewTab && (
+          <button
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 border border-blue-700 rounded mt-4"
+            onClick={handleStartExam}
+            disabled={!props.assignment}
+            style={{ cursor: props.assignment ? "pointer" : "not-allowed" }}
+          >
+            Start Proctoring
+          </button>
+        )}
         {props.isNewTab && (
           <button
             className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 border border-blue-700 rounded mt-4"
@@ -580,7 +621,7 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
               ></path>
             </svg>
             <h3 className="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
-              Open {props.quiz.title} quiz in a new tab
+              Open {props.assignment.name} quiz in a new tab
             </h3>
             <button
               data-modal-toggle="popup-modal"
@@ -599,7 +640,7 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
           close={() => setShowCloseProcPrompt(false)}
           handleOk={handleProctoringEnd}
           quizFinished={quizEnded}
-          quiz={props.quiz}
+          assignment={props.assignment}
         />
       )}
       {showWait && <InfoModal title="" message="Please wait..." />}

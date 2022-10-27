@@ -6,7 +6,7 @@ type Props = {
   close: () => void;
   quizFinished: boolean;
   handleOk: () => void;
-  quiz: any;
+  assignment: any;
 };
 
 const ProctoringEndInfoModal: React.FC<Props> = (props): JSX.Element => {
@@ -34,7 +34,7 @@ const ProctoringEndInfoModal: React.FC<Props> = (props): JSX.Element => {
         ) : (
           <>
             <p className="text-lg font-semibold">
-              We noticed that {props.quiz.title} has been submitted. Proctoring
+              We noticed that {props.assignment.name} has been submitted. Proctoring
               has finished.
             </p>
             <p className="text-lg font-semibold">

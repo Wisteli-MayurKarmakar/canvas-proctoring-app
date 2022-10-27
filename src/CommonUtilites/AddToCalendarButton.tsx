@@ -21,7 +21,7 @@ type EventProto = {
 };
 
 interface Props {
-  quiz: EventProto;
+  assignment: EventProto;
 }
 
 const AddToCalendarButton: React.FC<Props> = (props): JSX.Element => {
@@ -29,7 +29,7 @@ const AddToCalendarButton: React.FC<Props> = (props): JSX.Element => {
 
   useEffect(() => {
     setShowCalendars(false);
-  }, [props.quiz]);
+  }, [props.assignment]);
 
   let calendars: { [key: string]: any }[] = [
     { name: "Google", icon: <GoogleOutlined /> },
@@ -45,8 +45,8 @@ const AddToCalendarButton: React.FC<Props> = (props): JSX.Element => {
 
   const handleCalendarClick = (e: any, calendarName: string) => {
     let event: CalendarEvent = {
-      title: `Take the quiz: ${props.quiz.title}`,
-      start: props.quiz.all_dates.due_at,
+      title: `Take the quiz: ${props.assignment.name}`,
+      start: props.assignment.due_at,
       duration: [3, "hour"],
     };
     let link: string = "";
@@ -77,10 +77,10 @@ const AddToCalendarButton: React.FC<Props> = (props): JSX.Element => {
   };
 
   return (
-    <div className="flex flex-row gap-2 items-center justify-center">
+    <div className="flex flex-col md:flex-row gap-2 items-center justify-center">
       <CalendarOutlined />
-      <p className="font-semibold cursor-pointer hidden md:block" onClick={handleAddCalendarClick}>
-        Add to Calendar [Quiz: {props.quiz.title}]
+      <p className="md:font-semibold cursor-pointer hidden md:block text-xs md:text-lg" onClick={handleAddCalendarClick}>
+        Schedule assignment: {props.assignment.name}
       </p>
       {showCalendars ? (
         <svg

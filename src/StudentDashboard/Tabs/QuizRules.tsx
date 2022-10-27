@@ -144,6 +144,8 @@ const QuizRules: React.FC<Props> = (props) => {
     delete props.quizConfig.toolConsumerInstanceGuid;
     delete props.quizConfig.courseId;
     delete props.quizConfig.quizId;
+    // delete props.quizConfig.assignmentId;
+    // delete props.quizConfig.whitelistPages;
 
     Object.entries(props.quizConfig).forEach((item: any, index: number) => {
       let obj = configAbbrs[item[0]];

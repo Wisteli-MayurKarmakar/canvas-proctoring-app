@@ -2,7 +2,7 @@ import { Tabs } from "antd";
 import React from "react";
 import Configuration from "./configuration";
 import "antd/dist/antd.css";
-import ProctoringExam from "./quizReport";
+import QuizReports from "./quizReport";
 import Authentication from "./InstructorDashboard/Authentication";
 import LiveProctoring from "./InstructorDashboard/Menus/LiveProctoring";
 
@@ -13,6 +13,8 @@ interface Props {
   courseId: any;
   toolConsumerGuid: any;
   studentId: string;
+  invokeUrl: string;
+  accountId: string;
 }
 
 const InstructorMenu: React.FunctionComponent<Props> = (props): JSX.Element => {
@@ -36,18 +38,33 @@ const InstructorMenu: React.FunctionComponent<Props> = (props): JSX.Element => {
           />
         </TabPane>
         <TabPane tab="Authentication" key="2">
-          <Authentication courseId={props.courseId} authData={props.auth} userId={props.id} guid={props.toolConsumerGuid} studentId={props.studentId}/>
+          <Authentication
+            courseId={props.courseId}
+            authData={props.auth}
+            userId={props.id}
+            guid={props.toolConsumerGuid}
+            studentId={props.studentId}
+            accountId={props.accountId}
+          />
         </TabPane>
         <TabPane tab="Proctoring Exam" key="3">
-          <LiveProctoring authData={props.auth} courseId={props.courseId} userId={props.id} studentId={props.studentId}/>
+          <LiveProctoring
+            authData={props.auth}
+            courseId={props.courseId}
+            userId={props.id}
+            studentId={props.studentId}
+            accountId={props.accountId}
+          />
         </TabPane>
         <TabPane tab="Quiz reports" key="4">
-          <ProctoringExam
-            userId={props.emailAsId}
+          <QuizReports
+            userId={props.id}
             courseId={props.courseId}
             reqToken={props.auth.data.access_token}
             toolConsumerGuid={props.toolConsumerGuid}
             studentId={props.studentId}
+            invokeUrl={props.invokeUrl}
+            accountId={props.accountId}
           />
         </TabPane>
       </Tabs>

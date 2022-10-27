@@ -5,7 +5,9 @@ import { devtools } from "zustand/middleware";
 
 type WebCamStore = {
   stream?: MediaStream;
-  setStream: (stream: MediaStream) => void;
+  isWebCamActive: boolean;
+  initWebCam: () => void;
+  closeWebCamResouce: () => void;
 };
 
 type StudentStore = {
@@ -21,11 +23,35 @@ type StudentStore = {
 
 export const useWebCamStore = create<WebCamStore>()(
   devtools(
-    (set) => ({
+    (set, get) => ({
       stream: undefined,
-      setStream: (streamSource) => set({ stream: streamSource }),
+      isWebCamActive: false,
+      initWebCam: async () => {
+        let streamInstance = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: false,
+        });
+
+        if (streamInstance) {
+          set({
+            stream: streamInstance,
+            isWebCamActive: streamInstance.active,
+          });
+        }
+      },
+
+      closeWebCamResouce: () => {
+        if (get().isWebCamActive) {
+          get()
+            .stream?.getTracks()
+            .forEach((tracks) => {
+              tracks.stop();
+            });
+          set({ stream: undefined, isWebCamActive: false });
+        }
+      },
     }),
-    { name: "useWebCamStore" }
+    { name: "WebCamStore" }
   )
 );
 
