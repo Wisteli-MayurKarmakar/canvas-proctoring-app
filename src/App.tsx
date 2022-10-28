@@ -1,13 +1,9 @@
 import React, { useEffect } from "react";
-// import "./App.css";
-
 import axios from "axios";
 import DummyPage from "./dummyPage";
-
 import Quizzes from "./quizzes";
 import InstructorMenu from "./instructorMenu";
 import { userAuthenticationStore } from "./store/autheticationStore";
-// import emailjs from "@emailjs/browser";
 
 import {
   getEndPoints as getEndPointsUrl,
@@ -180,7 +176,7 @@ function App() {
     id &&
     toolConsumerGuid &&
     studentId &&
-    invokeUrl && 
+    invokeUrl &&
     accountId
   ) {
     return (

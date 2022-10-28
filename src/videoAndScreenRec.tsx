@@ -323,20 +323,21 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
   };
 
   const handleEndExam = async () => {
-    const response = await axios.get(
-      `${getQuizSubmissionsStateFromCanvas}${props.courseId}/${props.assignment.id}/Y/${props.token}/${authenticationData?.instituteId}`
-    );
-    if (response.data.length > 0) {
-      if (startTime.isAfter(moment.utc(response.data[0]["started_at"]))) {
-        window.close();
-        return;
-      }
+    // const response = await axios.get(
+    //   `${getQuizSubmissionsStateFromCanvas}${props.courseId}/${props.assignment.id}/Y/${props.token}/${authenticationData?.instituteId}`
+    // );
+    // if (response.data.length > 0) {
+    //   if (startTime.isAfter(moment.utc(response.data[0]["started_at"]))) {
+    //     window.close();
+    //     return;
+    //   }
 
-      if (!("finished_at" in response.data[0])) {
-        clearInterval(checkSubmissionInterval);
-        setShowCloseProcPrompt(true);
-      }
-    }
+    //   if (!("finished_at" in response.data[0])) {
+    //     clearInterval(checkSubmissionInterval);
+    //     setShowCloseProcPrompt(true);
+    //   }
+    // }
+    handleProctoringEnd()
   };
 
   const createPeerConnection = async () => {

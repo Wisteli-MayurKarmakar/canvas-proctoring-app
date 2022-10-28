@@ -23,13 +23,13 @@ const Grid: React.FunctionComponent<Props> = (props): JSX.Element => {
 
   const addActions = (quizId: string) => {
     if (props.childTableActions) {
-      props.nestedTableColumns.forEach((col: any) => {
+      props.nestedTableColumns.forEach((col: any, index: number) => {
         if (col.key === "action") {
           col.render = (row: any) => {
             return (
               <Button
                 type="link"
-                key={row.id}
+                key={index}
                 disabled={
                   props.authQuizId &&
                   props.authQuizId === selectedQuizId &&
@@ -70,8 +70,8 @@ const Grid: React.FunctionComponent<Props> = (props): JSX.Element => {
             if (props.nestedTableData) {
               addActions(selectedQuizId as string);
               return (
-                <>
-                  <p className="text-center text-base font-bold underline">
+                <div key={rowData.id}>
+                  <p key={rowData.id + "a"} className="text-center text-base font-bold underline">
                     {rowData.title} enrollments
                   </p>
                   <Table
@@ -83,10 +83,14 @@ const Grid: React.FunctionComponent<Props> = (props): JSX.Element => {
                         : false
                     }
                   />
-                </>
+                </div>
               );
             } else {
-              return <p className="font-bold">Getting enrollments...</p>;
+              return (
+                <p className="font-bold" key={rowData.id}>
+                  Getting enrollments...
+                </p>
+              );
             }
           },
           expandedRowKeys: activeRow,

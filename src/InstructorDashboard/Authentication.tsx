@@ -1,8 +1,6 @@
 import React, { useEffect } from "react";
 import Grid from "../CommonUtilites/Grid";
 import axios from "axios";
-// import { COURSES_BY_QUIZ_ID_URL } from "../APIs/Constants";
-// import { ENROLLMENTS_BY_COURSE_ID_URL } from "../APIs/Constants";
 import AuthenticateUser from "./AuthenticateUser";
 import Modal from "antd/lib/modal/Modal";
 import { Button } from "antd";
@@ -12,7 +10,6 @@ import {
   viewCanvasProfile,
   downloadDL,
   fetchCanvasQuizzesByCourseId,
-  fetchCanvasEnrollmentsByCourseId,
   fetchAccountsByIdAndEnrollemntType,
 } from "../apiConfigs";
 import { userAuthenticationStore } from "../store/autheticationStore";
@@ -105,7 +102,6 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
       title: `Live Status`,
       render: (row: any) => {
         if (Object.keys(row).length > 0) {
-          // return <span>{stuLiveStatusObj[row.user.id]}</span>;
           return <span>{stuLiveStatusObj[row.id]}</span>;
         } else {
           return false;
@@ -116,11 +112,6 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
       dataIndex: "",
       key: "action",
       title: `Action`,
-      //   render: (row: any) => {
-      //     return (
-      //       <button onClick={() => handleViewReport(row)}>View Report</button>
-      //     );
-      //   },
       render: "",
     },
   ];
@@ -210,25 +201,18 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
       .get(
         `${fetchAccountsByIdAndEnrollemntType}/${props.accountId}/student/${authenticationData?.instituteId}/${props.authData.data.access_token}`
       )
-      // axios
-      //   .get(
-      //     fetchAccountsByIdAndEnrollemntType +
-      //       "/" +
-      //       props.accountId +
-      //       `/${props.studentId}/${props.authData.data.access_token}/${authenticationData?.instituteId}`
-      //   )
       .then((response) => {
         let temp: any = {};
-        response.data.forEach((enrollment: any) => {
-          temp[enrollment.user_id] = "NOT JOINED";
+
+        let enrollments = response.data.map((enrollment: any) => {
+          temp[enrollment.id] = "NOT JOINED";
+          return {
+            ...enrollment,
+            user_id: enrollment.id,
+            course_id: props.courseId,
+          };
         });
 
-        let enrollments = response.data.map((enrollment: any) => ({
-          ...enrollment,
-          user_id: enrollment.id,
-          course_id: props.courseId,
-        }));
-        
         setStuLiveStatusObj(temp);
         setEnrollments(enrollments);
       })
@@ -266,7 +250,6 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
 
     socket.on("chat", (data: any) => {
       if (data.type === "chat") {
-        console.log("chat data", data);
         let msg = JSON.parse(data.message);
         setAuthForQuizId(msg.quizId);
         if (msg.msgType === "STU_LIVE_REP") {
@@ -330,14 +313,7 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
           <h2 className="text-sm">Fetching Quizzes. Please wait...</h2>
         </div>
       )}
-      {showWait && (
-        // <Modal visible={showWait} title={null} footer={null} closable={false}>
-        //   <div className="flex h-full w-full items-center justify-center">
-        //     <p className="text-lg font-semibold">Please wait...</p>
-        //   </div>
-        // </Modal>
-        <InfoModal title="" message="Please wait..." />
-      )}
+      {showWait && <InfoModal title="" message="Please wait..." />}
       {showAuthModal &&
         quizId &&
         selectedRow &&

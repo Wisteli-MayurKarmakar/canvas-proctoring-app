@@ -604,7 +604,7 @@ const Quzzies: React.FC<Props> = (props) => {
             {selectedAssignment && !props.isNewTab && (
               <AddToCalendarButton assignment={selectedAssignment} />
             )}
-            <div className="flex flex-row justify-center flex-wrap gap-8 max-h-72 overflow-y-scroll border-2 border-gray-300 rounded-lg py-2">
+            <div className="flex flex-row justify-center flex-wrap gap-8 max-h-72 overflow-y-scroll py-2">
               {assignments.map((assignment: any, index: number) => {
                 if (
                   "due_at" in assignment &&
@@ -756,11 +756,12 @@ const Quzzies: React.FC<Props> = (props) => {
               />
             )}
           </div>
-          {showScheduler && (
+          {showScheduler && selectedAssignment && (
             <DateTimePicker
               visible={showScheduler}
               close={() => setShowScheduler(false)}
               handleDateTimeSelect={handleSelectedDateTime}
+              assignment={selectedAssignment}
             />
           )}
           {modalComponent && showOptionModal && (

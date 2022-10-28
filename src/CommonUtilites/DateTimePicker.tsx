@@ -7,6 +7,7 @@ type Props = {
   visible: boolean;
   close: () => void;
   handleDateTimeSelect: (value: any, time: any) => void;
+  assignment: any;
 };
 
 const App: React.FC<Props> = (props): JSX.Element => {
@@ -35,10 +36,7 @@ const App: React.FC<Props> = (props): JSX.Element => {
       title="Select Date and Time"
       width={"50pc"}
       footer={[
-        <Button
-          disabled={!date || !time}
-          onClick={handleClose}
-        >
+        <Button disabled={!date || !time} onClick={handleClose}>
           Ok
         </Button>,
       ]}
@@ -51,7 +49,15 @@ const App: React.FC<Props> = (props): JSX.Element => {
             key="calendar"
             onChange={onDateChange}
             disabledDate={(current) => {
-              return moment().add(-1, "days") >= current;
+              let upperBound: number = 0;
+              upperBound = moment(props.assignment.due_at).diff(
+                moment(),
+                "day"
+              );
+              return (
+                moment().add(0, "days") >= current ||
+                moment().add(upperBound + 1, "days") <= current
+              );
             }}
           />
         </div>
