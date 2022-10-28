@@ -32,8 +32,8 @@ function App() {
   let [authData, setAuthData] = React.useState<any>(null);
   let [endPoints, setEndPoints] = React.useState<any>(null);
   let [toolConsumerGuid, setToolConsumerGuid] = React.useState<any>(null);
-  const [assignmentId, setAssignmentId] = React.useState<any>(null);
-  const [isNewTab, setIsNewTab] = React.useState<any>(false);
+  let [assignmentId, setAssignmentId] = React.useState<any>(null);
+  let [isNewTab, setIsNewTab] = React.useState<any>(false);
   let [loginId, setLoginId] = React.useState<any>(null);
   let [studentId, setStudentId] = React.useState<any>(null);
   let [accountId, setAccountId] = React.useState<any>(null);
@@ -61,11 +61,6 @@ function App() {
         `${fetchCanvasEnrollmentsByCourseId}${courseId}/${studId}/${authData.data.access_token}/${authData.data.instituteId}`
       );
       if (response.status === 200) {
-
-        // test enrollment
-        response.data = [
-          { role: "StudentEnrollment", user: { name: "TestUser", id: "1" } },
-        ];
         if (response.data.length > 0) {
           let data = response.data[0];
           setStudent(data);
@@ -140,7 +135,7 @@ function App() {
     console.log(
       `userId=${userId}, courseId=${courseId}, auth=${
         authData ? "true" : "false"
-      }, toolConsumerGuid=${toolConsumerGuid}, studentId=${studentId}, courseId=${courseId}, invokeUrl=${invokeUrl}`
+      }, toolConsumerGuid=${toolConsumerGuid}, studentId=${studentId}, assignmentId=${assignmentId}, invokeUrl=${invokeUrl}`
     );
 
     setInvokeUrl(invokeUrl);

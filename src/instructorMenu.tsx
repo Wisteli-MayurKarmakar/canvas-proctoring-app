@@ -47,7 +47,7 @@ const InstructorMenu: React.FunctionComponent<Props> = (props): JSX.Element => {
             accountId={props.accountId}
           />
         </TabPane>
-        <TabPane tab="Proctoring Exam" key="3">
+        <TabPane tab="Proctoring Quiz" key="3">
           <LiveProctoring
             authData={props.auth}
             courseId={props.courseId}

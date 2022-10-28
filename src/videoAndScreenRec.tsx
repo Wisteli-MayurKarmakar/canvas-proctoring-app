@@ -221,25 +221,27 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
 
   const submitQuizAssignment = async () => {
     let response = await axios.post(
-      `${submitAssignment}/${props.courseId}/${authenticationData?.instituteId}/${props.quizConfig.assignmentId}/${props.token}`
+      `${submitAssignment}/${props.courseId}/${props.assignment.id}/${authenticationData?.instituteId}/${props.token}`
     );
 
     console.log("assgn resp", response);
   };
 
   const startProctoring = async () => {
-    let time = moment().add(
-      parseInt(props.assignment["time_limit"]) + 5,
-      "minutes"
-    );
-    let expTime: number = Math.round(
-      moment.duration(time.diff(moment())).asMilliseconds()
-    );
-    completeQuizInterval = setTimeout(() => {
-      completeQuizSubmission();
-      clearTimeout(completeQuizInterval);
-      closeTab();
-    }, expTime);
+    if ("time_limit" in props.assignment) {
+      let time = moment().add(
+        parseInt(props.assignment["time_limit"]) + 5,
+        "minutes"
+      );
+      let expTime: number = Math.round(
+        moment.duration(time.diff(moment())).asMilliseconds()
+      );
+      completeQuizInterval = setTimeout(() => {
+        completeQuizSubmission();
+        clearTimeout(completeQuizInterval);
+        closeTab();
+      }, expTime);
+    }
 
     if (props.quizConfig.lockdownBrowser) {
       if (stuAuthenticated) {
@@ -263,12 +265,9 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
 
     await window.ExamdAutoProctorJS.initLibrary()
       .then((resp: any) => {
-        console.log(resp);
         setAssignedId(resp.assignedId);
       })
-      .catch((error: any) => {
-        console.log(error);
-      });
+      .catch((error: any) => {});
 
     window.ExamdAutoProctorJS.setCredentials(props.username, props.pass);
 
@@ -326,11 +325,6 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
   const handleEndExam = async () => {
     const response = await axios.get(
       `${getQuizSubmissionsStateFromCanvas}${props.courseId}/${props.assignment.id}/Y/${props.token}/${authenticationData?.instituteId}`
-      // {
-      //   headers: {
-      //     Authorization: `Bearer ${props.token}`,
-      //   },
-      // }
     );
     if (response.data.length > 0) {
       if (startTime.isAfter(moment.utc(response.data[0]["started_at"]))) {
@@ -470,13 +464,11 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
     if (onSeb === "true") {
       setOnSeb(true);
     }
-    // setVideo(video === "1" ? true : false);
-    // setScreen(screen === "1" ? true : false);
+
     if (props.isNewTab) {
       checkSubmissionInterval = setInterval(() => {
         checkQuizSubmission();
       }, 10000);
-
       startProctoring();
     }
 
@@ -569,7 +561,8 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
       <div className="container text-center flex justify-center gap-8 h-full items-center">
         {!props.isNewTab && (
           <button
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 border border-blue-700 rounded mt-4"
+            className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight rounded shadow-md hover:bg-blue-700 hover:shadow-lg
+             focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
             onClick={handleStartExam}
             disabled={!props.assignment}
             style={{ cursor: props.assignment ? "pointer" : "not-allowed" }}
@@ -579,7 +572,9 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
         )}
         {props.isNewTab && (
           <button
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 border border-blue-700 rounded mt-4"
+            className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight rounded shadow-md
+             hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg 
+             transition duration-150 ease-in-out"
             onClick={handleEndExam}
             disabled={examStarted ? false : true}
             style={{ cursor: examStarted ? "pointer" : "not-allowed" }}

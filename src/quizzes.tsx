@@ -147,7 +147,9 @@ const Quzzies: React.FC<Props> = (props) => {
           let x = { [props.assignmentId]: true };
           setQuizObj(x);
           setSelectedAssignment(
-            res.data.find((item: any) => item.id === props.assignmentId)
+            res.data.find(
+              (item: any) => item.id === parseInt(props.assignmentId)
+            )
           );
         }
       })
@@ -248,13 +250,13 @@ const Quzzies: React.FC<Props> = (props) => {
     return res;
   };
 
-  const handleSelectQuiz = (quizz: Object | any) => {
-    let res: boolean = checkStoreForRecord(quizz);
+  const handleSelectAssignment = (assignment: Object | any) => {
+    let res: boolean = checkStoreForRecord(assignment);
     if (!res) {
       let quiz: {
         [key: string]: string | boolean;
       } = {
-        quizId: quizz.id,
+        quizId: assignment.id,
         studentAuthState: false,
       };
       setQuizAuthObj(quiz);
@@ -262,7 +264,7 @@ const Quzzies: React.FC<Props> = (props) => {
     setQuizConfig(null);
     setIsAssignmentProctored(false);
     setShowLDBDwnldOption(false);
-    getQuizConfigs(quizz.id);
+    getQuizConfigs(assignment.id);
 
     let qObj: any = { ...quizObj };
 
@@ -270,9 +272,9 @@ const Quzzies: React.FC<Props> = (props) => {
       qObj[key] = false;
     });
 
-    qObj[quizz.id] = true;
+    qObj[assignment.id] = true;
     setQuizObj(qObj);
-    setSelectedAssignment(quizz);
+    setSelectedAssignment(assignment);
   };
 
   const handleShowHelpModal = () => {
@@ -602,7 +604,7 @@ const Quzzies: React.FC<Props> = (props) => {
             {selectedAssignment && !props.isNewTab && (
               <AddToCalendarButton assignment={selectedAssignment} />
             )}
-            <div className="flex flex-row justify-center flex-wrap gap-8 max-h-72 overflow-y-scroll">
+            <div className="flex flex-row justify-center flex-wrap gap-8 max-h-72 overflow-y-scroll border-2 border-gray-300 rounded-lg py-2">
               {assignments.map((assignment: any, index: number) => {
                 if (
                   "due_at" in assignment &&
@@ -657,7 +659,7 @@ const Quzzies: React.FC<Props> = (props) => {
                           cursor: "pointer",
                         }}
                         key={index}
-                        onClick={() => handleSelectQuiz(assignment)}
+                        onClick={() => handleSelectAssignment(assignment)}
                         className={`block p-6 max-w-sm bg-white rounded-lg border text-center ${
                           quizObj[assignment.id]
                             ? "border-blue-600 border-4"
@@ -702,6 +704,24 @@ const Quzzies: React.FC<Props> = (props) => {
                   </div>
                 </div>
               )}
+              {studentAuthed && isAssignmentProctored && (
+                <VideoAndScreenRec
+                  assignment={selectedAssignment}
+                  username={props.student.user.name}
+                  pass={props.pass}
+                  procData={props.procData}
+                  token={props.authToken}
+                  id={props.id}
+                  isNewTab={props.isNewTab}
+                  courseId={props.courseId}
+                  toolConsumerGuid={props.toolConsumerGuid}
+                  isAuthed={props.isAuthed}
+                  studentId={props.studentId}
+                  quizConfig={quizConfig}
+                  accountId={props.accountId}
+                  invokeUrl={props.invokeUrl}
+                />
+              )}
               {selectedAssignment && !props.isNewTab && (
                 <div className="flex space-x-0 mb-4 h-10 items-center pt-4 justify-center">
                   <button
@@ -717,24 +737,7 @@ const Quzzies: React.FC<Props> = (props) => {
                 </div>
               )}
             </div>
-            {studentAuthed && isAssignmentProctored && (
-              <VideoAndScreenRec
-                assignment={selectedAssignment}
-                username={props.student.user.name}
-                pass={props.pass}
-                procData={props.procData}
-                token={props.authToken}
-                id={props.id}
-                isNewTab={props.isNewTab}
-                courseId={props.courseId}
-                toolConsumerGuid={props.toolConsumerGuid}
-                isAuthed={props.isAuthed}
-                studentId={props.studentId}
-                quizConfig={quizConfig}
-                accountId={props.accountId}
-                invokeUrl={props.invokeUrl}
-              />
-            )}
+
             {showAuthModal && (
               <AuthenticationModal
                 view={true}

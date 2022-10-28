@@ -101,7 +101,6 @@ const LiveStreaming: React.FC<Props> = (props): JSX.Element => {
     }
 
     socket.on("chat", (data: any) => {
-      console.log("chat", data);
       if (data.type === "chat") {
         let msg = JSON.parse(data.message);
         if (msg.msgType === "answer") {
@@ -113,7 +112,6 @@ const LiveStreaming: React.FC<Props> = (props): JSX.Element => {
         }
 
         if (msg.msgType === "QUIZ_STARTED") {
-          console.log("msg", msg);
         }
         // if (msg.msgType === "STU_LIVE_REP") {
         //   if (msg.msg.stuId === props.selectedRow.user.id) {
@@ -175,7 +173,7 @@ const LiveStreaming: React.FC<Props> = (props): JSX.Element => {
                     <p className="">Name:</p>
                   </Col>
                   <Col span={12}>
-                    <p className="">{props.student.user.name}</p>
+                    <p className="">{props.student.name}</p>
                   </Col>
                 </Row>
                 <Row gutter={24} style={{ textAlign: "center" }}>

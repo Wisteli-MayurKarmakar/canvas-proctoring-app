@@ -80,28 +80,23 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
       key: "name",
       title: `Name`,
       render: (row: any) => {
-        console.log("row", row);
-        if ("name" in row) {
-          return row.user.name;
-        }
-        return "Un-named";
+        return row.name;
       },
     },
     {
       dataIndex: "type",
       key: "type",
       title: `Enrollment Type`,
+      render: (row: any) => {
+        return "Student";
+      },
     },
     {
-      dataIndex: "enrollment_state",
+      dataIndex: "status",
       key: "enrollment_state",
       title: `Status`,
       render: (row: any) => {
-        if (row === "active") {
-          return <span>Active</span>;
-        } else {
-          return <span>Inactive</span>;
-        }
+        return row;
       },
     },
     {
@@ -227,8 +222,15 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
         response.data.forEach((enrollment: any) => {
           temp[enrollment.user_id] = "NOT JOINED";
         });
+
+        let enrollments = response.data.map((enrollment: any) => ({
+          ...enrollment,
+          user_id: enrollment.id,
+          course_id: props.courseId,
+        }));
+        
         setStuLiveStatusObj(temp);
-        setEnrollments(response.data);
+        setEnrollments(enrollments);
       })
       .catch((error) => {
         console.log(error);

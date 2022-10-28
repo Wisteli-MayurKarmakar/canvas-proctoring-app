@@ -77,8 +77,10 @@ const QuizReports: FunctionComponent<Props> = (props): JSX.Element => {
         let data = res.data.map((item: any) => ({
           ...item,
           key: item.id,
+          user_id: item.id,
+          course_id: props.courseId,
         }));
-        console.log("data", data);
+
         setStudList(data);
       })
       .catch((err) => {
@@ -236,27 +238,23 @@ const QuizReports: FunctionComponent<Props> = (props): JSX.Element => {
       key: "",
       title: `Name`,
       render: (row: any) => {
-        if ("name" in row) {
-          return row.name;
-        }
-        return "un-named";
+        return row.name;
       },
     },
     {
       dataIndex: "type",
       key: "type",
       title: `Enrollment Type`,
+      render: (row: any) => {
+        return "Student";
+      },
     },
     {
-      dataIndex: "enrollment_state",
+      dataIndex: "status",
       key: "enrollment_state",
       title: `Status`,
       render: (row: any) => {
-        if (row === "active") {
-          return <span>Active</span>;
-        } else {
-          return <span>Inactive</span>;
-        }
+        return row;
       },
     },
     {

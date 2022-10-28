@@ -65,8 +65,13 @@ const LiveProctoring: React.FC<Props> = (props): JSX.Element => {
         res.data.forEach((item: any) => {
           temp[item.id] = 0;
         });
+        let enrollments = res.data.map((enrollment: any) => ({
+          ...enrollment,
+          user_id: enrollment.id,
+          course_id: props.courseId,
+        }));
         setEnrollmentLiveStatus(temp);
-        setEnrollments(res.data);
+        setEnrollments(enrollments);
       })
       .catch((err) => {
         console.log(err);
@@ -81,9 +86,7 @@ const LiveProctoring: React.FC<Props> = (props): JSX.Element => {
       user: socketUser,
     });
 
-    socket.on("chat", (data: any) => {
-      console.log("chat data", data);
-    });
+    socket.on("chat", (data: any) => {});
   };
 
   useEffect(() => {
@@ -170,8 +173,8 @@ const LiveProctoring: React.FC<Props> = (props): JSX.Element => {
                     >
                       <div className="flex flex-col h-full w-full justify-center items-center">
                         <p className="text-center font-semibold">
-                          {/* {enrollment.user.name} */}
-                          {enrollment.id}
+                          {enrollment.name}
+                          {/* {enrollment.id} */}
                         </p>
                         <div className="box-border h-60 mb-3 w-60 border-2 rounded border-blue-400 overflow-y-scroll"></div>
                         <button
@@ -192,28 +195,6 @@ const LiveProctoring: React.FC<Props> = (props): JSX.Element => {
               )}
             </div>
           </Col>
-          {/* <Col span={10}>
-            <div className="grid grid-cols-3 h-full gap-3 content-center">
-              {enrollments ? (
-                enrollments.map((item: any, index: number) => {
-                  return (
-                    <button
-                      key={index}
-                      type="button"
-                      style={{ cursor: "none" }}
-                      className="px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
-                    >
-                      {item.user.name}
-                    </button>
-                  );
-                })
-              ) : (
-                <p className="text-center text-xl font-semibold">
-                  Fetching students...
-                </p>
-              )}
-            </div>
-          </Col> */}
         </Row>
       </div>
       {showLiveStream && selectedStudent && selectedQuiz && (

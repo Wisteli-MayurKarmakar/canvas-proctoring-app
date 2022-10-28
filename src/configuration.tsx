@@ -33,11 +33,9 @@ import {
   saveLtiCanvasConfig,
   getLtiCanvasConfigByGuidCourseIdQuizId,
   fetchCanvasQuizzesByCourseId,
-  fetchCanvasAssignmentsByCourseId,
 } from "./apiConfigs";
 import { message } from "antd";
 import { userAuthenticationStore } from "./store/autheticationStore";
-import moment from "moment";
 
 interface Props {
   auth: Object | any;
@@ -233,7 +231,6 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
     {}
   );
   let [quizzesStat, setQuizzesStat] = React.useState<any>();
-  let [infoMsg, setInfoMsg] = React.useState("");
   let [checked, setChecked] = React.useState<checkTypes>(abbrs);
   let [showInfoModal, setShowInfoModal] = React.useState(false);
   let [userSettings, setUserSettings] = React.useState<any>({});
@@ -565,22 +562,6 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
       });
   };
 
-  const getAssignmentsByCourseId = async (courseId: string): Promise<void> => {
-    let response = await axios.post(
-      `${fetchCanvasAssignmentsByCourseId}/${courseId}/${authenticationData?.instituteId}/${props.reqToken}`
-    );
-
-    if (response.status === 200) {
-      let assignmentsStatus: any = {};
-
-      response.data.forEach((assignment: any) => {
-        assignmentsStatus[assignment.name] = false;
-      });
-      setQuizzes(response.data);
-      setQuizzesStat(assignmentsStatus);
-    }
-  };
-
   const prepareDefaultSettingsOptionsChecked = (): void => {
     let optionsChecked: any = {};
 
@@ -591,11 +572,9 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
   };
 
   useEffect(() => {
-    // getQuizzesByCourseId(props.courseId);
-    getAssignmentsByCourseId(props.courseId);
+    getQuizzesByCourseId(props.courseId);
     setOptionsEnableSwitchStatus();
     setDefaultCheckedStatus();
-    // getUserSettings("");
     prepareDefaultSettingsOptionsChecked();
   }, []);
 
@@ -607,7 +586,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
       quizStat[key] = false;
     });
 
-    quizStat[quiz.name] = true;
+    quizStat[quiz.title] = true;
     setQuizzesStat(quizStat);
     setNoQuizConfig(true);
     getUserSettings(quiz.id);
@@ -715,15 +694,15 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
                 key={index}
                 onClick={() => handleSelectQuiz(quiz)}
                 className={`block p-6 max-w-sm bg-white rounded-lg border ${
-                  quizzesStat[quiz.name]
+                  quizzesStat[quiz.title]
                     ? "border-blue-400 border-4"
                     : "border-gray-200"
                 } hover:bg-gray-100 dark:${
-                  quizzesStat[quiz.name] ? "border-blue-400" : "border-gray-700"
+                  quizzesStat[quiz.title] ? "border-blue-400" : "border-gray-700"
                 } dark:hover:bg-gray-300`}
               >
-                <h1>{quiz.name}</h1>
-                {/* <p>Type: {quiz.quiz_type}</p> */}
+                <h1>{quiz.title}</h1>
+                <p>Type: {quiz.quiz_type}</p>
               </div>
             );
           })
@@ -806,7 +785,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
                       Object.keys(optionsStatus).length > 0 &&
                       optionsStatus[key]
                     }
-                    onClick={(e) => handleChange(key, e)}
+                    onChange={(e) => handleChange(key, e)}
                   />
                 </div>
               </div>
