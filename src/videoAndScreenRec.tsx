@@ -45,6 +45,7 @@ interface Props {
   quizConfig: any;
   accountId: string;
   invokeUrl: string;
+  quizId: string;
 }
 
 useStudentStore.getState().setCurrentTime();
@@ -145,7 +146,7 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
         idUser: props.studentId,
         idInstructor: "",
         idReference: videoId,
-        idExam: props.assignment.id,
+        idExam: props.quizId,
         status: 1,
         courseId: props.courseId,
         toolConsumerInstanceGuid: props.toolConsumerGuid,
@@ -323,21 +324,20 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
   };
 
   const handleEndExam = async () => {
-    // const response = await axios.get(
-    //   `${getQuizSubmissionsStateFromCanvas}${props.courseId}/${props.assignment.id}/Y/${props.token}/${authenticationData?.instituteId}`
-    // );
-    // if (response.data.length > 0) {
-    //   if (startTime.isAfter(moment.utc(response.data[0]["started_at"]))) {
-    //     window.close();
-    //     return;
-    //   }
+    const response = await axios.get(
+      `${getQuizSubmissionsStateFromCanvas}${props.courseId}/${props.quizId}/Y/${props.token}/${authenticationData?.instituteId}`
+    );
+    if (response.data.length > 0) {
+      if (startTime.isAfter(moment.utc(response.data[0]["started_at"]))) {
+        window.close();
+        return;
+      }
 
-    //   if (!("finished_at" in response.data[0])) {
-    //     clearInterval(checkSubmissionInterval);
-    //     setShowCloseProcPrompt(true);
-    //   }
-    // }
-    handleProctoringEnd()
+      if (!("finished_at" in response.data[0])) {
+        clearInterval(checkSubmissionInterval);
+        setShowCloseProcPrompt(true);
+      }
+    }
   };
 
   const createPeerConnection = async () => {
@@ -417,7 +417,7 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
 
   useEffect(() => {
     if (props.assignment) {
-      setRoom("rm_" + props.courseId + "_" + props.assignment.id + "rtc");
+      setRoom("rm_" + props.courseId + "_" + props.quizId + "rtc");
     }
   }, [props.assignment]);
 
@@ -429,7 +429,7 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
 
   const checkQuizSubmission = async () => {
     let response = await axios.get(
-      `${getQuizSubmissionsStateFromCanvas}${props.courseId}/${props.assignment.id}/Y/${props.token}/${authenticationData?.instituteId}`
+      `${getQuizSubmissionsStateFromCanvas}${props.courseId}/${props.quizId}/Y/${props.token}/${authenticationData?.instituteId}`
     );
     if (response.data.length > 0) {
       if (startTime.isAfter(moment.utc(response.data[0]["started_at"]))) {
@@ -541,7 +541,7 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
   const completeQuizSubmission = async () => {
     $.ajax({
       async: false,
-      url: `${completeCanvasQuizSubmissionUrl}${props.studentId}/${props.courseId}/${props.assignment.id}/${props.token}`,
+      url: `${completeCanvasQuizSubmissionUrl}${props.studentId}/${props.courseId}/${props.quizId}/${props.token}`,
     });
   };
 

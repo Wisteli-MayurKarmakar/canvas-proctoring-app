@@ -23,6 +23,7 @@ import {
   getLtiCanvasConfigByGuidCourseIdQuizId,
   saveLtiStudentProfile,
   sendEmail as sendEmailUrl,
+  getLtiCanvasConfigByAssignment
 } from "./apiConfigs";
 
 interface Props {
@@ -137,6 +138,11 @@ const Quzzies: React.FC<Props> = (props) => {
         `${fetchCanvasAssignmentsByCourseId}/${props.courseId}/${authenticationData?.instituteId}/${props.authToken}`
       )
       .then((res) => {
+
+        if (res.data.length === 0) {
+          return;
+        }
+
         let temp: any = {};
         res.data.forEach((item: any) => {
           temp[item.id] = false;
@@ -182,17 +188,10 @@ const Quzzies: React.FC<Props> = (props) => {
     };
   }, []);
 
-  const getQuizConfigs = async (quizId: string) => {
+  const getQuizConfigs = async (assignmentId: string) => {
     try {
       let response = await axios.get(
-        `${getLtiCanvasConfigByGuidCourseIdQuizId}?guid=${[
-          props.toolConsumerGuid,
-        ]}&courseId=${props.courseId}&quizId=${quizId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${props.authToken}`,
-          },
-        }
+        `${getLtiCanvasConfigByAssignment}/${assignmentId}`,
       );
 
       if (response.data) {
@@ -330,17 +329,17 @@ const Quzzies: React.FC<Props> = (props) => {
     }
   };
 
-  const handleDeSelectQuiz = () => {
-    let qObj: any = { ...quizObj };
+  // const handleDeSelectQuiz = () => {
+  //   let qObj: any = { ...quizObj };
 
-    Object.keys(qObj).forEach((key: any) => {
-      qObj[key] = false;
-    });
+  //   Object.keys(qObj).forEach((key: any) => {
+  //     qObj[key] = false;
+  //   });
 
-    setQuizObj(qObj);
-    setSelectedAssignment(null);
-    setQuizConfig(null);
-  };
+  //   setQuizObj(qObj);
+  //   setSelectedAssignment(null);
+  //   setQuizConfig(null);
+  // };
 
   const handleModalClose = async () => {
     if (modalTitle === "Authentication") {
@@ -720,9 +719,10 @@ const Quzzies: React.FC<Props> = (props) => {
                   quizConfig={quizConfig}
                   accountId={props.accountId}
                   invokeUrl={props.invokeUrl}
+                  quizId={quizConfig.quizId}
                 />
               )}
-              {selectedAssignment && !props.isNewTab && (
+              {/* {selectedAssignment && !props.isNewTab && (
                 <div className="flex space-x-0 mb-4 h-10 items-center pt-4 justify-center">
                   <button
                     type="button"
@@ -735,7 +735,7 @@ const Quzzies: React.FC<Props> = (props) => {
                     De-Select
                   </button>
                 </div>
-              )}
+              )} */}
             </div>
 
             {showAuthModal && (
@@ -762,6 +762,7 @@ const Quzzies: React.FC<Props> = (props) => {
               close={() => setShowScheduler(false)}
               handleDateTimeSelect={handleSelectedDateTime}
               assignment={selectedAssignment}
+              assignmentConfig={quizConfig}
             />
           )}
           {modalComponent && showOptionModal && (

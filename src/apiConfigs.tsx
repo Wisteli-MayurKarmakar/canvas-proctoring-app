@@ -181,6 +181,8 @@ const submitAssignment: string = `${baseUrl}student/api/v1/submitAssignment`;
 
 const fetchCanvasAssignmentsByCourseId: string = `${baseUrl}student/api/v1/fetchCanvasAssignmentsByCourseId`;
 
+const getLtiCanvasConfigByAssignment: string = `${baseUrl}student/api/v1/getLtiCanvasConfigByAssignment`;
+
 export {
   getEndPoints,
   canvasEnrollmentsByCourseId,
@@ -191,6 +193,7 @@ export {
   downloadDL,
   viewCanvasProfile,
   saveLtiVideoRef,
+  getLtiCanvasConfigByAssignment,
   getQuizSubmissionsStateFromCanvas,
   completeCanvasQuizSubmission,
   newTabQuizUrl,

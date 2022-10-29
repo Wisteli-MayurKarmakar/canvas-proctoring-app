@@ -377,7 +377,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
     axios
       .get(
         `${autoCompleteSetup}${props.courseId}/${encodeURIComponent(
-          selectedQuiz.name
+          selectedQuiz.title
         )}/${selectedQuiz.id}/${props.auth.data.access_token}/${
           authenticationData?.instituteId
         }`

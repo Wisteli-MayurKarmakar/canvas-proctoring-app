@@ -8,6 +8,7 @@ type Props = {
   close: () => void;
   handleDateTimeSelect: (value: any, time: any) => void;
   assignment: any;
+  assignmentConfig: any;
 };
 
 const App: React.FC<Props> = (props): JSX.Element => {
@@ -50,9 +51,9 @@ const App: React.FC<Props> = (props): JSX.Element => {
             onChange={onDateChange}
             disabledDate={(current) => {
               let upperBound: number = 0;
-              upperBound = moment(props.assignment.due_at).diff(
+              upperBound = moment(props.assignmentConfig.availableUntil).diff(
                 moment(),
-                "day"
+                "days"
               );
               return (
                 moment().add(0, "days") >= current ||
@@ -80,15 +81,6 @@ const App: React.FC<Props> = (props): JSX.Element => {
           </div>
         </div>
       </div>
-      {/* <Space direction="vertical" size={12}>
-        <DatePicker showTime onChange={onChange} onOk={handleDateTimeSelect} />
-        <RangePicker
-          showTime={{ format: "HH:mm" }}
-          format="YYYY-MM-DD HH:mm"
-          onChange={onChange}
-          onOk={handleDateTimeSelect}
-        />
-      </Space> */}
     </Modal>
   );
 };

@@ -141,7 +141,6 @@ const QuizReports: FunctionComponent<Props> = (props): JSX.Element => {
         configObj = config.config;
       }
     });
-    console.log("selectedQuiz", selectedQuiz);
     if (!selectedQuiz.all_dates[0].due_at) {
       message.error("Something went wrong. Please try again later");
       return;
@@ -163,7 +162,7 @@ const QuizReports: FunctionComponent<Props> = (props): JSX.Element => {
         }
       );
     } catch (e) {
-      message.error("Failed to fetch result");
+      message.error("No reports available");
       return;
     }
 
