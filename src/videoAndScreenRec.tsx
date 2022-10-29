@@ -16,6 +16,7 @@ import SebConfigLocal from "./assets/seb_settings/SebClientSettingsLocal.seb";
 import { userAuthenticationStore } from "./store/autheticationStore";
 import {
   getLtiCanvasConfigByGuidCourseIdQuizId,
+  getLtiCanvasConfigByAssignment,
   getQuizSubmissionsStateFromCanvas,
   newTabQuizUrl,
   saveLtiVideoRef,
@@ -57,15 +58,15 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
   let [onSeb, setOnSeb] = React.useState<boolean>(false);
   let [showCloseProcPrompt, setShowCloseProcPrompt] =
     React.useState<boolean>(false);
-  let [video, setVideo] = React.useState<boolean>(false);
-  let [screen, setScreen] = React.useState<boolean>(false);
+  // let [video, setVideo] = React.useState<boolean>(false);
+  // let [screen, setScreen] = React.useState<boolean>(false);
   const [examStarted, setExamStarted] = React.useState<boolean>(false);
   let [stuAuthenticated, setStuAuthenticated] = React.useState<boolean>(false);
   let [showProctoringAlert, setShowProctoringAlert] =
     React.useState<boolean>(false);
   const [openNewTabPropmpt, setOpenNewTabPrompt] =
     React.useState<boolean>(false);
-  const [quizConfig, setQuizConfig] = React.useState<any>(null);
+  const [quizConfig, setQuizConfig] = React.useState<any>(props.quizConfig);
   let checkSubmissionInterval: any = null;
   let interval: any = null;
   let completeQuizInterval: any = null;
@@ -102,14 +103,7 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
   const setConfigByQuizCourseGuid = async () => {
     if (props.assignment) {
       let response = await axios.get(
-        `${getLtiCanvasConfigByGuidCourseIdQuizId}?guid=${[
-          props.toolConsumerGuid,
-        ]}&courseId=${props.courseId}&quizId=${props.assignment.id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${props.token}`,
-          },
-        }
+        `${getLtiCanvasConfigByAssignment}/${props.assignment.id}`
       );
 
       if (response.data) {
@@ -150,7 +144,7 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
         status: 1,
         courseId: props.courseId,
         toolConsumerInstanceGuid: props.toolConsumerGuid,
-        examDate: new Date(props.assignment.due_at).toISOString(),
+        examDate: new Date(quizConfig.dueDate).toISOString(),
       },
       {
         headers: {
@@ -225,7 +219,15 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
       `${submitAssignment}/${props.courseId}/${props.assignment.id}/${authenticationData?.instituteId}/${props.token}`
     );
 
-    console.log("assgn resp", response);
+    if (response.status === 200) {
+      message.success(
+        "Assignment submitted successfully. Please go to quiz page and continue. Thanks"
+      );
+      return;
+    }
+
+    message.error("Something went wrong submitting the assignment.");
+    return;
   };
 
   const startProctoring = async () => {

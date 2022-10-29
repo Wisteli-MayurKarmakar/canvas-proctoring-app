@@ -1,7 +1,7 @@
 import { Modal, Timeline } from "antd";
-import axios from "axios";
 import React from "react";
-import { useEffect } from "react";
+
+import {getMedia} from "./apiConfigs"
 
 interface Props {
   show: boolean;
@@ -80,7 +80,7 @@ const Report: React.FC<Props> = ({
               {configuration.recordWebcam ? (
                 <video controls className="object-fill rounded">
                   <source
-                    src={`https://examd.us/media/${fileName}_vdo/webm`}
+                    src={`${getMedia}/${fileName}_vdo/webm`}
                   ></source>
                 </video>
               ) : (
@@ -96,7 +96,7 @@ const Report: React.FC<Props> = ({
               {configuration.recordScreen ? (
                 <video controls className="object-fill rounded">
                   <source
-                    src={`https://examd.us/media/${fileName}_scr/webm`}
+                    src={`${getMedia}/media/${fileName}_scr/webm`}
                   ></source>
                 </video>
               ) : (
@@ -114,7 +114,7 @@ const Report: React.FC<Props> = ({
               {configuration.roomScan ? (
                 <video controls className="object-fill rounded">
                   <source
-                    src={`https://examd.us/media/${guid}_${courseId}_${quizId}_${studentId}_rmvdo/webm`}
+                    src={`${getMedia}/media/${guid}_${courseId}_${quizId}_${studentId}_rmvdo/webm`}
                   ></source>
                 </video>
               ) : (

@@ -23,7 +23,7 @@ import {
   getLtiCanvasConfigByGuidCourseIdQuizId,
   saveLtiStudentProfile,
   sendEmail as sendEmailUrl,
-  getLtiCanvasConfigByAssignment
+  getLtiCanvasConfigByAssignment,
 } from "./apiConfigs";
 
 interface Props {
@@ -138,7 +138,6 @@ const Quzzies: React.FC<Props> = (props) => {
         `${fetchCanvasAssignmentsByCourseId}/${props.courseId}/${authenticationData?.instituteId}/${props.authToken}`
       )
       .then((res) => {
-
         if (res.data.length === 0) {
           return;
         }
@@ -191,7 +190,7 @@ const Quzzies: React.FC<Props> = (props) => {
   const getQuizConfigs = async (assignmentId: string) => {
     try {
       let response = await axios.get(
-        `${getLtiCanvasConfigByAssignment}/${assignmentId}`,
+        `${getLtiCanvasConfigByAssignment}/${assignmentId}`
       );
 
       if (response.data) {
@@ -703,7 +702,7 @@ const Quzzies: React.FC<Props> = (props) => {
                   </div>
                 </div>
               )}
-              {studentAuthed && isAssignmentProctored && (
+              {studentAuthed && isAssignmentProctored && quizConfig && (
                 <VideoAndScreenRec
                   assignment={selectedAssignment}
                   username={props.student.user.name}

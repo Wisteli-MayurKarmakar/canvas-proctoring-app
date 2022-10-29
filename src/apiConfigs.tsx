@@ -183,6 +183,8 @@ const fetchCanvasAssignmentsByCourseId: string = `${baseUrl}student/api/v1/fetch
 
 const getLtiCanvasConfigByAssignment: string = `${baseUrl}student/api/v1/getLtiCanvasConfigByAssignment`;
 
+const getMedia: string = `${baseUrl}media`;
+
 export {
   getEndPoints,
   canvasEnrollmentsByCourseId,
@@ -191,6 +193,7 @@ export {
   getLtiCanvasConfigByGuidCourseIdQuizId,
   fetchCanvasQuizzesByCourseId,
   downloadDL,
+  getMedia,
   viewCanvasProfile,
   saveLtiVideoRef,
   getLtiCanvasConfigByAssignment,
