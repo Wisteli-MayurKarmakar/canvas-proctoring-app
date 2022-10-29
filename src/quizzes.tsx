@@ -742,7 +742,7 @@ const Quzzies: React.FC<Props> = (props) => {
                 view={true}
                 quizTitle={selectedAssignment.name}
                 close={() => setShowAuthModal(false)}
-                quizId={selectedAssignment.id}
+                quizId={quizConfig.quizId}
                 quizConfig={quizConfig}
                 userId={props.id}
                 studentId={props.studentId}

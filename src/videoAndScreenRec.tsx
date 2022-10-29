@@ -187,7 +187,7 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
     };
     socket.emit("chat", {
       evt: "chat",
-      room: "rm_" + props.courseId + "_" + props.assignment.id + "rtc",
+      room: "rm_" + props.courseId + "_" + props.quizId + "rtc",
       text: JSON.stringify(payload),
     });
   };
@@ -393,7 +393,7 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
 
     sendMsgViaSocket("QUIZ_STARTED", {
       stuId: props.id,
-      quizId: props.assignment.id,
+      quizId: props.quizId,
       courseId: props.courseId,
     });
 
