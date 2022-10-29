@@ -144,7 +144,7 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
         status: 1,
         courseId: props.courseId,
         toolConsumerInstanceGuid: props.toolConsumerGuid,
-        examDate: new Date(quizConfig.dueDate).toISOString(),
+        examDate: quizConfig.dueDate + "Z",
       },
       {
         headers: {
