@@ -1,6 +1,7 @@
 import { message } from "antd";
 import React, { useEffect } from "react";
 import { getWebSocketUrl } from "../../APIs/apiservices";
+import { useWebCamStore } from "../../store/globalStore";
 
 interface Props {
   courseId: string;
@@ -19,6 +20,12 @@ const LiveAuthentication: React.FC<Props> = (props): JSX.Element => {
   const user = "chat_" + props.userId + "_" + "stu";
   var peerConnection: any = null;
   var vStream: any = null;
+
+  const initWebCam = useWebCamStore((state) => state.initWebCam);
+  const closeWebCamResouce = useWebCamStore(
+    (state) => state.closeWebCamResouce
+  );
+  const stream = useWebCamStore((state) => state.stream);
 
   const TURN_SERVER_URL = "turn:examd.us:3478?transport=tcp";
   const TURN_SERVER_USERNAME = "webRtcUser";
@@ -40,10 +47,10 @@ const LiveAuthentication: React.FC<Props> = (props): JSX.Element => {
     if (!props.authConfigs.examdLiveLaunch) {
       return;
     }
-    let stream = await navigator.mediaDevices.getUserMedia({
-      video: true,
-      audio: true,
-    });
+    // let stream = await navigator.mediaDevices.getUserMedia({
+    //   video: true,
+    //   audio: true,
+    // });
 
     videoSrc.current.srcObject = stream;
     vStream = stream;
@@ -52,25 +59,29 @@ const LiveAuthentication: React.FC<Props> = (props): JSX.Element => {
 
   const createPeerConnection = async () => {
     peerConnection = new RTCPeerConnection(PC_CONFIG);
-    let localStream: any = null;
-    if (!vStream) {
-      localStream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-        video: true,
-      });
-      videoSrc.current.srcObject = localStream;
-      setVdoStmSource(localStream);
-      vStream = localStream;
-    }
-    if (vStream) {
-      vStream.getTracks().forEach((track: any) => {
-        peerConnection.addTrack(track, vStream);
-      });
-    } else {
-      localStream.getTracks().forEach((track: any) => {
-        peerConnection.addTrack(track, localStream);
-      });
-    }
+    // let localStream: any = null;
+    // if (!vStream) {
+    //   localStream = await navigator.mediaDevices.getUserMedia({
+    //     audio: true,
+    //     video: true,
+    //   });
+    //   videoSrc.current.srcObject = localStream;
+    //   setVdoStmSource(localStream);
+    //   vStream = localStream;
+    // }
+    // if (vStream) {
+    //   vStream.getTracks().forEach((track: any) => {
+    //     peerConnection.addTrack(track, vStream);
+    //   });
+    // } else {
+    //   localStream.getTracks().forEach((track: any) => {
+    //     peerConnection.addTrack(track, localStream);
+    //   });
+    // }
+
+    stream?.getTracks().forEach((track: any) => {
+      peerConnection.addTrack(track, stream);
+    });
 
     peerConnection.ondatachannel = (event: any) => {
       interface DataProto {
@@ -83,22 +94,9 @@ const LiveAuthentication: React.FC<Props> = (props): JSX.Element => {
           message.success("You are successfully authenticated");
           props.isLiveAuthed(true);
 
-          vStream.getTracks().forEach((track: any) => {
+          stream?.getTracks().forEach((track: any) => {
             track.stop();
           });
-
-          // if (vdoStmSource) {
-          //   vdoStmSource.getTracks().forEach((track: any) => {
-          //     track.stop();
-          //   });
-          // } else {
-          //   videoSrc.current.srcObject.getTracks().forEach((track: any) => {
-          //     console.log(track.name);
-          //     track.stop();
-          //   });
-          // }
-
-          //close peerConnection
           peerConnection.close();
         }
       };
@@ -177,8 +175,8 @@ const LiveAuthentication: React.FC<Props> = (props): JSX.Element => {
         if (msg.msgType === "END_AUTH") {
           if (msg.msg.stuId === props.userId) {
             //get tracks from videoSrc and stop the stream
-            if (vStream) {
-              vStream.getTracks().forEach((track: any) => {
+            if (stream) {
+              stream.getTracks().forEach((track: any) => {
                 track.stop();
               });
             }
@@ -189,8 +187,16 @@ const LiveAuthentication: React.FC<Props> = (props): JSX.Element => {
   };
 
   useEffect(() => {
-    sendActiveNotification();
     startVideo();
+  }, [stream]);
+
+  useEffect(() => {
+    sendActiveNotification();
+    initWebCam();
+
+    return () => {
+      closeWebCamResouce();
+    }
   }, []);
 
   return (

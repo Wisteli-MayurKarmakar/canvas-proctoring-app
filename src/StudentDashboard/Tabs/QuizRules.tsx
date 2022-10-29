@@ -1,4 +1,9 @@
-import { CheckOutlined, CloseOutlined } from "@ant-design/icons";
+import {
+  CheckOutlined,
+  CheckSquareOutlined,
+  CloseCircleOutlined,
+  CloseOutlined,
+} from "@ant-design/icons";
 import { Col, Row } from "antd";
 import React, { useEffect } from "react";
 
@@ -134,29 +139,41 @@ let configAbbrs: configAbbrPrototype = {
 };
 
 const QuizRules: React.FC<Props> = (props) => {
-  const fontWeight: string = "semibold"
+  const fontWeight: string = "semibold";
   const getQuizConfigs = (): JSX.Element[] => {
     let items: JSX.Element[] = [];
     let cols: JSX.Element[] = [];
 
-    delete props.quizConfig.idLtiCanvasConfig;
-    delete props.quizConfig.idUser;
-    delete props.quizConfig.toolConsumerInstanceGuid;
-    delete props.quizConfig.courseId;
-    delete props.quizConfig.quizId;
-    // delete props.quizConfig.assignmentId;
-    // delete props.quizConfig.whitelistPages;
+    let config = { ...props.quizConfig };
 
-    Object.entries(props.quizConfig).forEach((item: any, index: number) => {
+    delete config.idLtiCanvasConfig;
+    delete config.idUser;
+    delete config.toolConsumerInstanceGuid;
+    delete config.courseId;
+    delete config.quizId;
+    delete config.assignmentId;
+    delete config.availableFrom;
+    delete config.availableUntil;
+    delete config.dueDate;
+    delete config.whitelistPages;
+    delete config.moduleId;
+
+    Object.entries(config).forEach((item: any, index: number) => {
       let obj = configAbbrs[item[0]];
       cols.push(
         <Col span={4} key={index}>
-          <Row gutter={24} className="mt-4 mb-4" key={index.toString()+"a"}>
-            <Col span={18} key={index.toString()+"b"}>
+          <Row gutter={24} className="mt-4 mb-4" key={index.toString() + "a"}>
+            <Col span={18} key={index.toString() + "b"}>
               <p className="font-bold">{obj && obj.fullName}</p>
             </Col>
-            <Col span={4} key={index.toString()+"c"}>
-              <p>{item[1] ? <CheckOutlined /> : <CloseOutlined />}</p>
+            <Col span={4} key={index.toString() + "c"}>
+              <p>
+                {item[1] ? (
+                  <CheckSquareOutlined style={{ background: "lightgreen", fontSize: 20 }} />
+                ) : (
+                  <CloseCircleOutlined style={{ color: "red", fontSize: 20 }} />
+                )}
+              </p>
             </Col>
           </Row>
         </Col>
@@ -211,15 +228,14 @@ const QuizRules: React.FC<Props> = (props) => {
           {" "}
           6.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; The computer you are using to take
           the exam must not have more than one display or monitor. For example,
-          if you usually use a laptop with a monitor connected,
-          disconnect your monitor and use only the laptop screen.
+          if you usually use a laptop with a monitor connected, disconnect your
+          monitor and use only the laptop screen.
         </p>
         <p className={`font-${fontWeight}`}>
           {" "}
           7.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; You must verify your identity using a
           photo ID that has your name and photo on the same side. The name must
-          match the full name you use in your
-          ExamD account.
+          match the full name you use in your ExamD account.
         </p>
         <p className={`font-${fontWeight}`}>
           {" "}
@@ -230,8 +246,8 @@ const QuizRules: React.FC<Props> = (props) => {
           {" "}
           9.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; If you violate the online proctoring
           rules and receive an Unsatisfactory status, you automatically receive
-          a score of 0 for the exam. For most courses,
-          you are no longer eligible for academic credit.
+          a score of 0 for the exam. For most courses, you are no longer
+          eligible for academic credit.
         </p>
       </div>
       <div>

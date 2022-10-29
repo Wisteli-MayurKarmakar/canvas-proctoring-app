@@ -96,7 +96,7 @@ const Report: React.FC<Props> = ({
               {configuration.recordScreen ? (
                 <video controls className="object-fill rounded">
                   <source
-                    src={`${getMedia}/media/${fileName}_scr/webm`}
+                    src={`${getMedia}/${fileName}_scr/webm`}
                   ></source>
                 </video>
               ) : (

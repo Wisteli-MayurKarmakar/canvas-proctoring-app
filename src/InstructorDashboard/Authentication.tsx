@@ -172,7 +172,7 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
     setSelectedRow(row);
     setQuizId(quizId);
     setShowWait(true);
-    getStudentProofs(row.user.id);
+    getStudentProofs(row.id);
   };
 
   const fetchQuizzesByCourseId = async (courseId: string): Promise<void> => {
@@ -251,7 +251,11 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
     socket.on("chat", (data: any) => {
       if (data.type === "chat") {
         let msg = JSON.parse(data.message);
-        setAuthForQuizId(msg.quizId);
+        
+        if (msg.msg.quizId) {
+          setAuthForQuizId(msg.msg.quizId);
+        }
+
         if (msg.msgType === "STU_LIVE_REP") {
           let stuId = msg.msg.stuId;
           let stage = msg.msg.status;

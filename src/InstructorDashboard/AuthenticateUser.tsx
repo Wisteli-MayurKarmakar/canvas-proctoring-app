@@ -44,9 +44,6 @@ const AuthenticateUser: React.FC<Props> = (props): JSX.Element => {
         username: TURN_SERVER_USERNAME,
         credential: TURN_SERVER_CREDENTIAL,
       },
-      // {
-      //   urls: ["stun:stun1.1.google.com:19302", "stun:stun2.1.google.com:19302"],
-      // }
     ],
   };
 
@@ -81,7 +78,6 @@ const AuthenticateUser: React.FC<Props> = (props): JSX.Element => {
       peerConnection.current.createDataChannel("dataChannel");
     //open data channel
     peerDataChannel.current.onopen = () => {
-      console.log("data channel opened");
     };
 
     destVideo = new MediaStream();
@@ -104,7 +100,6 @@ const AuthenticateUser: React.FC<Props> = (props): JSX.Element => {
   };
 
   const createOffer = async () => {
-    console.log("createOffer")
     setIsAuthenticated(false);
     await createPeerConnection();
 
@@ -165,7 +160,6 @@ const AuthenticateUser: React.FC<Props> = (props): JSX.Element => {
     }
 
     socket.on("chat", (data: any) => {
-      console.log("authuser msg", data);
       if (data.type === "chat") {
         let msg = JSON.parse(data.message);
         if (msg.msgType === "answer") {
@@ -196,7 +190,7 @@ const AuthenticateUser: React.FC<Props> = (props): JSX.Element => {
       peerDataChannel.current.send(
         JSON.stringify({
           authStatus: "STU_AUTHED",
-          stuId: props.selectedRow.user.id,
+          stuId: props.selectedRow.id,
         })
       );
     }
@@ -228,7 +222,7 @@ const AuthenticateUser: React.FC<Props> = (props): JSX.Element => {
           </Col>
           <Col span={6}>
             {/* <p className="text-xl">{props.userName}</p> */}
-            <p className="text-xl">{props.selectedRow.user.name}</p>
+            <p className="text-xl">{props.selectedRow.name}</p>
           </Col>
         </Row>
       </div>
