@@ -119,7 +119,7 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
 
   useEffect(() => {
     studentQuizAuthObject.forEach((item) => {
-      if (item.quizId === props.assignment.id) {
+      if (item.quizId === props.assignment.quizId) {
         if (item.studentAuthState) {
           setStuAuthenticated(true);
         }
@@ -231,6 +231,7 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
   };
 
   const startProctoring = async () => {
+    console.log(`newTab = ${props.isNewTab}, stuAuth = ${stuAuthenticated}`);
     if ("time_limit" in props.assignment) {
       let time = moment().add(
         parseInt(props.assignment["time_limit"]) + 5,
