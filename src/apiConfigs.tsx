@@ -185,8 +185,14 @@ const getLtiCanvasConfigByAssignment: string = `${baseUrl}student/api/v1/getLtiC
 
 const getMedia: string = `${baseUrl}media`;
 
+const saveScheduling: string = `${baseUrl}canvaslms/api/v1/saveLtiSchedule`;
+
+const getScheduling: string = `${baseUrl}canvaslms/api/v1/getLtiSchedule`;
+
 export {
   getEndPoints,
+  saveScheduling,
+  getScheduling,
   canvasEnrollmentsByCourseId,
   autoCompleteSetup,
   saveLtiCanvasConfig,
@@ -215,5 +221,5 @@ export {
   getCanvasTokenUrl,
   fetchAccountsByIdAndEnrollemntType,
   submitAssignment,
-  fetchCanvasAssignmentsByCourseId
+  fetchCanvasAssignmentsByCourseId,
 };

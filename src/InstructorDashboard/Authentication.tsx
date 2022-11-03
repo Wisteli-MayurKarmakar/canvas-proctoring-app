@@ -29,6 +29,8 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
   const [showAuthModal, setShowAuthModal] = React.useState<boolean>(false);
   const [authForQuizId, setAuthForQuizId] = React.useState<string | null>(null);
   let [studentPhoto, setStudentPhoto] = React.useState<any>(null);
+  const [studentAvailableForAuth, setStudentAvailableForAuth] =
+    React.useState<boolean>(false);
   let [studentId, setStudentId] = React.useState<any>(null);
   const [quizId, setQuizId] = React.useState<string | null>(null);
   const [selectedRow, setSelectedRow] = React.useState<any>(null);
@@ -38,6 +40,7 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
   const [selectedQuizTitle, setSelectedQuizTitle] = React.useState<
     string | null
   >(null);
+  let checkAvailabilityInterval: any = null;
   const socket = getWebSocketUrl();
   const authenticationData = userAuthenticationStore(
     (state) => state.authenticationData
@@ -246,12 +249,29 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
           msg: { stuIds: [...ids], quizId: id },
         }),
       });
+
+      if (!studentAvailableForAuth) {
+        checkAvailabilityInterval = setInterval(() => {
+          if (studentAvailableForAuth) {
+            clearInterval(checkAvailabilityInterval);
+          } else {
+            socket.emit("chat", {
+              evt: "chat",
+              room: room,
+              text: JSON.stringify({
+                msgType: "STU_LIVE_REQ",
+                msg: { stuIds: [...ids], quizId: id },
+              }),
+            });
+          }
+        }, 2000);
+      }
     }
 
     socket.on("chat", (data: any) => {
       if (data.type === "chat") {
         let msg = JSON.parse(data.message);
-        
+
         if (msg.msg.quizId) {
           setAuthForQuizId(msg.msg.quizId);
         }
@@ -276,6 +296,7 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
           let step = msg.msg.stepName;
           let temp = { ...stuLiveStatusObj };
           temp[stuId] = step;
+          setStudentAvailableForAuth(true);
           setStuLiveStatusObj(temp);
 
           if (step === "Authentication") {

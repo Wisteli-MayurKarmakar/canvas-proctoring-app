@@ -1,44 +1,144 @@
-import { Button, Calendar, Modal, TimePicker } from "antd";
+import { Button, Calendar, message, Modal, TimePicker } from "antd";
 import type { Moment } from "moment";
 import moment from "moment";
 import { useState } from "react";
+import { useAssignmentStore } from "../store/StudentDashboardStore";
+import { useAppStore } from "..//store/AppSotre";
+import { useCommonStudentDashboardStore } from "../store/StudentDashboardStore";
+import emailjs from "@emailjs/browser";
+import axios from "axios";
+import { saveScheduling } from "../apiConfigs";
 
 type Props = {
   visible: boolean;
   close: () => void;
-  handleDateTimeSelect: (value: any, time: any) => void;
   assignment: any;
   assignmentConfig: any;
 };
 
+type SchedulingData = {
+  scheduleId: string;
+  instituteId: string;
+  assignmentId: number;
+  quizId: string;
+  studentId: string;
+  courseId: string;
+  scheduleDate: string;
+  status: number;
+};
+
 const App: React.FC<Props> = (props): JSX.Element => {
-  const { visible, close, handleDateTimeSelect } = props;
+  const { visible, close } = props;
   const [time, setTime] = useState<Moment | null>(null);
   const [date, setDate] = useState<any>(moment());
-
+  const [isSavingSchedule, setIsSavingSchedule] = useState<boolean>(false);
+  const tokenData = useAppStore((state) => state.tokenData);
+  const urlParamsData = useAppStore((state) => state.urlParamsData);
+  const enrollments = useCommonStudentDashboardStore(
+    (state) => state.enrollments
+  );
+  const selectedAssignment = useAssignmentStore(
+    (state) => state.selectedAssignment
+  );
+  const checkAssignmentSchedules = useAssignmentStore(
+    (state) => state.checkAssignmentSchedules
+  );
   const onTimeChange = (time: Moment | null) => {
+    console.log(time);
     setTime(time);
   };
-
   const onDateChange = (value: Moment) => {
     setDate(value);
   };
 
-  const handleClose = () => {
-    handleDateTimeSelect(date, time);
+  const sendMail = (date: Moment | null, time: Moment | null) => {
+    let serviceId: string = "service_2su5kx4";
+    let templateId: string = "template_iqbfsp2";
+    let pubKey: string = "qaGgmKlvzp5138RXC";
+    let messageBody: { [key: string]: string } = {
+      subject: `Schedule for ${selectedAssignment?.name} - ${date?.format(
+        "DD/MMM/YYYY"
+      )}/ ${time?.format("hh:mm:ss A")}`,
+      recipent_name: `${enrollments?.user.name}`,
+      message: `Your quiz ${
+        selectedAssignment?.name
+      } has been scheduled. Below are the scheduling details.<br>
+      Date - ${date?.format("DD/MMM/YYYY")}<br>
+      Time - ${time?.format("hh:mm:ss A")}
+      `,
+      send_to: `${enrollments?.user.login_id}`,
+      reply_to: "devshantanu@gmail.com",
+    };
+    emailjs
+      .send(serviceId, templateId, messageBody, pubKey)
+      .then((response: any) => {
+        message.success("Quiz has been scheduled successfully");
+        setIsSavingSchedule(false);
+      })
+      .catch((error: any) => {
+        message.error("Failed to schedule the quiz");
+      });
+  };
+
+  const saveSchedule = async (date: Moment, time: Moment) => {
+    setIsSavingSchedule(true);
+
+    let scheduleDate: any = date?.set("hours", time.hours());
+    scheduleDate = date.set("minutes", time.minutes());
+    scheduleDate = date.set("seconds", time.seconds());
+    scheduleDate = date.set("milliseconds", time.milliseconds());
+
+    let data: SchedulingData = {
+      scheduleId: "",
+      instituteId: tokenData.instituteId as any,
+      assignmentId: selectedAssignment?.id as any,
+      quizId: urlParamsData.quizId as any,
+      studentId: urlParamsData.studentId as any,
+      courseId: urlParamsData.courseId as any,
+      scheduleDate: scheduleDate.toISOString(),
+      status: 0,
+    };
+
+    let response = await axios.post(
+      `${saveScheduling}`,
+      { ...data },
+      {
+        headers: {
+          Authorization: `Bearer ${tokenData.lmsAccessToken}`,
+        },
+      }
+    );
+
+    if (response.status !== 200 && response.status !== 201) {
+      message.error("Failed to save the schedule. Please try again");
+      return;
+    }
+
+    checkAssignmentSchedules();
+    sendMail(date, time);
     close();
+  };
+
+  const handleClose = () => {
+    if (date && time) {
+      saveSchedule(date, time);
+    }
   };
 
   return (
     <Modal
       visible={visible}
-      onCancel={() => handleClose()}
+      onCancel={() => close()}
       maskClosable={false}
       title="Select Date and Time"
       width={"50pc"}
       footer={[
-        <Button disabled={!date || !time} onClick={handleClose}>
-          Ok
+        <Button
+          disabled={!date || !time}
+          onClick={handleClose}
+          loading={isSavingSchedule}
+        >
+          {!isSavingSchedule ? "Ok" : "Saving"}
         </Button>,
       ]}
     >

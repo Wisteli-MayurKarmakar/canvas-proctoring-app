@@ -31,7 +31,7 @@ export const defaultProcSettings = [
     {
       name: "Default w/ Live launch",
       settings: {
-        recordWebcam: false,
+        recordWebcam: true,
         recordScreen: true,
         recordAudio: false,
         chat: false,
@@ -59,7 +59,7 @@ export const defaultProcSettings = [
     {
       name: "Default w/ Live Proctoring",
       settings: {
-        recordWebcam: false,
+        recordWebcam: true,
         recordScreen: true,
         recordAudio: false,
         chat: false,

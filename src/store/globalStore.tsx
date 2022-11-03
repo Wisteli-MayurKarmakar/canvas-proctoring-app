@@ -8,6 +8,7 @@ type WebCamStore = {
   isWebCamActive: boolean;
   initWebCam: () => void;
   closeWebCamResouce: () => void;
+  setStream: (stream: MediaStream) => void;
 };
 
 type StudentStore = {
@@ -27,6 +28,10 @@ export const useWebCamStore = create<WebCamStore>()(
       stream: undefined,
       isWebCamActive: false,
       initWebCam: async () => {
+        set({
+          stream: undefined,
+          isWebCamActive: false,
+        });
         let streamInstance = await navigator.mediaDevices.getUserMedia({
           video: true,
           audio: false,
@@ -41,13 +46,21 @@ export const useWebCamStore = create<WebCamStore>()(
       },
 
       closeWebCamResouce: () => {
-        if (get().isWebCamActive) {
+        if (get().isWebCamActive && get().stream) {
           get()
             .stream?.getTracks()
             .forEach((tracks) => {
               tracks.stop();
             });
           set({ stream: undefined, isWebCamActive: false });
+        }
+      },
+      setStream: (mediaStream: any) => {
+        if (!get().stream) {
+          set({
+            stream: mediaStream,
+            isWebCamActive: mediaStream.active,
+          });
         }
       },
     }),
@@ -61,7 +74,7 @@ export const useStudentStore = create<StudentStore>()(
       studentQuizAuthObject: [],
       currentTime: new Date(),
       authStepsCount: 0,
-      setQuizAuthObj: (data) =>
+      setQuizAuthObj: (data: any) =>
         set(
           produce((draft) => {
             let index: number = -1;

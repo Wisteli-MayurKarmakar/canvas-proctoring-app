@@ -4,6 +4,8 @@ import DummyPage from "./dummyPage";
 import Quizzes from "./quizzes";
 import InstructorMenu from "./instructorMenu";
 import { userAuthenticationStore } from "./store/autheticationStore";
+import { useAppStore } from "./store/AppSotre";
+import { useCommonStudentDashboardStore } from "./store/StudentDashboardStore";
 
 import {
   getEndPoints as getEndPointsUrl,
@@ -38,9 +40,14 @@ function App() {
   let [proctoringProps, setProctoringProps] = React.useState<Object | null>(
     null
   );
+  const setEnrollments = useCommonStudentDashboardStore(
+    (state) => state.setEnrollments
+  );
+  const setUrlParamsData = useAppStore((state) => state.setUrlParamsData);
   const setAuthenticationData = userAuthenticationStore(
     (state) => state.setAuthenticationData
   );
+  const setTokenData = useAppStore((state) => state.setTokenData);
 
   let userName = "ca6a42188e970ab77fab0e34";
   let password = "e5aa447e19ee4180b5ba1364";
@@ -60,12 +67,14 @@ function App() {
         if (response.data.length > 0) {
           let data = response.data[0];
           setStudent(data);
+          setEnrollments(data);
           role = data.role;
           if (role === "StudentEnrollment") {
             setLoadFlag("N");
             // setLoadFlag("Y");
           } else {
-            setLoadFlag("Y");
+            setLoadFlag("N");
+            // setLoadFlag("Y");
           }
         }
       } else {
@@ -103,7 +112,7 @@ function App() {
     let loginId = "ncghosh@gmail.com";
     // let courseId = "23";
     // let quizId = "67";
-    let courseId = "16";
+    let courseId = "24";
     let userId = "1";
     let toolConsumerGuid = "Examd";
     let invokeUrl: string =
@@ -128,6 +137,24 @@ function App() {
     if (newTab === "true") {
       setIsNewTab(true);
     }
+
+    let data = {
+      courseId: courseId,
+      userId: userId,
+      studentId: studentId,
+      accountId: accId,
+      guid: toolConsumerGuid,
+      invokeUrl: invokeUrl,
+      isAuthed: isAuthed ? true : false,
+      assignmentId: assignmentId,
+      newTab: newTab ? true : false,
+      loginId: loginId,
+    };
+
+    setUrlParamsData({
+      ...data,
+    } as any);
+
     console.log(
       `userId=${userId}, courseId=${courseId}, auth=${
         authData ? "true" : "false"
@@ -139,8 +166,8 @@ function App() {
     setAccountId(accId);
     setToolConsumerGuid(toolConsumerGuid);
     setLoginId(loginId);
-    // setId(getUuid(userId));
-    setId(getUuid("1470923eea43f6bcab4326fee7047884cf84f374"));
+    setId(getUuid(userId));
+    // setId(getUuid("1470923eea43f6bcab4326fee7047884cf84f374"));
     setCourseId(courseId as string);
   };
 
@@ -162,6 +189,7 @@ function App() {
       response.data = { ...authData };
       setAuthData(response);
       setAuthenticationData(response.data);
+      setTokenData(response.data);
     }
   };
 

@@ -77,10 +77,10 @@ const AddToCalendarButton: React.FC<Props> = (props): JSX.Element => {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-2 items-center justify-center">
-      <CalendarOutlined />
-      <p className="md:font-semibold cursor-pointer hidden md:block text-xs md:text-lg truncate" onClick={handleAddCalendarClick}>
-        Schedule assignment: {props.assignment.name}
+    <div className="flex flex-row gap-4 items-center justify-center">
+      <CalendarOutlined style={{fontSize: 20, fill: "grey"}}/>
+      <p className="md:font-semibold cursor-pointer md:block text-xs md:text-base text-ellipsis break-all transition focus:outline-none" onClick={handleAddCalendarClick}>
+        Add to Calendar: {props.assignment.name}
       </p>
       {showCalendars ? (
         <svg

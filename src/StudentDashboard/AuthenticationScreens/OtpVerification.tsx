@@ -23,27 +23,27 @@ const OtpVerification: React.FC<Props> = (props) => {
     null
   );
 
-  const sendOtpOnMail = (otp: string) => {
-    let serviceId: string = "service_2su5kx4";
-    let templateId: string = "template_iqbfsp2";
-    let pubKey: string = "qaGgmKlvzp5138RXC";
-    let messageBody: { [key: string]: string } = {
-      subject: `Otp for ${props.quizTitle} Authentication`,
-      recipent_name: `${props.student.user.name}`,
-      message: `Your Otp (One Time passcode/ password) to authenticate is ${otp}
-      `,
-      send_to: `${props.student.user.login_id}`,
-      reply_to: "devshantanu@gmail.com",
-    };
-    emailjs
-      .send(serviceId, templateId, messageBody, pubKey)
-      .then((response) => {
-        message.success("Otp sent successfully");
-      })
-      .catch((error) => {
-        message.error("Error sending otp. Please try again");
-      });
-  };
+  // const sendOtpOnMail = (otp: string) => {
+  //   let serviceId: string = "service_2su5kx4";
+  //   let templateId: string = "template_iqbfsp2";
+  //   let pubKey: string = "qaGgmKlvzp5138RXC";
+  //   let messageBody: { [key: string]: string } = {
+  //     subject: `Otp for ${props.quizTitle} Authentication`,
+  //     recipent_name: `${props.student.user.name}`,
+  //     message: `Your Otp (One Time passcode/ password) to authenticate is ${otp}
+  //     `,
+  //     send_to: `${props.student.user.login_id}`,
+  //     reply_to: "devshantanu@gmail.com",
+  //   };
+  //   emailjs
+  //     .send(serviceId, templateId, messageBody, pubKey)
+  //     .then((response) => {
+  //       message.success("Otp sent successfully");
+  //     })
+  //     .catch((error) => {
+  //       message.error("Error sending otp. Please try again");
+  //     });
+  // };
 
   const generateOpt: any = async () => {
     let response = await axios.get(

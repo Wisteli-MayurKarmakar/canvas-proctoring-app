@@ -31,7 +31,7 @@ const StudentIdDlVerification: React.FC<Props> = (props): JSX.Element => {
   let [retryCount, setRetryCount] = React.useState<number>(0);
   let [isRetry, setIsRetry] = React.useState<boolean>(false);
   let [stream, setStream] = React.useState<MediaStream>();
-  // let setStreamInStore = useWebCamStore((state) => state.setStream);
+  let setStreamInStore = useWebCamStore((state) => state.setStream);
   let vidSrcRef: any = React.useRef<any>();
   let canvasRef: any = React.useRef<any>();
   const imgWidth: number = 320;
@@ -135,7 +135,7 @@ const StudentIdDlVerification: React.FC<Props> = (props): JSX.Element => {
 
     if (vidSrcRef.current && stream) {
       vidSrcRef.current.srcObject = stream;
-      // setStreamInStore(stream);
+      setStreamInStore(stream);
       setStream(stream);
     }
 

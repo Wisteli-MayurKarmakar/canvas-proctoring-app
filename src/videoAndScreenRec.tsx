@@ -8,6 +8,7 @@ import InfoModal from "./infoModal";
 import moment from "moment";
 import { useStudentStore } from "./store/globalStore";
 import ProctoringEndInfoModal from "./ProctoringEndInfoModal";
+import { useAppStore } from "./store/AppSotre";
 
 //@ts-ignore
 import SebConfigDev from "./assets/seb_settings/SebClientSettingsDev.seb";
@@ -84,6 +85,7 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
   const authenticationData = userAuthenticationStore(
     (state) => state.authenticationData
   );
+  const urlParamsData = useAppStore((state) => state.urlParamsData)
   const TURN_SERVER_URL = "turn:examd.us:3478?transport=tcp";
   const TURN_SERVER_USERNAME = "webRtcUser";
   const TURN_SERVER_CREDENTIAL = "C0pp$r567";
@@ -119,7 +121,7 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
 
   useEffect(() => {
     studentQuizAuthObject.forEach((item) => {
-      if (item.quizId === props.assignment.quizId) {
+      if (item.quizId === props.quizConfig.quizId) {
         if (item.studentAuthState) {
           setStuAuthenticated(true);
         }
@@ -231,7 +233,6 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
   };
 
   const startProctoring = async () => {
-    console.log(`newTab = ${props.isNewTab}, stuAuth = ${stuAuthenticated}`);
     if ("time_limit" in props.assignment) {
       let time = moment().add(
         parseInt(props.assignment["time_limit"]) + 5,
@@ -340,6 +341,9 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
         clearInterval(checkSubmissionInterval);
         setShowCloseProcPrompt(true);
       }
+    } else {
+      window.close();
+      return
     }
   };
 
@@ -469,7 +473,7 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
       setOnSeb(true);
     }
 
-    if (props.isNewTab) {
+    if (urlParamsData.newTab) {
       checkSubmissionInterval = setInterval(() => {
         checkQuizSubmission();
       }, 10000);

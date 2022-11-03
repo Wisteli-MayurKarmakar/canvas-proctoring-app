@@ -31,10 +31,11 @@ const ImageMatchAuthentication: React.FC<Props> = (props): JSX.Element => {
   let [retryCount, setRetryCount] = React.useState<number>(0);
   let [isRetry, setIsRetry] = React.useState<boolean>(false);
   const stream = useWebCamStore((state) => state.stream);
+  const setStream = useWebCamStore((state) => state.setStream)
   const closeWebCamResouce = useWebCamStore(
     (state) => state.closeWebCamResouce
   );
-  const initWebCam = useWebCamStore((state) => state.initWebCam);
+  // const initWebCam = useWebCamStore((state) => state.initWebCam);
   const isWebCamActive = useWebCamStore((state) => state.isWebCamActive);
 
   function convertBase64toBlob(
@@ -114,8 +115,7 @@ const ImageMatchAuthentication: React.FC<Props> = (props): JSX.Element => {
             // clearTimeout(timeoutId);
             resolve();
             return;
-          } catch (e) {
-          }
+          } catch (e) {}
           await delay(delayBetweenRetries);
         }
 
@@ -126,13 +126,13 @@ const ImageMatchAuthentication: React.FC<Props> = (props): JSX.Element => {
   };
 
   const startVideo = async () => {
-    // let stream = await navigator.mediaDevices.getUserMedia({
-    //   video: true,
-    //   audio: false,
-    // });
-
+    let stream = await navigator.mediaDevices.getUserMedia({
+      video: true,
+      audio: false,
+    });
     if (stream) {
       videoRef.current.srcObject = stream;
+      setStream(stream);
     }
 
     try {
@@ -150,25 +150,27 @@ const ImageMatchAuthentication: React.FC<Props> = (props): JSX.Element => {
         1,
         15
       );
-
+      
+      setIsRetry(false);
       setStudentAuthed(true);
       setWaitCompleted(true);
       setAuthStarted(false);
-      // videoRef.current.srcObject.getTracks().forEach((track: any) => {
-      //   track.stop();
-      // });
+      videoRef.current.srcObject.getTracks().forEach((track: any) => {
+        track.stop();
+      });
       if (isWebCamActive) {
         closeWebCamResouce();
       }
 
       setRetryInProgress(false);
     } catch (err) {
+      setIsRetry(false);
       setWaitCompleted(true);
       setStudentAuthed(false);
       setAuthStarted(false);
-      // videoRef.current.srcObject.getTracks().forEach((track: any) => {
-      //   track.stop();
-      // });
+      videoRef.current.srcObject.getTracks().forEach((track: any) => {
+        track.stop();
+      });
       if (isWebCamActive) {
         closeWebCamResouce();
       }
@@ -194,7 +196,6 @@ const ImageMatchAuthentication: React.FC<Props> = (props): JSX.Element => {
           type: response.headers["content-type"],
         });
         setStudentPicture(URL.createObjectURL(blob));
-        initWebCam();
         setProofBlob(blob);
       })
       .catch((error: any) => {
@@ -218,11 +219,11 @@ const ImageMatchAuthentication: React.FC<Props> = (props): JSX.Element => {
   };
 
   useEffect(() => {
-    if (studentPicture && stream) {
+    if (studentPicture) {
       setRetryInProgress(true);
       startVideo();
     }
-  }, [studentPicture, stream]);
+  }, [studentPicture]);
 
   useEffect(() => {
     if (isRetry) {
@@ -234,6 +235,7 @@ const ImageMatchAuthentication: React.FC<Props> = (props): JSX.Element => {
   }, [isRetry]);
 
   const handleRetry = () => {
+    console.log("retry cound", retryCount);
     if (retryCount > 3) {
       message.error("You have reached the maximum number of retries.");
       return;
@@ -248,7 +250,7 @@ const ImageMatchAuthentication: React.FC<Props> = (props): JSX.Element => {
     getStudentProof();
     return () => {
       closeWebCamResouce();
-    }
+    };
   }, []);
 
   return (

@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import {
   AudioOutlined,
   CalculatorOutlined,
@@ -238,7 +238,9 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
   const [quizzes, setQuizzes] = React.useState<any>(null);
   const [selectedQuiz, setSelectedQuiz] = React.useState<any>(null);
   let [quizSettings, setQuizSettings] = React.useState<any>(null);
-  let [noQuizConfig, setNoQuizConfig] = React.useState<boolean>(false);
+  const [showConfigurations, setShowConfigurations] =
+    React.useState<boolean>(false);
+  let [quizConfig, setQuizConfig] = React.useState<any>(null);
   let [configSaveStatus, setConfigSaveStatus] = React.useState<boolean>(false);
   let [defaultSettingsOptionsChecked, setDefaultSettingsOptionsChecked] =
     React.useState<any>(null);
@@ -246,7 +248,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
   const authenticationData = userAuthenticationStore(
     (state) => state.authenticationData
   );
-
+  const configRefDiv: any = useRef();
   const borderColorOnSelect = "#12b0ff";
   const defaultBorderColor = "#949799";
 
@@ -373,14 +375,9 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
   }
 
   const handleAutoCompleteSetup = () => {
-    console.log("selected assgn", selectedQuiz);
     axios
       .get(
-        `${autoCompleteSetup}${props.courseId}/${encodeURIComponent(
-          selectedQuiz.title
-        )}/${selectedQuiz.id}/${props.auth.data.access_token}/${
-          authenticationData?.instituteId
-        }`
+        `${autoCompleteSetup}${props.courseId}/${selectedQuiz.title}/${selectedQuiz.id}/${props.auth.data.access_token}/${authenticationData?.instituteId}`
       )
       .then((response) => {
         message.success("Successfully setuped the quiz");
@@ -435,15 +432,21 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
     allOptions["quizId"] = selectedQuiz.id;
     allOptions["toolConsumerInstanceGuid"] = props.toolConsumerGuid;
     allOptions["courseId"] = props.courseId;
+    allOptions["assignmentId"] = 0;
+
+    if (quizConfig) {
+      allOptions["assignmentId"] = quizConfig.assignmentId;
+    }
 
     axios
       .post(saveLtiCanvasConfig, allOptions, {
         headers: { Authorization: `Bearer ${props.auth.data.access_token}` },
       })
       .then((res) => {
-        if (noQuizConfig) {
+        if (allOptions["assignmentId"] === 0) {
+          handleAutoCompleteSetup();
         }
-        handleAutoCompleteSetup();
+        setQuizConfig(res.data);
         message.success("Configurations saved successfully");
         setConfigSaveStatus(true);
       })
@@ -531,14 +534,14 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
         }
       )
       .then((res) => {
-        setNoQuizConfig(false);
         setUserSettings(res.data);
         setQuizSettings(res.data);
         applyUserSettings(res.data);
         setApplySettings(false);
+        setQuizConfig(res.data);
       })
       .catch((err) => {
-        setNoQuizConfig(true);
+        setQuizConfig(null);
         setOptionsEnableSwitchStatus();
         setDefaultCheckedStatus();
       });
@@ -580,6 +583,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
 
   const handleSelectQuiz = (quiz: any) => {
     setSelectedQuiz(quiz);
+    setShowConfigurations(false);
     let quizStat: any = { ...quizzesStat };
 
     Object.keys(quizStat).forEach((key: string) => {
@@ -588,7 +592,6 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
 
     quizStat[quiz.title] = true;
     setQuizzesStat(quizStat);
-    setNoQuizConfig(true);
     getUserSettings(quiz.id);
     setIsReset(false);
   };
@@ -681,6 +684,16 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
     }
   };
 
+  const handleShowConfig = () => {
+    if (selectedQuiz) {
+      configRefDiv.current.classList.toggle("translate-y-full");
+      setShowConfigurations(!showConfigurations);
+    } else {
+      message.error("Please select a quiz");
+      return;
+    }
+  };
+
   return (
     <div className="flex flex-col gap-5 justify-center items-center mt-5 text-center container text-lg">
       <div className="flex flex-row flex-wrap gap-10 justify-center">
@@ -693,16 +706,16 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
                 }}
                 key={index}
                 onClick={() => handleSelectQuiz(quiz)}
-                className={`block p-6 max-w-sm bg-white rounded-lg border ${
+                className={`transition ease-in-out delay-50 hover:-translate-y-1 hover:scale-110 duration-200 
+                flex border box-border items-center justify-center w-36 h-32 bg-white shadow-md text-center ${
                   quizzesStat[quiz.title]
-                    ? "border-blue-400 border-4"
-                    : "border-gray-200"
-                } hover:bg-gray-100 dark:${
-                  quizzesStat[quiz.title] ? "border-blue-400" : "border-gray-700"
-                } dark:hover:bg-gray-300`}
+                    ? "hover:bg-blue-400 hover:text-white bg-blue-400 text-white"
+                    : "hover:bg-blue-400 hover:text-white text-black"
+                } rounded`}
               >
-                <h1>{quiz.title}</h1>
-                <p>Type: {quiz.quiz_type}</p>
+                <p className="font-semibold text-center break-words w-full">
+                  {quiz.title}
+                </p>
               </div>
             );
           })
@@ -730,85 +743,83 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
           </div>
         )}
       </div>
-      <div className="flex flex-row gap-10 h-24 lg:w-full md:w-screen sm:w-screen md:pl-4 md:pr-4 sm:pl-2 sm:pr-2 items-center justify-center">
-        <div className="flex lg:flex-row md:flex-row sm:flex-col items-center justify-center box-border h-full w-full border-4 border-blue-400 rounded">
+      <div className="flex border box-border shadow-md rounded flex-row gap-4 h-16 w-full items-center mt-4">
+        <div className="flex flex-col md:flex-row w-full h-full gap-2 items-center justify-center p-2">
           {defaultSettingsOptionsChecked &&
             defaultProcSettings.map((setting: any, index: number) => {
               return (
-                <label
-                  htmlFor={setting.name}
-                  className="flex items-center cursor-pointer"
-                  key={index}
-                >
-                  <div className="relative">
-                    <input
-                      type="checkbox"
-                      value=""
-                      id={setting.name}
-                      className="sr-only"
-                      onChange={(e) =>
-                        handleCheckboxChange(e, index, setting.name)
-                      }
-                      checked={defaultSettingsOptionsChecked[setting.name]}
-                    />
-                    <div className="w-10 h-4 bg-gray-400 rounded-full shadow-inner"></div>
-                    <div className="dot absolute w-6 h-6 bg-white rounded-full shadow -left-1 -top-1 transition border-2 border-gray-400"></div>
-                  </div>
-                  {/* <div className="w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-focus:ring-4   peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-600"></div> */}
-                  <div className="ml-1 mr-5 text-gray-700 font-semibold lg:text-lg md:text-baseline sm:text-sm">
+                <>
+                  <input
+                    className="form-check-input appearance-none h-4 w-4 border border-gray-300 rounded-sm bg-white checked:bg-blue-600 checked:border-blue-600 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer"
+                    type="checkbox"
+                    value=""
+                    id="flexCheckDefault"
+                    onChange={(e) =>
+                      handleCheckboxChange(e, index, setting.name)
+                    }
+                    checked={defaultSettingsOptionsChecked[setting.name]}
+                  ></input>
+                  <div className="mr-5 text-gray-700 font-semibold truncate">
                     {setting.name}
                   </div>
-                </label>
+                </>
               );
             })}
         </div>
       </div>
-      <div className="container mx-auto pt-2">
+      <p
+        className="text-center text-blue-400 font-semibold cursor-pointer underline text-lg mt-4 mb-4"
+        onClick={handleShowConfig}
+      >
+        {`${
+          showConfigurations ? "Hide Configurations" : "Show/ Set Configurations"
+        }`}
+      </p>
+      <div
+        ref={configRefDiv}
+        className="container mx-auto mt-2 duration-150 ease-in-out top-0 transition-all translate-y-full"
+      >
         <p className="font-bold font-serif text-xl underline">
           {selectedQuiz && selectedQuiz.title + ":    "}Configuration
         </p>
         <div
-          className="pt-3 container overflow-y-scroll"
+          className="mt-4 container overflow-y-scroll"
           style={{ height: "76vh" }}
         >
           {Object.keys(settingOptions).map((key: string) => (
-            <div key={key} className="row-span-full pb-2">
-              <div className="flex gap-3">
-                <b className="font-bold font-serif">{key}</b>
-                <div className="form-check form-switch">
-                  <input
-                    className="form-check-input"
-                    type="checkbox"
-                    role="switch"
-                    id="flexSwitchCheckDefault"
-                    checked={
-                      Object.keys(optionsStatus).length > 0 &&
-                      optionsStatus[key]
-                    }
-                    onChange={(e) => handleChange(key, e)}
-                  />
-                </div>
+            <div key={key} className="row-span-full">
+              <div className="flex flex-row h-full items-center gap-2 mb-2 mt-4">
+                <b className="font-semibold">{key}</b>
+                <input
+                  className="flex items-center justify-center"
+                  type="checkbox"
+                  role="switch"
+                  id="flexSwitchCheckDefault"
+                  checked={
+                    Object.keys(optionsStatus).length > 0 && optionsStatus[key]
+                  }
+                  onChange={(e) => handleChange(key, e)}
+                />
               </div>
               <div className="flex flex-row gap-6">
                 {Object.keys(settingOptions[key]).map(
                   (subKey: string, idx: number) => (
                     <div key={idx}>
                       <div
-                        className="box-border h-32 w-32 p-4 border-4"
+                        className={`flex border box-border items-center justify-center h-32 w-32 bg-white shadow-lg rounded hover:bg-blue-400 hover:text-white 
+                        cursor-pointer ${
+                          Object.keys(checked).length > 0 &&
+                          checked[key][subKey]
+                            ? "bg-blue-400 text-white"
+                            : "bg-white"
+                        }`}
                         onClick={() => handleOptionClick(key, subKey)}
-                        style={{
-                          borderColor:
-                            Object.keys(checked).length > 0 &&
-                            checked[key][subKey]
-                              ? borderColorOnSelect
-                              : defaultBorderColor,
-                        }}
                       >
                         <div className="text-7xl flex items-start justify-center align-middle">
                           {settingOptions[key][subKey].icon}
                         </div>
                       </div>
-                      <p className="text-center">
+                      <p className="text-center truncate w-32">
                         {settingOptions[key][subKey].fullName}
                       </p>
                     </div>
@@ -838,14 +849,6 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
             Reset
           </button>
         </div>
-        {/* {showInfoModal && configSaveStatus && (
-          <SettingsModal
-            view={showInfoModal}
-            close={() => setShowInfoModal(false)}
-            message={infoMsg}
-            status={configSaveStatus}
-          />
-        )} */}
       </div>
     </div>
   );
