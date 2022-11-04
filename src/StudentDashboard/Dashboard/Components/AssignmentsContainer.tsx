@@ -190,8 +190,7 @@ const AssignmentsContainer: React.FC<Props> = (props): JSX.Element => {
           {showAuthModal &&
             selectedAssignment &&
             selectedAssignmentConfigurations &&
-            enrollments &&
-            schedulesAvailable && (
+            enrollments && (
               <AuthenticationModal
                 view={true}
                 quizTitle={selectedAssignment.name}

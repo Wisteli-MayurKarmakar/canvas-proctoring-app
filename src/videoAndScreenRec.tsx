@@ -254,8 +254,8 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
         return;
       }
     }
-
-    if (!props.isNewTab && stuAuthenticated) {
+    console.log(props, stuAuthenticated)
+    if (!props.isNewTab) {
       handleOpenQuizInNewTab();
       return;
     }

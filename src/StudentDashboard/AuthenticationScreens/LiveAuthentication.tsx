@@ -211,11 +211,9 @@ const LiveAuthentication: React.FC<Props> = (props): JSX.Element => {
     initWebCam();
 
     return () => {
-      if (vStream) {
-        vStream.getTracks().forEach((track: any) => {
-          track.stop();
-        });
-      }
+      vStream.getTracks().forEach((track: any) => {
+        track.stop();
+      });
       closeWebCamResouce();
     };
   }, []);

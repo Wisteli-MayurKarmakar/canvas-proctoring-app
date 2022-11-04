@@ -21,7 +21,6 @@ const Grid: React.FunctionComponent<Props> = (props): JSX.Element => {
   let selectedQuizDate: any = null;
   let selectedQuizTitle: any = null;
   const [activeRow, setActiveRow] = React.useState<any>([]);
-  console.log(props);
   const addActions = (quizId: string) => {
     if (props.childTableActions) {
       props.nestedTableColumns.forEach((col: any, index: number) => {
@@ -34,7 +33,7 @@ const Grid: React.FunctionComponent<Props> = (props): JSX.Element => {
                   key={index}
                   disabled={
                     props.authQuizId &&
-                    props.authQuizId === selectedQuizId &&
+                    parseInt(props.authQuizId) === selectedQuizId &&
                     props.enableAuth &&
                     props.enableAuth.step === "LIVE_AUTH" &&
                     props.enableAuth.studId === row.id &&

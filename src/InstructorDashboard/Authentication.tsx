@@ -227,6 +227,7 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
   const connectSocket = (id: any) => {
     let room = "rm_" + props.courseId + "_" + id;
     let user = "chat_" + props.userId + "_" + "instr";
+    console.log(room)
 
     if (!socket.connected) {
       socket.connect();
@@ -290,7 +291,7 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
         }
         if (msg.msgType === "LIVE_AUTH") {
           let assgnId = msg.msg.assignmentId;
-          if (id === assgnId) {
+          if (id === parseInt(assgnId)) {
             let stuId = msg.msg.stuId;
             let step = msg.msg.stepName;
             let temp = { ...stuLiveStatusObj };

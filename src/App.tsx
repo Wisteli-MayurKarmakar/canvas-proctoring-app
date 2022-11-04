@@ -70,8 +70,8 @@ function App() {
           setEnrollments(data);
           role = data.role;
           if (role === "StudentEnrollment") {
-            setLoadFlag("N");
-            // setLoadFlag("Y");
+            // setLoadFlag("N");
+            setLoadFlag("Y");
           } else {
             // setLoadFlag("N");
             setLoadFlag("Y");
