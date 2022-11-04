@@ -35,7 +35,7 @@ const Grid: React.FunctionComponent<Props> = (props): JSX.Element => {
                     props.authQuizId &&
                     props.authQuizId === selectedQuizId &&
                     props.enableAuth &&
-                    props.enableAuth.step === "Authentication" &&
+                    props.enableAuth.step === "LIVE_AUTH" &&
                     props.enableAuth.studId === row.id
                       ? false
                       : true

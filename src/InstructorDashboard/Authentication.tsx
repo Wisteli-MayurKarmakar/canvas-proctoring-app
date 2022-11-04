@@ -302,7 +302,20 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
           setStudentAvailableForAuth(true);
           setStuLiveStatusObj(temp);
 
-          if (step === "Authentication") {
+          if (step === "LIVE_AUTH") {
+            setDoAuth({ step: step, studId: stuId });
+          }
+        }
+        if (msg.msgType === "LIVE_AUTH") {
+          let assgnId = msg.msg.assignmentId;
+
+          if (id === assgnId) {
+            let stuId = msg.msg.stuId;
+            let step = msg.msg.stepName;
+            let temp = { ...stuLiveStatusObj };
+            temp[stuId] = step;
+            setStudentAvailableForAuth(true);
+            setStuLiveStatusObj(temp);
             setDoAuth({ step: step, studId: stuId });
           }
         }

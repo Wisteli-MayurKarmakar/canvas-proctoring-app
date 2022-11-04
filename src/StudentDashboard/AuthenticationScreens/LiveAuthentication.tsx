@@ -156,6 +156,11 @@ const LiveAuthentication: React.FC<Props> = (props): JSX.Element => {
         },
       }),
     });
+    sendMsgViaSocket("LIVE_AUTH", {
+      stuId: props.userId,
+      stepName: "LIVE_AUTH",
+      assignmentId: selectedAssignment?.id.toString(),
+    });
 
     socket.on("chat", (data: any) => {
       if (data.type === "chat") {
@@ -166,10 +171,10 @@ const LiveAuthentication: React.FC<Props> = (props): JSX.Element => {
         }
 
         if (msg.msgType === "STU_LIVE_REQ") {
-          sendMsgViaSocket("STU_LIVE_REP", {
+          sendMsgViaSocket("LIVE_AUTH", {
             stuId: props.userId,
             stepName: "LIVE_AUTH",
-            assignmentId: selectedAssignment?.id,
+            assignmentId: selectedAssignment?.id.toString(),
           });
         }
         if (msg.msgType === "candidate") {
