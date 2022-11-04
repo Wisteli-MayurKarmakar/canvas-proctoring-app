@@ -186,7 +186,6 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
       }
       // setQuizSteps(steps);
     }
-    sendStatus("System Check");
     setAuthStepsCount(steps.length - 1);
 
     if (steps.length <= 4) {
