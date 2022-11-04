@@ -14,7 +14,7 @@ interface Props {
   guid: string;
   studentPhoto: any;
   studentId: any;
-  studentAuthed: (data: any) => void;
+  updateStudentAuthStatus: (data: any) => void;
 }
 
 interface rtcStateProto {
@@ -188,7 +188,7 @@ const AuthenticateUser: React.FC<Props> = (props): JSX.Element => {
 
     let dataChannelState = await peerDataChannel.current.readyState;
     if (dataChannelState === "open") {
-      props.studentAuthed({studId: props.selectedRow.id, assignmentId: selectedAssignment?.id, courseId: props.courseId})
+      props.updateStudentAuthStatus({courseId: props.courseId, assignmentId: selectedAssignment?.id, studentId: props.studentId})
       setIsAuthenticated(true);
       peerDataChannel.current.send(
         JSON.stringify({

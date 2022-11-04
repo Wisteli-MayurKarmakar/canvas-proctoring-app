@@ -21,7 +21,7 @@ const Grid: React.FunctionComponent<Props> = (props): JSX.Element => {
   let selectedQuizDate: any = null;
   let selectedQuizTitle: any = null;
   const [activeRow, setActiveRow] = React.useState<any>([]);
-
+  console.log(props);
   const addActions = (quizId: string) => {
     if (props.childTableActions) {
       props.nestedTableColumns.forEach((col: any, index: number) => {
@@ -50,13 +50,9 @@ const Grid: React.FunctionComponent<Props> = (props): JSX.Element => {
                     )
                   }
                 >
-                  {props.studentAuthStatus === false
-                    ? "Authenticate"
-                    : "Authenticated"}
+                  {props.studentAuthStatus === false ? "Authenticate": "Authenticated"}
                 </Button>
-                <Button type="link" disabled={true}>
-                  Contacts
-                </Button>
+                <Button type="link" disabled={true}>Contacts</Button>
               </div>
             );
           };

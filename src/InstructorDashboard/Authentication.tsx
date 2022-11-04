@@ -31,6 +31,7 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
   const [showAuthModal, setShowAuthModal] = React.useState<boolean>(false);
   const [authForQuizId, setAuthForQuizId] = React.useState<any>(null);
   let [studentPhoto, setStudentPhoto] = React.useState<any>(null);
+  const [studentAuthed, setStudentAuthed] = React.useState<boolean>(false);
   const [studentAvailableForAuth, setStudentAvailableForAuth] =
     React.useState<boolean>(false);
   let [studentId, setStudentId] = React.useState<any>(null);
@@ -42,7 +43,6 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
   const [selectedQuizTitle, setSelectedQuizTitle] = React.useState<
     string | null
   >(null);
-  const [studentAuthed, setStudentAuthed] = React.useState<boolean>(false);
   // let checkAvailabilityInterval: any = null;
   const urlParamsData = useAppStore((state) => state.urlParamsData);
   const socket = getWebSocketUrl();
@@ -255,8 +255,8 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
       if (data.type === "chat") {
         let msg = JSON.parse(data.message);
 
-        if (msg.msg.quizId) {
-          setAuthForQuizId(msg.msg.quizId);
+        if (msg.msg.assignmentId) {
+          setAuthForQuizId(msg.msg.assignmentId);
         }
 
         if (msg.msgType === "STU_LIVE_REP") {
@@ -289,7 +289,7 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
           }
         }
         if (msg.msgType === "LIVE_AUTH") {
-          let assgnId = parseInt(msg.msg.assignmentId);
+          let assgnId = msg.msg.assignmentId;
           if (id === assgnId) {
             let stuId = msg.msg.stuId;
             let step = msg.msg.stepName;
@@ -309,9 +309,9 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
     connectSocket(row.id);
   };
 
-  const handleStudentAuthed = (data: any) => {
-    if (props.studentId === data.studId && authForQuizId === data.assignmentId && props.courseId === data.courseId) {
-      setStudentAuthed(true)
+  const getStudentAuthStat = (data: any) => {
+    if (data.courseId === props.courseId && data.assignmentId === authForQuizId && props.studentId === data.studentId) {
+      setStudentAuthed(true);
     }
   }
 
@@ -376,7 +376,7 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
               selectedRow={selectedRow}
               userId={props.userId}
               guid={props.guid}
-              studentAuthed={handleStudentAuthed}
+              updateStudentAuthStatus={getStudentAuthStat}
             />
           </Modal>
         )}
