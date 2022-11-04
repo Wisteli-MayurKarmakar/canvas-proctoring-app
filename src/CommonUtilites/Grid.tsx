@@ -27,28 +27,31 @@ const Grid: React.FunctionComponent<Props> = (props): JSX.Element => {
         if (col.key === "action") {
           col.render = (row: any) => {
             return (
-              <Button
-                type="link"
-                key={index}
-                disabled={
-                  props.authQuizId &&
-                  props.authQuizId === selectedQuizId &&
-                  props.enableAuth &&
-                  props.enableAuth.step === "Authentication" &&
-                  props.enableAuth.studId === row.id
-                    ? false
-                    : true
-                }
-                onClick={() =>
-                  props.childTableActions["Authenticate"](
-                    row,
-                    selectedQuizTitle,
-                    quizId
-                  )
-                }
-              >
-                Authenticate
-              </Button>
+              <div className="flex flex-row h-full items-center gap-4">
+                <Button
+                  type="link"
+                  key={index}
+                  disabled={
+                    props.authQuizId &&
+                    props.authQuizId === selectedQuizId &&
+                    props.enableAuth &&
+                    props.enableAuth.step === "Authentication" &&
+                    props.enableAuth.studId === row.id
+                      ? false
+                      : true
+                  }
+                  onClick={() =>
+                    props.childTableActions["Authenticate"](
+                      row,
+                      selectedQuizTitle,
+                      quizId
+                    )
+                  }
+                >
+                  Authenticate
+                </Button>
+                <Button type="link" disabled={true}>Contacts</Button>
+              </div>
             );
           };
         }
@@ -65,13 +68,18 @@ const Grid: React.FunctionComponent<Props> = (props): JSX.Element => {
         expandable={{
           expandedRowRender: (rowData: any) => {
             selectedQuizId = rowData.id;
-            selectedQuizDate = rowData.all_dates.due_at;
+            if ("due_at" in rowData) {
+              selectedQuizDate = rowData.due_at;
+            }
             selectedQuizTitle = rowData.title;
             if (props.nestedTableData) {
               addActions(selectedQuizId as string);
               return (
                 <div key={rowData.id}>
-                  <p key={rowData.id + "a"} className="text-center text-base font-bold underline">
+                  <p
+                    key={rowData.id + "a"}
+                    className="text-center text-base font-bold underline"
+                  >
                     {rowData.title} enrollments
                   </p>
                   <Table

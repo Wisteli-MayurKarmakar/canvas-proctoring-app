@@ -6,6 +6,7 @@ import SystemCheck from "../../StudentDashboard/Tabs/SystemCheck";
 import StudentAuthentication from "../../StudentDashboard/Tabs/StudentAuthentication";
 import { useStudentStore } from "../../store/globalStore";
 import { useWebCamStore } from "../../store/globalStore";
+import { useAssignmentStore } from "../../store/StudentDashboardStore";
 
 interface Props {
   view: boolean;
@@ -36,8 +37,11 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
   let setStudAuthState = useStudentStore((state) => state.setQuizAuthObj);
   let authStepsCount = useStudentStore((state) => state.authStepsCount);
   let setAuthStepsCount = useStudentStore((state) => state.setAuthStepsCount);
+  const selectedAssignment = useAssignmentStore(
+    (state) => state.selectedAssignment
+  );
   let stream = useWebCamStore((state) => state.stream);
-  let studIdWODash = props.courseId + "_" + props.quizId;
+  let studIdWODash = props.courseId + "_" + selectedAssignment?.id;
   let user = "chat_" + props.userId;
   let room = "rm_" + studIdWODash;
 
@@ -73,7 +77,12 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
       let msg = JSON.parse(data.message);
 
       if (msg.msgType === "STU_LIVE_REQ") {
-        sendAuthStatus("STU_AUTH_STEP", quizSteps[stepNo].name, props.userId, props.quizId);
+        sendAuthStatus(
+          "STU_AUTH_STEP",
+          quizSteps[stepNo].name,
+          props.userId,
+          selectedAssignment?.id.toString() as any
+        );
       }
     });
   };
@@ -82,13 +91,18 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
     setSocketInstance(socket);
   };
 
-  const sendAuthStatus = (msgType: string, stepName: string, stuId: string, quizId: string) => {
+  const sendAuthStatus = (
+    msgType: string,
+    stepName: string,
+    stuId: string,
+    quizId: string
+  ) => {
     socketInstance.emit("chat", {
       evt: "chat",
       room: room,
       text: JSON.stringify({
         msgType: msgType,
-        msg: { stuId: stuId, stepName: stepName, quizId: quizId},
+        msg: { stuId: stuId, stepName: stepName, assignmentId: quizId },
       }),
     });
   };
@@ -97,7 +111,10 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
     if (status) {
       setStuAuthenticated(status);
       setButtonDisabled(false);
-      setStudAuthState({ quizId: props.quizId, studentAuthState: true });
+      setStudAuthState({
+        quizId: selectedAssignment?.id as any,
+        studentAuthState: true,
+      });
       props.authComplete();
     }
   };
@@ -182,7 +199,10 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
     if (authStepsCount === stepNo) {
       if (!buttonDisabled) {
         props.authComplete();
-        setStudAuthState({ quizId: props.quizId, studentAuthState: true });
+        setStudAuthState({
+          quizId: selectedAssignment?.id as any,
+          studentAuthState: true,
+        });
         setStuAuthenticated(true);
       } else {
         setStuAuthenticated(false);
@@ -199,7 +219,7 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
       "STU_AUTH_STEP",
       quizSteps[stepNo + 1].name,
       props.studentId,
-      props.quizId,
+      selectedAssignment?.id as any
     );
   };
 

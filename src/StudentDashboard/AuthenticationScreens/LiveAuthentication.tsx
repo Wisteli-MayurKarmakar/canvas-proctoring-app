@@ -2,6 +2,7 @@ import { message } from "antd";
 import React, { useEffect } from "react";
 import { getWebSocketUrl } from "../../APIs/apiservices";
 import { useWebCamStore } from "../../store/globalStore";
+import { useAssignmentStore } from "../../store/StudentDashboardStore";
 
 interface Props {
   courseId: string;
@@ -15,7 +16,10 @@ const LiveAuthentication: React.FC<Props> = (props): JSX.Element => {
   const socket = getWebSocketUrl();
   const videoSrc = React.useRef<any>(null);
   let [vdoStmSource, setVdoStmSource] = React.useState<any>(null);
-  const roomName = "rm_" + props.courseId + "_" + props.quizId;
+  const selectedAssignment = useAssignmentStore(
+    (state) => state.selectedAssignment
+  );
+  const roomName = "rm_" + props.courseId + "_" + selectedAssignment?.id;
   var offer: any = null;
   const user = "chat_" + props.userId + "_" + "stu";
   var peerConnection: any = null;
@@ -146,7 +150,8 @@ const LiveAuthentication: React.FC<Props> = (props): JSX.Element => {
       text: JSON.stringify({
         msgType: "USER_ACTIVE",
         msg: {
-          stuName: props.courseId + "_" + props.quizId + "_" + props.userId,
+          stuName:
+            props.courseId + "_" + selectedAssignment?.id + "_" + props.userId,
           stuId: props.userId,
         },
       }),
@@ -161,13 +166,16 @@ const LiveAuthentication: React.FC<Props> = (props): JSX.Element => {
         }
 
         if (msg.msgType === "STU_LIVE_REQ") {
-          console.log("live request", msg.msg);
+          sendMsgViaSocket("STU_LIVE_REP", {
+            stuId: props.userId,
+            stepName: "LIVE_AUTH",
+            assignmentId: selectedAssignment?.id,
+          });
         }
         if (msg.msgType === "candidate") {
           addCandidate(msg.msg);
         }
         if (msg.msgType === "AUTH_APPROVED") {
-          console.log("AUTH_APPROVED");
         }
         if (msg.msgType === "END_AUTH") {
           if (msg.msg.stuId === props.userId) {

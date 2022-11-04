@@ -11,8 +11,11 @@ import {
   downloadDL,
   fetchCanvasQuizzesByCourseId,
   fetchAccountsByIdAndEnrollemntType,
+  getCanvasAssignmentDetails,
 } from "../apiConfigs";
 import { userAuthenticationStore } from "../store/autheticationStore";
+import { useAppStore } from "../store/AppSotre";
+import moment from "moment";
 
 interface Props {
   courseId: string;
@@ -41,6 +44,7 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
     string | null
   >(null);
   // let checkAvailabilityInterval: any = null;
+  const urlParamsData = useAppStore((state) => state.urlParamsData);
   const socket = getWebSocketUrl();
   const authenticationData = userAuthenticationStore(
     (state) => state.authenticationData
@@ -48,30 +52,33 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
 
   const quizzesColumns = [
     {
-      dataIndex: "title",
-      key: "title",
-      title: `Quiz Name`,
+      dataIndex: "name",
+      key: "Name",
+      title: `Assignment Name`,
     },
     {
-      dataIndex: "quiz_type",
-      key: "quiz_type",
-      title: `Quiz Type`,
+      dataIndex: "",
+      key: "due_at",
+      title: `Due by`,
+      render: (row: any) => {
+        return moment(row.due_at).format("DD/MM/YYYY hh:mm a");
+      },
     },
-    {
-      dataIndex: "allowed_attempts",
-      key: "allowed_attempts",
-      title: "Attempts allowed",
-    },
-    {
-      dataIndex: "question_count",
-      key: "question_count",
-      title: "Questions",
-    },
-    {
-      dataIndex: "time_limit",
-      key: "time_limit",
-      title: `Duration`,
-    },
+    // {
+    //   dataIndex: "allowed_attempts",
+    //   key: "allowed_attempts",
+    //   title: "Attempts allowed",
+    // },
+    // {
+    //   dataIndex: "question_count",
+    //   key: "question_count",
+    //   title: "Questions",
+    // },
+    // {
+    //   dataIndex: "time_limit",
+    //   key: "time_limit",
+    //   title: `Duration`,
+    // },
   ];
 
   const enrollmentsColumns = [
@@ -81,14 +88,6 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
       title: `Name`,
       render: (row: any) => {
         return row.name;
-      },
-    },
-    {
-      dataIndex: "type",
-      key: "type",
-      title: `Enrollment Type`,
-      render: (row: any) => {
-        return "Student";
       },
     },
     {
@@ -181,18 +180,19 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
   const fetchQuizzesByCourseId = async (courseId: string): Promise<void> => {
     axios
       .get(
-        fetchCanvasQuizzesByCourseId +
-          courseId +
-          "/" +
-          props.authData.data.access_token +
-          "/" +
-          authenticationData?.instituteId
+        `${getCanvasAssignmentDetails}/${authenticationData?.instituteId}/${urlParamsData.guid}/${props.courseId}/${authenticationData?.lmsAccessToken}`
       )
       .then((response) => {
-        response.data.forEach((quiz: any) => {
-          quiz.key = quiz.id;
+        let assignments = response.data.filter((assignment: any) => {
+          if ("due_at" in assignment) {
+            if (moment(assignment.due_at).isSameOrAfter(moment())) {
+              assignment.key = assignment.id;
+              return assignment;
+            }
+          }
         });
-        setQuizzes(response.data);
+        // setQuizzes(response.data);
+        setQuizzes(assignments);
       })
       .catch((error) => {
         console.log(error);
@@ -246,7 +246,7 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
         room: room,
         text: JSON.stringify({
           msgType: "STU_LIVE_REQ",
-          msg: { stuIds: [...ids], quizId: id },
+          msg: { stuIds: [...ids], assignmentId: id },
         }),
       });
 
@@ -277,11 +277,14 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
         }
 
         if (msg.msgType === "STU_LIVE_REP") {
-          let stuId = msg.msg.stuId;
-          let stage = msg.msg.status;
-          let temp = { ...stuLiveStatusObj };
-          temp[stuId] = stage;
-          setStuLiveStatusObj(temp);
+          let assignmentId = msg.msg.assignmentId;
+          if (id === assignmentId) {
+            let stuId = msg.msg.stuId;
+            let stage = msg.msg.status;
+            let temp = { ...stuLiveStatusObj };
+            temp[stuId] = stage;
+            setStuLiveStatusObj(temp);
+          }
         }
 
         if (msg.msgType === "EXAM_SESS_JOIN") {
@@ -335,7 +338,7 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
         />
       ) : (
         <div className="flex flex-col gap-6 justify-center items-center h-screen">
-          <h2 className="text-sm">Fetching Quizzes. Please wait...</h2>
+          <h2 className="text-sm">Fetching assignments. Please wait...</h2>
         </div>
       )}
       {showWait && <InfoModal title="" message="Please wait..." />}

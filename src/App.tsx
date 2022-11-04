@@ -73,8 +73,8 @@ function App() {
             setLoadFlag("N");
             // setLoadFlag("Y");
           } else {
-            setLoadFlag("N");
-            // setLoadFlag("Y");
+            // setLoadFlag("N");
+            setLoadFlag("Y");
           }
         }
       } else {
