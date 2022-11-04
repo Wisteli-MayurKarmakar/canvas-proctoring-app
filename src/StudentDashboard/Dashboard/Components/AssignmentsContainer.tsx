@@ -115,34 +115,52 @@ const AssignmentsContainer: React.FC<Props> = (props): JSX.Element => {
           </div>
           <div className="flex flex-row h-full w-full max-h-80 xl:max-h-full items-center justify-center self-center mx-auto flex-wrap gap-4  overflow-y-scroll p-2">
             {assignments.map((assignment: any, index: number) => {
-              if (
-                "due_at" in assignment &&
-                moment(assignment.due_at).isBefore(moment())
-              ) {
+              if ("due_at" in assignment) {
+                if (moment(assignment.due_at).isSameOrAfter(moment())) {
+                  return (
+                    <Tooltip
+                      key={index}
+                      placement="top"
+                      title={`${
+                        "Due date - " +
+                        moment(assignment.due_at).format("MM/DD/YYYY HH:MM a")
+                      }`}
+                    >
+                      <div className="flex flex-col gap-4" key={index}>
+                        <div
+                          key={index}
+                          onClick={() => handleSelectAssignment(assignment)}
+                          className={`transition ease-in-out delay-50 hover:-translate-y-1 hover:scale-110 duration-200 break-before-right cursor-pointer
+                          flex border box-border items-center justify-center h-40 w-48 p-4 rounded-lg bg-white shadow-md text-center
+                          ${
+                            selectedAssignment?.id === assignment.id
+                              ? "hover:bg-blue-400 hover:text-white bg-blue-400 text-white"
+                              : "hover:bg-blue-400 hover:text-white text-black"
+                          }`}
+                        >
+                          <p className="font-semibold text-center w-full">
+                            {assignment.name}
+                          </p>
+                        </div>
+                      </div>
+                    </Tooltip>
+                  );
+                }
                 return (
                   <Tooltip
                     key={index}
                     placement="top"
-                    title={"Due date expired"}
+                    title={`${
+                      "Due date expired - " +
+                      moment(assignment.due_at).format("MM/DD/YYYY HH:MM a")
+                    }`}
                   >
                     <div className="flex flex-col gap-4" key={index}>
                       <div
-                        style={{
-                          cursor: "not-allowed",
-                        }}
-                        key={index}
-                        onClick={(e: any) => e.preventDefault()}
-                        className={`flex p-6 h-28 w-28 relative rounded-lg text-md shadow-lg border font-semibold items-center justify-center text-center ${
-                          quizObj[assignment.id]
-                            ? "bg-blue-400 text-white"
-                            : "bg-white text-black"
-                        } hover:bg-gray-100 dark:${
-                          quizObj[assignment.id]
-                            ? "bg-blue-400"
-                            : "border-gray-200"
-                        } dark:hover:bg-red-400 dark:hover:text-white`}
+                        className={`flex p-6 h-40 w-48 relative rounded-lg text-md shadow-lg border break-before-right
+                          font-semibold items-center justify-center text-center cursor-not-allowed bg-red-400 text-white`}
                       >
-                        <h1>{assignment.name}</h1>
+                        <p className="font-semibold text-center w-full">{assignment.name}</p>
                       </div>
                     </div>
                   </Tooltip>
@@ -152,31 +170,14 @@ const AssignmentsContainer: React.FC<Props> = (props): JSX.Element => {
                 <Tooltip
                   key={index}
                   placement="top"
-                  title={`${
-                    "due_at" in assignment
-                      ? "Due date - " +
-                        moment(assignment.due_at).format("MM/ DD/ YYYY HH:MM a")
-                      : "No due date"
-                  }`}
+                  title={"No due date available"}
                 >
                   <div className="flex flex-col gap-4" key={index}>
                     <div
-                      style={{
-                        cursor: "pointer",
-                      }}
-                      key={index}
-                      onClick={() => handleSelectAssignment(assignment)}
-                      className={`flex p-6 h-40 w-48 rounded-lg text-md shadow-lg border items-center justify-center font-semibold text-center ${
-                        selectedAssignment?.id === assignment.id
-                          ? "bg-blue-400 text-white"
-                          : "bg-white text-black"
-                      } hover:bg-blue-400 dark:${
-                        selectedAssignment?.id === assignment.id
-                          ? "bg-blue-400"
-                          : "border-gray-200"
-                      } dark:hover:bg-blue-400 dark:hover:text-white`}
+                      className={`flex p-6 h-40 w-48 relative rounded-lg text-md shadow-lg border break-before-right
+                      font-semibold items-center justify-center text-center cursor-not-allowed bg-red-400 text-white`}
                     >
-                      <p className="text-ellipsis break-all">
+                      <p className="font-semibold text-center w-full">
                         {assignment.name}
                       </p>
                     </div>
@@ -254,7 +255,7 @@ const AssignmentsContainer: React.FC<Props> = (props): JSX.Element => {
                     onClick={() => setShowAuthModal(true)}
                     className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
                   >
-                    Authenticate
+                    Authentication for Proctoring
                   </button>
                 </div>
               </div>

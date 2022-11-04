@@ -687,6 +687,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
   const handleShowConfig = () => {
     if (selectedQuiz) {
       configRefDiv.current.classList.toggle("translate-y-full");
+      configRefDiv.current.classList.toggle("invisible");
       setShowConfigurations(!showConfigurations);
     } else {
       message.error("Please select a quiz");
@@ -777,7 +778,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
       </p>
       <div
         ref={configRefDiv}
-        className="container mx-auto mt-2 duration-150 ease-in-out top-0 transition-all translate-y-full"
+        className="container mx-auto mt-2 duration-150 ease-in-out top-0 transition-all translate-y-full invisible"
       >
         <p className="font-bold font-serif text-xl underline">
           {selectedQuiz && selectedQuiz.title + ":    "}Configuration

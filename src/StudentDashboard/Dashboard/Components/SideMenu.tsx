@@ -5,6 +5,7 @@ import PrivacyPolicy from "../../Tabs/PrivacyPolicy";
 import ImageMatchAuthentication from "../../AuthenticationScreens/ImageMatchAuthentication";
 import UpdateProfile from "../../Menu/UpdateProfile";
 import { useCommonStudentDashboardStore } from "../../../store/StudentDashboardStore";
+import { useWebCamStore } from "../../../store/globalStore";
 import { useAppStore } from "../../../store/AppSotre";
 import { Button, Modal, Tooltip } from "antd";
 import AssibilityModal from "../../../CommonUtilites/Modals/AccessibilityModal";
@@ -22,6 +23,10 @@ const SideMenu: React.FC = (): JSX.Element => {
   );
   const urlParamsData = useAppStore((state) => state.urlParamsData);
   const tokenData = useAppStore((state) => state.tokenData);
+  const stream = useWebCamStore((state) => state.stream);
+  const closeWebCamResouce = useWebCamStore(
+    (state) => state.closeWebCamResouce
+  );
 
   const options: string[] = [
     "System Check",
@@ -85,6 +90,15 @@ const SideMenu: React.FC = (): JSX.Element => {
     }
   };
 
+  const handleClose = () => {
+    if (modalTitle === "Authentication Test") {
+      if (stream?.active) {
+        closeWebCamResouce();
+      }
+    }
+    setShowModal(null);
+  };
+
   return (
     <div className="flex flex-col gap-4 w-5/12 xl:w-3/12 h-full items-center">
       <NeedHelp />
@@ -128,7 +142,7 @@ const SideMenu: React.FC = (): JSX.Element => {
         <Modal
           title={modalTitle}
           visible={showModal ? true : false}
-          onCancel={() => setShowModal(null)}
+          onCancel={handleClose}
           maskClosable={false}
           width={"90pc"}
           bodyStyle={{

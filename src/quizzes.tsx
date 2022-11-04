@@ -19,6 +19,7 @@ import {
   saveLtiStudentProfile,
   sendEmail as sendEmailUrl,
   getLtiCanvasConfigByAssignment,
+  getCanvasAssignmentDetails,
 } from "./apiConfigs";
 
 interface Props {
@@ -127,8 +128,8 @@ const Quzzies: React.FC<Props> = (props) => {
     }
 
     axios
-      .post(
-        `${fetchCanvasAssignmentsByCourseId}/${props.courseId}/${authenticationData?.instituteId}/${props.authToken}`
+      .get(
+        `${getCanvasAssignmentDetails}/${authenticationData?.instituteId}/${props.toolConsumerGuid}/${props.courseId}/${props.authToken}`
       )
       .then((res) => {
         if (res.data.length === 0) {
@@ -136,19 +137,23 @@ const Quzzies: React.FC<Props> = (props) => {
         }
 
         let temp: any = {};
-        res.data.forEach((item: any) => {
-          temp[item.id] = false;
+        let assignments = res.data.filter((item: any) => {
+          if ("name" in item) {
+            temp[item.id] = false;
+            return item;
+          }
         });
-        setAllAssignments(res.data);
-        setAssignments(res.data);
+        setAllAssignments(assignments);
+        setAssignments(assignments);
         setQuizObj(temp);
         if (urlParamsData.assignmentId) {
           let x = { [urlParamsData.assignmentId]: true };
           setQuizObj(x);
-          let assignment = res.data.find(
-            (item: any) =>
-              item.id === parseInt(urlParamsData.assignmentId as any)
-          );
+          let assignment = res.data.find((item: any) => {
+            if ("name" in item) {
+              return item.id === parseInt(urlParamsData.assignmentId as any);
+            }
+          });
           setSelectedAssgn({
             ...assignment,
           });

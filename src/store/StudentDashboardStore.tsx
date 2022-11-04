@@ -139,7 +139,7 @@ const checkIfProctored = async (
 ) => {
   let resProctoring: boolean = false;
 
-  if (assignmentConfig.recordWebcam && assignmentConfig.recordScreen) {
+  if (assignmentConfig.instructorProctored || assignmentConfig.examdLiveLaunch) {
     resProctoring = true;
     useAssignmentStore.setState({ isProctoredAssignment: resProctoring });
 

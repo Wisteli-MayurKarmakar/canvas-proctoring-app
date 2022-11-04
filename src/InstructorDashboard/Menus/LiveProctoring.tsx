@@ -130,8 +130,8 @@ const LiveProctoring: React.FC<Props> = (props): JSX.Element => {
               <div
                 className={
                   qzSelectTrack[quizz.id]
-                    ? `box-border h-32 w-48  p-4 border-4 rounded-lg hover:bg-slate-300 border-blue-400`
-                    : `box-border h-32 w-48  p-4 border-4 rounded-lg hover:bg-slate-300 border-slate-300`
+                    ? `box-border h-32 w-48 border  p-4 rounded bg-blue-400 shadow-lg text-white hover:bg-blue-400`
+                    : `transition ease-in-out delay-50 hover:-translate-y-1 hover:scale-110 duration-200 box-border h-32 w-48 border  p-4 rounded text-black shadow-lg bg-white hover:bg-blue-400 hover:text-white`
                 }
                 key={index}
                 style={{ cursor: "pointer" }}

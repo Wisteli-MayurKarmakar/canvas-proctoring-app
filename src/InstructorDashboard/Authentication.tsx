@@ -40,7 +40,7 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
   const [selectedQuizTitle, setSelectedQuizTitle] = React.useState<
     string | null
   >(null);
-  let checkAvailabilityInterval: any = null;
+  // let checkAvailabilityInterval: any = null;
   const socket = getWebSocketUrl();
   const authenticationData = userAuthenticationStore(
     (state) => state.authenticationData
@@ -250,22 +250,22 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
         }),
       });
 
-      if (!studentAvailableForAuth) {
-        checkAvailabilityInterval = setInterval(() => {
-          if (studentAvailableForAuth) {
-            clearInterval(checkAvailabilityInterval);
-          } else {
-            socket.emit("chat", {
-              evt: "chat",
-              room: room,
-              text: JSON.stringify({
-                msgType: "STU_LIVE_REQ",
-                msg: { stuIds: [...ids], quizId: id },
-              }),
-            });
-          }
-        }, 2000);
-      }
+      // if (!studentAvailableForAuth) {
+      //   checkAvailabilityInterval = setInterval(() => {
+      //     if (studentAvailableForAuth) {
+      //       clearInterval(checkAvailabilityInterval);
+      //     } else {
+      //       socket.emit("chat", {
+      //         evt: "chat",
+      //         room: room,
+      //         text: JSON.stringify({
+      //           msgType: "STU_LIVE_REQ",
+      //           msg: { stuIds: [...ids], quizId: id },
+      //         }),
+      //       });
+      //     }
+      //   }, 2000);
+      // }
     }
 
     socket.on("chat", (data: any) => {

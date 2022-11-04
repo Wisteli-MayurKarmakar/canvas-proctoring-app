@@ -3,7 +3,6 @@ import React, { useEffect } from "react";
 import InfoModal from "../infoModal";
 import { getWebSocketUrl } from "../APIs/apiservices";
 
-
 interface Props {
   authConfigs: any;
   quizTitle: string;
@@ -77,8 +76,7 @@ const AuthenticateUser: React.FC<Props> = (props): JSX.Element => {
     peerDataChannel.current =
       peerConnection.current.createDataChannel("dataChannel");
     //open data channel
-    peerDataChannel.current.onopen = () => {
-    };
+    peerDataChannel.current.onopen = () => {};
 
     destVideo = new MediaStream();
     vdoDstRef.current.srcObject = destVideo;
@@ -187,6 +185,7 @@ const AuthenticateUser: React.FC<Props> = (props): JSX.Element => {
 
     let dataChannelState = await peerDataChannel.current.readyState;
     if (dataChannelState === "open") {
+      setIsAuthenticated(true);
       peerDataChannel.current.send(
         JSON.stringify({
           authStatus: "STU_AUTHED",
@@ -196,8 +195,6 @@ const AuthenticateUser: React.FC<Props> = (props): JSX.Element => {
     }
     // sendMsgViaSocket("STU_AUTHED", { stuId: props.selectedRow.user.id });
   };
-
-  
 
   useEffect(() => {
     connectSocket();
@@ -274,7 +271,7 @@ const AuthenticateUser: React.FC<Props> = (props): JSX.Element => {
         <button
           type="button"
           onClick={handleSave}
-          disabled={authButtonDisabled}
+          disabled={isAuthenticated}
           className={
             "inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
           }

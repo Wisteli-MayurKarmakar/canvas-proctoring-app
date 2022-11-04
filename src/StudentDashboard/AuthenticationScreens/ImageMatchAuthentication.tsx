@@ -31,7 +31,7 @@ const ImageMatchAuthentication: React.FC<Props> = (props): JSX.Element => {
   let [retryCount, setRetryCount] = React.useState<number>(0);
   let [isRetry, setIsRetry] = React.useState<boolean>(false);
   const stream = useWebCamStore((state) => state.stream);
-  const setStream = useWebCamStore((state) => state.setStream)
+  const setStream = useWebCamStore((state) => state.setStream);
   const closeWebCamResouce = useWebCamStore(
     (state) => state.closeWebCamResouce
   );
@@ -150,7 +150,7 @@ const ImageMatchAuthentication: React.FC<Props> = (props): JSX.Element => {
         1,
         15
       );
-      
+
       setIsRetry(false);
       setStudentAuthed(true);
       setWaitCompleted(true);
@@ -168,9 +168,11 @@ const ImageMatchAuthentication: React.FC<Props> = (props): JSX.Element => {
       setWaitCompleted(true);
       setStudentAuthed(false);
       setAuthStarted(false);
-      videoRef.current.srcObject.getTracks().forEach((track: any) => {
-        track.stop();
-      });
+      if (videoRef.current) {
+        videoRef.current.srcObject.getTracks().forEach((track: any) => {
+          track.stop();
+        });
+      }
       if (isWebCamActive) {
         closeWebCamResouce();
       }
@@ -235,8 +237,7 @@ const ImageMatchAuthentication: React.FC<Props> = (props): JSX.Element => {
   }, [isRetry]);
 
   const handleRetry = () => {
-    console.log("retry cound", retryCount);
-    if (retryCount > 3) {
+    if (retryCount > 2) {
       message.error("You have reached the maximum number of retries.");
       return;
     }
