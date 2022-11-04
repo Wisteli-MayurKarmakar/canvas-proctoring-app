@@ -9,9 +9,8 @@ import InfoModal from "../infoModal";
 import {
   viewCanvasProfile,
   downloadDL,
-  fetchCanvasQuizzesByCourseId,
-  fetchAccountsByIdAndEnrollemntType,
   getCanvasAssignmentDetails,
+  fetchAccountsByCourseAndEnrollemntType,
 } from "../apiConfigs";
 import { userAuthenticationStore } from "../store/autheticationStore";
 import { useAppStore } from "../store/AppSotre";
@@ -30,7 +29,7 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
   let [quizzes, setQuizzes] = React.useState<Object | null>(null);
   const [enrollments, setEnrollments] = React.useState<Object | null>(null);
   const [showAuthModal, setShowAuthModal] = React.useState<boolean>(false);
-  const [authForQuizId, setAuthForQuizId] = React.useState<string | null>(null);
+  const [authForQuizId, setAuthForQuizId] = React.useState<any>(null);
   let [studentPhoto, setStudentPhoto] = React.useState<any>(null);
   const [studentAvailableForAuth, setStudentAvailableForAuth] =
     React.useState<boolean>(false);
@@ -43,6 +42,7 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
   const [selectedQuizTitle, setSelectedQuizTitle] = React.useState<
     string | null
   >(null);
+  const [studentAuthed, setStudentAuthed] = React.useState<boolean>(false);
   // let checkAvailabilityInterval: any = null;
   const urlParamsData = useAppStore((state) => state.urlParamsData);
   const socket = getWebSocketUrl();
@@ -202,7 +202,7 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
   const fetchCourseEnrollments = async (courseId: string): Promise<void> => {
     axios
       .get(
-        `${fetchAccountsByIdAndEnrollemntType}/${props.accountId}/student/${authenticationData?.instituteId}/${props.authData.data.access_token}`
+        `${fetchAccountsByCourseAndEnrollemntType}/${props.courseId}/student/${authenticationData?.instituteId}/${props.authData.data.access_token}`
       )
       .then((response) => {
         let temp: any = {};
@@ -249,23 +249,6 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
           msg: { stuIds: [...ids], assignmentId: id },
         }),
       });
-
-      // if (!studentAvailableForAuth) {
-      //   checkAvailabilityInterval = setInterval(() => {
-      //     if (studentAvailableForAuth) {
-      //       clearInterval(checkAvailabilityInterval);
-      //     } else {
-      //       socket.emit("chat", {
-      //         evt: "chat",
-      //         room: room,
-      //         text: JSON.stringify({
-      //           msgType: "STU_LIVE_REQ",
-      //           msg: { stuIds: [...ids], quizId: id },
-      //         }),
-      //       });
-      //     }
-      //   }, 2000);
-      // }
     }
 
     socket.on("chat", (data: any) => {
@@ -286,7 +269,6 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
             setStuLiveStatusObj(temp);
           }
         }
-
         if (msg.msgType === "EXAM_SESS_JOIN") {
           let stuId = msg.msg.stuId;
           let step = msg.msg.stepName;
@@ -307,13 +289,13 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
           }
         }
         if (msg.msgType === "LIVE_AUTH") {
-          let assgnId = msg.msg.assignmentId;
-
+          let assgnId = parseInt(msg.msg.assignmentId);
           if (id === assgnId) {
             let stuId = msg.msg.stuId;
             let step = msg.msg.stepName;
             let temp = { ...stuLiveStatusObj };
             temp[stuId] = step;
+            setAuthForQuizId(assgnId);
             setStudentAvailableForAuth(true);
             setStuLiveStatusObj(temp);
             setDoAuth({ step: step, studId: stuId });
@@ -326,6 +308,12 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
   const getExpandedRow = (row: any) => {
     connectSocket(row.id);
   };
+
+  const handleStudentAuthed = (data: any) => {
+    if (props.studentId === data.studId && authForQuizId === data.assignmentId && props.courseId === data.courseId) {
+      setStudentAuthed(true)
+    }
+  }
 
   useEffect(() => {
     fetchQuizzesByCourseId(props.courseId);
@@ -348,6 +336,7 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
           childTableActions={{ Authenticate: handleEnrollmentAuthentication }}
           mainTableActions={null}
           expandedRow={getExpandedRow}
+          studentAuthStatus={studentAuthed}
         />
       ) : (
         <div className="flex flex-col gap-6 justify-center items-center h-screen">
@@ -387,6 +376,7 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
               selectedRow={selectedRow}
               userId={props.userId}
               guid={props.guid}
+              studentAuthed={handleStudentAuthed}
             />
           </Modal>
         )}

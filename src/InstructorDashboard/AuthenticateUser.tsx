@@ -2,6 +2,7 @@ import { Col, Row } from "antd";
 import React, { useEffect } from "react";
 import InfoModal from "../infoModal";
 import { getWebSocketUrl } from "../APIs/apiservices";
+import { useAssignmentStore } from "../store/StudentDashboardStore";
 
 interface Props {
   authConfigs: any;
@@ -13,6 +14,7 @@ interface Props {
   guid: string;
   studentPhoto: any;
   studentId: any;
+  studentAuthed: (data: any) => void;
 }
 
 interface rtcStateProto {
@@ -24,6 +26,7 @@ const AuthenticateUser: React.FC<Props> = (props): JSX.Element => {
   const user = "chat_" + props.userId + "_" + "instr";
   const room = "rm_" + props.courseId + "_" + props.quizId;
   let [isAuthenticated, setIsAuthenticated] = React.useState<boolean>(false);
+  const selectedAssignment = useAssignmentStore((state) => state.selectedAssignment)
   const [authButtonDisabled, setAuthButtonDisabled] =
     React.useState<boolean>(true);
   let vdoDstRef = React.useRef<any>(null);
@@ -185,6 +188,7 @@ const AuthenticateUser: React.FC<Props> = (props): JSX.Element => {
 
     let dataChannelState = await peerDataChannel.current.readyState;
     if (dataChannelState === "open") {
+      props.studentAuthed({studId: props.selectedRow.id, assignmentId: selectedAssignment?.id, courseId: props.courseId})
       setIsAuthenticated(true);
       peerDataChannel.current.send(
         JSON.stringify({

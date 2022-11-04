@@ -6,8 +6,7 @@ import { getWebSocketUrl } from "../../APIs/apiservices";
 import LiveSreaming from "../Modals/LiveStreaming";
 import {
   fetchCanvasQuizzesByCourseId,
-  fetchCanvasEnrollmentsByCourseId,
-  fetchAccountsByIdAndEnrollemntType,
+  fetchAccountsByCourseAndEnrollemntType,
 } from "../../apiConfigs";
 import { userAuthenticationStore } from "../../store/autheticationStore";
 
@@ -58,7 +57,7 @@ const LiveProctoring: React.FC<Props> = (props): JSX.Element => {
       });
     axios
       .get(
-        `${fetchAccountsByIdAndEnrollemntType}/${props.accountId}/student/${authenticationData?.instituteId}/${props.authData.data.access_token}`
+        `${fetchAccountsByCourseAndEnrollemntType}/${props.courseId}/student/${authenticationData?.instituteId}/${props.authData.data.access_token}`
       )
       .then((res) => {
         let temp: any = {};

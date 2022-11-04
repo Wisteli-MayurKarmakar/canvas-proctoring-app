@@ -26,6 +26,7 @@ const LiveAuthentication: React.FC<Props> = (props): JSX.Element => {
   var vStream: any = null;
 
   const initWebCam = useWebCamStore((state) => state.initWebCam);
+  const setStream = useWebCamStore((state) => state.setStream);
   const closeWebCamResouce = useWebCamStore(
     (state) => state.closeWebCamResouce
   );
@@ -59,6 +60,7 @@ const LiveAuthentication: React.FC<Props> = (props): JSX.Element => {
     videoSrc.current.srcObject = stream;
     vStream = stream;
     setVdoStmSource(stream);
+    setStream(stream);
   };
 
   const createPeerConnection = async () => {
@@ -94,10 +96,14 @@ const LiveAuthentication: React.FC<Props> = (props): JSX.Element => {
         if (data.authStatus === "STU_AUTHED" && data.stuId === props.userId) {
           message.success("You are successfully authenticated");
           props.isLiveAuthed(true);
-
-          vStream.getTracks().forEach((track: any) => {
-            track.stop();
-          });
+          if (vStream) {
+            vStream.getTracks().forEach((track: any) => {
+              track.stop();
+            });
+          }
+          if (stream) {
+            closeWebCamResouce();
+          }
           peerConnection.close();
         }
       };
@@ -174,7 +180,7 @@ const LiveAuthentication: React.FC<Props> = (props): JSX.Element => {
           sendMsgViaSocket("LIVE_AUTH", {
             stuId: props.userId,
             stepName: "LIVE_AUTH",
-            assignmentId: selectedAssignment?.id.toString(),
+            assignmentId: selectedAssignment?.id,
           });
         }
         if (msg.msgType === "candidate") {

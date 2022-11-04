@@ -6,13 +6,12 @@ import Report from "./report";
 import InfoModal from "./infoModal";
 import {
   fetchCanvasQuizzesByCourseId,
-  fetchCanvasEnrollmentsByCourseId,
   getLtiCanvasConfigByGuidCourseIdQuizId,
-  fetchAccountsByIdAndEnrollemntType,
   fetchCanvasCourseDetailsByCourseId,
   viewCanvasProfile,
   getExceptions as getExceptionsUrl,
   getLtiCVideoRef,
+  fetchAccountsByCourseAndEnrollemntType,
 } from "./apiConfigs";
 import { userAuthenticationStore } from "./store/autheticationStore";
 
@@ -71,7 +70,7 @@ const QuizReports: FunctionComponent<Props> = (props): JSX.Element => {
   const getStudentsByCourseId = () => {
     axios
       .get(
-        `${fetchAccountsByIdAndEnrollemntType}/${props.accountId}/student/${authenticationData?.instituteId}/${props.reqToken}`
+        `${fetchAccountsByCourseAndEnrollemntType}/${props.courseId}/student/${authenticationData?.instituteId}/${props.reqToken}`
       )
       .then((res: any) => {
         let data = res.data.map((item: any) => ({
@@ -238,14 +237,6 @@ const QuizReports: FunctionComponent<Props> = (props): JSX.Element => {
       title: `Name`,
       render: (row: any) => {
         return row.name;
-      },
-    },
-    {
-      dataIndex: "type",
-      key: "type",
-      title: `Enrollment Type`,
-      render: (row: any) => {
-        return "Student";
       },
     },
     {

@@ -13,6 +13,7 @@ interface Props {
   mainTableActions: any;
   expandedRow: (row: any) => void;
   enableAuth: any;
+  studentAuthStatus: boolean;
 }
 
 const Grid: React.FunctionComponent<Props> = (props): JSX.Element => {
@@ -36,7 +37,8 @@ const Grid: React.FunctionComponent<Props> = (props): JSX.Element => {
                     props.authQuizId === selectedQuizId &&
                     props.enableAuth &&
                     props.enableAuth.step === "LIVE_AUTH" &&
-                    props.enableAuth.studId === row.id
+                    props.enableAuth.studId === row.id &&
+                    props.studentAuthStatus === false
                       ? false
                       : true
                   }
@@ -48,9 +50,13 @@ const Grid: React.FunctionComponent<Props> = (props): JSX.Element => {
                     )
                   }
                 >
-                  Authenticate
+                  {props.studentAuthStatus === false
+                    ? "Authenticate"
+                    : "Authenticated"}
                 </Button>
-                <Button type="link" disabled={true}>Contacts</Button>
+                <Button type="link" disabled={true}>
+                  Contacts
+                </Button>
               </div>
             );
           };
@@ -71,7 +77,7 @@ const Grid: React.FunctionComponent<Props> = (props): JSX.Element => {
             if ("due_at" in rowData) {
               selectedQuizDate = rowData.due_at;
             }
-            selectedQuizTitle = rowData.title;
+            selectedQuizTitle = rowData.name;
             if (props.nestedTableData) {
               addActions(selectedQuizId as string);
               return (
@@ -80,7 +86,7 @@ const Grid: React.FunctionComponent<Props> = (props): JSX.Element => {
                     key={rowData.id + "a"}
                     className="text-center text-base font-bold underline"
                   >
-                    {rowData.title} enrollments
+                    {rowData.name} enrollments
                   </p>
                   <Table
                     columns={props.nestedTableColumns}

@@ -66,8 +66,11 @@ const getScheduling: string = `${baseUrl}canvaslms/api/v1/getLtiSchedule`;
 
 const getCanvasAssignmentDetails: string =`${baseUrl}student/api/v1/getCanvasAssignmentDetails`
 
+const fetchAccountsByCourseAndEnrollemntType: string =`${baseUrl}student/api/v1/fetchAccountsByCourseAndEnrollemntType`
+
 export {
   getEndPoints,
+  fetchAccountsByCourseAndEnrollemntType,
   saveScheduling,
   getCanvasAssignmentDetails,
   getScheduling,

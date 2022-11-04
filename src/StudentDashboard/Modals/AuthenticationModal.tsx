@@ -81,7 +81,7 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
           "STU_AUTH_STEP",
           quizSteps[stepNo].name,
           props.userId,
-          selectedAssignment?.id.toString() as any
+          selectedAssignment?.id as any
         );
       }
     });
@@ -95,14 +95,14 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
     msgType: string,
     stepName: string,
     stuId: string,
-    quizId: string
+    assignmentId: number
   ) => {
     socketInstance.emit("chat", {
       evt: "chat",
       room: room,
       text: JSON.stringify({
         msgType: msgType,
-        msg: { stuId: stuId, stepName: stepName, assignmentId: quizId },
+        msg: { stuId: stuId, stepName: stepName, assignmentId: assignmentId },
       }),
     });
   };
@@ -186,7 +186,7 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
       }
       // setQuizSteps(steps);
     }
-
+    sendStatus("System Check");
     setAuthStepsCount(steps.length - 1);
 
     if (steps.length <= 4) {
