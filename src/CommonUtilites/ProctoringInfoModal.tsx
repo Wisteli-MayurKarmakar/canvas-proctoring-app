@@ -1,5 +1,5 @@
 import { Button, Modal } from "antd";
-import React, { useEffect } from "react";
+import React from "react";
 import ScreenShot from "../assets/images/screen-share.jpg";
 import WebCam from "../assets/images/webcam-share.jpg";
 
@@ -89,13 +89,14 @@ const ProctoringInfoModal: React.FC<Props> = (props): JSX.Element => {
       ]}
     >
       <div className="flex flex-col h-full w-full items-center justify-center">
-        <p className="text-xl font-bold">Proctoring has started.</p>
-        <p className="text-lg font-semibold">
-          Please don't close this tab or end proctoring untill you complete the
-          quiz.
+        <p className="text-xl font-bold uppercase">Proctoring has started</p>
+        <p className="text-xl font-bold text-center text-blue-500">
+          This is the proctoring tab, please do not close this tab or click "End
+          Proctoring" button up until you submit the quiz.
         </p>
-        <p className="text-lg font-semibold">
-          Please go to the quiz page and continue. Thanks
+        <p className="text-xl font-bold text-center text-blue-500">
+          Now, to take the quiz please go to the prior tab and click "Start
+          Quiz".
         </p>
         {!props.onSeb && promptInfo}
         {!props.onSeb &&

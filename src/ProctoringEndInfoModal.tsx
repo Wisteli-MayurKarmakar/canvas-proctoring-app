@@ -34,11 +34,11 @@ const ProctoringEndInfoModal: React.FC<Props> = (props): JSX.Element => {
         ) : (
           <>
             <p className="text-lg font-semibold">
-              We noticed that {props.assignment.name} has been submitted. Proctoring
+              We noticed that {props.assignment.name.split("-")[1]} has been submitted. Proctoring
               has finished.
             </p>
             <p className="text-lg font-semibold">
-              Press the close button to continue.
+              Press the close button to close proctoring.
             </p>
           </>
         )}

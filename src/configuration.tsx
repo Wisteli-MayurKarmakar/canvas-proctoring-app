@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   AudioOutlined,
   CalculatorOutlined,
@@ -8,6 +8,7 @@ import {
   DesktopOutlined,
   IdcardOutlined,
   IeOutlined,
+  InfoCircleFilled,
   InteractionOutlined,
   KeyOutlined,
   PhoneOutlined,
@@ -34,8 +35,12 @@ import {
   getLtiCanvasConfigByGuidCourseIdQuizId,
   fetchCanvasQuizzesByCourseId,
 } from "./apiConfigs";
-import { message } from "antd";
+import { message, Tooltip } from "antd";
 import { userAuthenticationStore } from "./store/autheticationStore";
+import CustomizationSummary from "./CommonUtilites/CustomizationSummary";
+import { useQuizStore } from "./store/QuizStore";
+import WaitingModal from "./CommonUtilites/WaitingModal";
+import { useAppStore } from "./store/AppSotre";
 
 interface Props {
   auth: Object | any;
@@ -73,10 +78,6 @@ interface objProto {
 
 interface settingOptionsStatus {
   [key: string]: any;
-}
-
-interface endPointsProto {
-  [key: string]: string;
 }
 
 const abbrs = {
@@ -232,26 +233,27 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
   );
   let [quizzesStat, setQuizzesStat] = React.useState<any>();
   let [checked, setChecked] = React.useState<checkTypes>(abbrs);
-  let [showInfoModal, setShowInfoModal] = React.useState(false);
   let [userSettings, setUserSettings] = React.useState<any>({});
   let [applySettings, setApplySettings] = React.useState<boolean>(false);
   const [quizzes, setQuizzes] = React.useState<any>(null);
   const [selectedQuiz, setSelectedQuiz] = React.useState<any>(null);
   let [quizSettings, setQuizSettings] = React.useState<any>(null);
+  const [showWaitingModal, setShowWaitingModal] =
+    React.useState<boolean>(false);
   const [showConfigurations, setShowConfigurations] =
     React.useState<boolean>(false);
   let [quizConfig, setQuizConfig] = React.useState<any>(null);
   let [configSaveStatus, setConfigSaveStatus] = React.useState<boolean>(false);
   let [defaultSettingsOptionsChecked, setDefaultSettingsOptionsChecked] =
     React.useState<any>(null);
+  const [showSummary, setShowSummary] = useState<boolean>(false);
+  const [quicKConfigSelected, setQuicKConfigSelected] = useState<string>("");
   let [isReset, setIsReset] = React.useState<boolean>(false);
   const authenticationData = userAuthenticationStore(
     (state) => state.authenticationData
   );
-  const configRefDiv: any = useRef();
-  const borderColorOnSelect = "#12b0ff";
-  const defaultBorderColor = "#949799";
-
+  const { tokenData } = useAppStore((state) => state);
+  const quizStoreState = useQuizStore((state) => state);
   const resetOptionSelection = (option: string) => {
     let selectables: optionCheckedProto = { ...(checked[option] as {}) };
     for (let key in selectables) {
@@ -259,6 +261,31 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
     }
     setChecked({ ...checked, [option]: selectables });
   };
+  const waitingModalMessage: JSX.Element = (
+    <div className="flex flex-row h-full w-full items-center justify-center gap-2">
+      <p className="mx-atuo text-xl text-center font-bold">
+        Setting up the quiz for proctoring. Please wait...
+      </p>
+      <div role="status">
+        <svg
+          className="inline mr-2 w-4 h-4 text-gray-200 animate-spin dark:text-gray-600 fill-green-600"
+          viewBox="0 0 100 101"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
+            fill="currentColor"
+          />
+          <path
+            d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
+            fill="currentFill"
+          />
+        </svg>
+        <span className="sr-only">Loading...</span>
+      </div>
+    </div>
+  );
 
   const handleChange = (option: string, e: any | null) => {
     let options: optionCheckedProto = { ...(optionsStatus as {}) };
@@ -293,7 +320,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
       return;
     }
 
-    if (defaultSettingsOptionsChecked["Default Proctoring"]) {
+    if (defaultSettingsOptionsChecked["AI Proctoring"]) {
       if (subOption === "examdLiveLaunch") {
         message.error(
           "Cannot select Examd Live Launch option with Default Proctoring"
@@ -302,7 +329,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
       }
     }
 
-    if (defaultSettingsOptionsChecked["Default w/ Live launch"]) {
+    if (defaultSettingsOptionsChecked["Live Launch"]) {
       if (subOption === "studentIdDl" || subOption === "studentPicture") {
         message.error(
           "Cannot select any AI authentication option with Live Launch Proctoring"
@@ -312,8 +339,8 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
     }
 
     if (
-      defaultSettingsOptionsChecked["Default w/ Live Proctoring"] ||
-      defaultSettingsOptionsChecked["Lock down Browser"]
+      defaultSettingsOptionsChecked["Live Proctoring"] ||
+      defaultSettingsOptionsChecked["Lockdown Browser"]
     ) {
       if (subOption === "examdLiveLaunch") {
         let res =
@@ -374,14 +401,15 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
     );
   }
 
-  const handleAutoCompleteSetup = () => {
-    axios
-      .get(
+  const handleAutoCompleteSetup = async () => {
+    try {
+      let response = await axios.get(
         `${autoCompleteSetup}${props.courseId}/${selectedQuiz.title}/${selectedQuiz.id}/${props.auth.data.access_token}/${authenticationData?.instituteId}`
-      )
-      .then((response) => {
-        message.success("Successfully setuped the quiz");
-      });
+      );
+      setShowWaitingModal(false);
+    } catch (e) {
+      setShowWaitingModal(false);
+    }
   };
 
   const handleSubmit = () => {
@@ -444,9 +472,10 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
       })
       .then((res) => {
         if (allOptions["assignmentId"] === 0) {
+          setShowWaitingModal(true);
           handleAutoCompleteSetup();
         }
-        setQuizConfig(res.data);
+        setQuizConfig(allOptions);
         message.success("Configurations saved successfully");
         setConfigSaveStatus(true);
       })
@@ -529,7 +558,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
         ]}&courseId=${props.courseId}&quizId=${quizId}`,
         {
           headers: {
-            Authorization: `Bearer ${props.auth.data.access_token}`,
+            Authorization: `Bearer ${tokenData.lmsAccessToken}`,
           },
         }
       )
@@ -539,9 +568,11 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
         applyUserSettings(res.data);
         setApplySettings(false);
         setQuizConfig(res.data);
+        setShowSummary(true);
       })
       .catch((err) => {
         setQuizConfig(null);
+        setShowSummary(false);
         setOptionsEnableSwitchStatus();
         setDefaultCheckedStatus();
       });
@@ -549,7 +580,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
   const getQuizzesByCourseId = (id: string): void => {
     axios
       .get(
-        `${fetchCanvasQuizzesByCourseId}${id}/${props.reqToken}/${authenticationData?.instituteId}`
+        `${fetchCanvasQuizzesByCourseId}${id}/${tokenData.lmsAccessToken}/${tokenData.instituteId}`
       )
       .then((res) => {
         let quizzesStatus: any = {};
@@ -559,6 +590,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
         });
         setQuizzes(res.data);
         setQuizzesStat(quizzesStatus);
+        quizStoreState.setAllQuizzes(res.data);
       })
       .catch((err) => {
         console.log(err);
@@ -583,6 +615,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
 
   const handleSelectQuiz = (quiz: any) => {
     setSelectedQuiz(quiz);
+    quizStoreState.setSelectedQuiz(quiz);
     setShowConfigurations(false);
     let quizStat: any = { ...quizzesStat };
 
@@ -632,7 +665,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
       return;
     }
 
-    if (optionName === "Default Proctoring") {
+    if (optionName === "AI Proctoring") {
       let res: boolean = checkExamLiveLaunchSelected();
       if (res) {
         let checkedOptions = { ...checked };
@@ -641,7 +674,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
       }
     }
 
-    if (optionName === "Default w/ Live launch") {
+    if (optionName === "Live Launch") {
       let res: boolean = checkPhotoIdSelected();
 
       if (res) {
@@ -652,7 +685,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
       }
     }
 
-    if (optionName === "Default w/ Live Proctoring") {
+    if (optionName === "Live Proctoring") {
       let res: boolean = checkPhotoIdAndLiveLaunchSelected();
 
       if (res) {
@@ -662,7 +695,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
       }
     }
 
-    if (optionName === "Lock down Browser") {
+    if (optionName === "Lockdown Browser") {
       let res: boolean = checkPhotoIdAndLiveLaunchSelected();
       if (res) {
         let checkedOptions = { ...checked };
@@ -675,20 +708,34 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
       let settings: any = { ...defaultProcSettings[idx].settings };
       resetOtherDefaultCheckedOptions(optionName);
       applyUserSettings(settings);
+      setQuicKConfigSelected(optionName);
+      if (!showConfigurations) {
+        setShowSummary(true);
+      }
     } else {
       setDefaultSettingsOptionsChecked({
         ...defaultSettingsOptionsChecked,
         [optionName]: false,
       });
-      applyUserSettings(quizSettings);
+      if (!quizStoreState.selectedQuizConfig) {
+        handleResetAll();
+      }
+      setQuicKConfigSelected("");
+      if (!showConfigurations) {
+        setShowSummary(false);
+      }
     }
   };
 
   const handleShowConfig = () => {
     if (selectedQuiz) {
-      configRefDiv.current.classList.toggle("translate-y-full");
-      configRefDiv.current.classList.toggle("invisible");
-      setShowConfigurations(!showConfigurations);
+      if (showConfigurations) {
+        setShowConfigurations(false);
+        setShowSummary(true);
+      } else {
+        setShowConfigurations(true);
+        setShowSummary(false);
+      }
     } else {
       message.error("Please select a quiz");
       return;
@@ -697,7 +744,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
 
   return (
     <div className="flex flex-col gap-5 justify-center items-center mt-5 text-center container text-lg">
-      <div className="flex flex-row flex-wrap gap-10 justify-center">
+      <div className="flex flex-row flex-wrap gap-10 justify-center h-full w-full max-h-72 overflow-y-scroll">
         {quizzes ? (
           quizzes.map((quiz: any, index: number) => {
             return (
@@ -749,108 +796,136 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
           {defaultSettingsOptionsChecked &&
             defaultProcSettings.map((setting: any, index: number) => {
               return (
-                <>
-                  <input
-                    className="form-check-input appearance-none h-4 w-4 border border-gray-300 rounded-sm bg-white checked:bg-blue-600 checked:border-blue-600 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer"
-                    type="checkbox"
-                    value=""
-                    id="flexCheckDefault"
-                    onChange={(e) =>
-                      handleCheckboxChange(e, index, setting.name)
-                    }
-                    checked={defaultSettingsOptionsChecked[setting.name]}
-                  ></input>
+                <div
+                  className="flex flex-col w-full justify-center gap-1"
+                  key={index}
+                >
+                  <div className="flex flex-row h-full w-full items-center justify-center gap-1">
+                    <input
+                      className="form-check-input appearance-none h-4 w-4 border self-center border-gray-300 rounded-sm bg-white checked:bg-blue-600 checked:border-blue-600 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer"
+                      type="checkbox"
+                      value=""
+                      id="flexCheckDefault"
+                      onChange={(e) =>
+                        handleCheckboxChange(e, index, setting.name)
+                      }
+                      checked={defaultSettingsOptionsChecked[setting.name]}
+                    />
+                    <Tooltip
+                      placement="top"
+                      title={setting.infoMsg}
+                      className="pt-1"
+                    >
+                      <InfoCircleFilled style={{ color: "rgb(96 165 250)" }} />
+                    </Tooltip>
+                  </div>
                   <div className="mr-5 text-gray-700 font-semibold truncate">
                     {setting.name}
                   </div>
-                </>
+                </div>
               );
             })}
         </div>
       </div>
-      <p
-        className="text-center text-blue-400 font-semibold cursor-pointer underline text-lg mt-4 mb-4"
-        onClick={handleShowConfig}
-      >
-        {`${
-          showConfigurations ? "Hide Configurations" : "Show/ Set Configurations"
-        }`}
-      </p>
-      <div
-        ref={configRefDiv}
-        className="container mx-auto mt-2 duration-150 ease-in-out top-0 transition-all translate-y-full invisible"
-      >
-        <p className="font-bold font-serif text-xl underline">
-          {selectedQuiz && selectedQuiz.title + ":    "}Configuration
-        </p>
-        <div
-          className="mt-4 container overflow-y-scroll"
-          style={{ height: "76vh" }}
+      <div className="flex flex-row h-full items-center gap-8">
+        <p
+          className="text-center text-blue-400 font-semibold cursor-pointer underline text-lg mt-4 mb-4"
+          onClick={handleShowConfig}
         >
-          {Object.keys(settingOptions).map((key: string) => (
-            <div key={key} className="row-span-full">
-              <div className="flex flex-row h-full items-center gap-2 mb-2 mt-4">
-                <b className="font-semibold">{key}</b>
-                <input
-                  className="flex items-center justify-center"
-                  type="checkbox"
-                  role="switch"
-                  id="flexSwitchCheckDefault"
-                  checked={
-                    Object.keys(optionsStatus).length > 0 && optionsStatus[key]
-                  }
-                  onChange={(e) => handleChange(key, e)}
-                />
-              </div>
-              <div className="flex flex-row gap-6">
-                {Object.keys(settingOptions[key]).map(
-                  (subKey: string, idx: number) => (
-                    <div key={idx}>
-                      <div
-                        className={`flex border box-border items-center justify-center h-32 w-32 bg-white shadow-lg rounded hover:bg-blue-400 hover:text-white 
+          {`${
+            showConfigurations ? "Hide Customization" : "Edit Customization"
+          }`}
+        </p>
+      </div>
+      {showConfigurations && selectedQuiz && (
+        <div className="container mx-auto mt-2">
+          <p className="font-bold font-serif text-xl underline">
+            {selectedQuiz && selectedQuiz.title + ":    "}Configuration
+          </p>
+          <div
+            className="mt-4 container overflow-y-scroll"
+            style={{ height: "76vh" }}
+          >
+            {Object.keys(settingOptions).map((key: string) => (
+              <div key={key} className="row-span-full">
+                <div className="flex flex-row h-full items-center gap-2 mb-2 mt-4">
+                  <b className="font-semibold">{key}</b>
+                  <input
+                    className="flex items-center justify-center"
+                    type="checkbox"
+                    role="switch"
+                    id="flexSwitchCheckDefault"
+                    checked={
+                      Object.keys(optionsStatus).length > 0 &&
+                      optionsStatus[key]
+                    }
+                    onChange={(e) => handleChange(key, e)}
+                  />
+                </div>
+                <div className="flex flex-row gap-6">
+                  {Object.keys(settingOptions[key]).map(
+                    (subKey: string, idx: number) => (
+                      <div key={idx}>
+                        <div
+                          className={`flex border box-border items-center justify-center h-32 w-32 bg-white shadow-lg rounded hover:bg-blue-400 hover:text-white 
                         cursor-pointer ${
                           Object.keys(checked).length > 0 &&
                           checked[key][subKey]
                             ? "bg-blue-400 text-white"
                             : "bg-white"
                         }`}
-                        onClick={() => handleOptionClick(key, subKey)}
-                      >
-                        <div className="text-7xl flex items-start justify-center align-middle">
-                          {settingOptions[key][subKey].icon}
+                          onClick={() => handleOptionClick(key, subKey)}
+                        >
+                          <div className="text-7xl flex items-start justify-center align-middle">
+                            {settingOptions[key][subKey].icon}
+                          </div>
                         </div>
+                        <p className="text-center truncate w-32">
+                          {settingOptions[key][subKey].fullName}
+                        </p>
                       </div>
-                      <p className="text-center truncate w-32">
-                        {settingOptions[key][subKey].fullName}
-                      </p>
-                    </div>
-                  )
-                )}
+                    )
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
-          {applySettings && (
-            <InfoModal
-              title="User settings"
-              message="Fetching user settings. Please wait."
-            />
-          )}
+            ))}
+            {applySettings && (
+              <InfoModal
+                title="User settings"
+                message="Fetching user settings. Please wait."
+              />
+            )}
+          </div>
+          <div className="flex flex-row pt-4 gap-5 pb-4">
+            <button
+              onClick={handleSubmit}
+              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            >
+              Submit
+            </button>
+            <button
+              onClick={handleResetAll}
+              className="bg-transparent  text-blue-700 font-semibold  py-2 px-4 border border-blue-500  rounded"
+            >
+              Reset
+            </button>
+          </div>
         </div>
-        <div className="flex flex-row pt-4 gap-5 pb-4">
-          <button
-            onClick={handleSubmit}
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-          >
-            Submit
-          </button>
-          <button
-            onClick={handleResetAll}
-            className="bg-transparent  text-blue-700 font-semibold  py-2 px-4 border border-blue-500  rounded"
-          >
-            Reset
-          </button>
-        </div>
-      </div>
+      )}
+      {showSummary && (
+        <CustomizationSummary
+          quickConfig={quicKConfigSelected}
+          quizConfig={quizConfig}
+          handleSave={handleSubmit}
+        />
+      )}
+      {showWaitingModal && (
+        <WaitingModal
+          visible={showWaitingModal}
+          title="Setting up quiz"
+          message={waitingModalMessage}
+        />
+      )}
     </div>
   );
 };

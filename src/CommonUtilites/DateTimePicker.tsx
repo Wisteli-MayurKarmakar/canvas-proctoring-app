@@ -25,6 +25,7 @@ type SchedulingData = {
   courseId: string;
   scheduleDate: string;
   status: number;
+  guid: string;
 };
 
 const App: React.FC<Props> = (props): JSX.Element => {
@@ -40,11 +41,13 @@ const App: React.FC<Props> = (props): JSX.Element => {
   const selectedAssignment = useAssignmentStore(
     (state) => state.selectedAssignment
   );
+  const selectedAssignmentConfigurations = useAssignmentStore(
+    (state) => state.selectedAssignmentConfigurations
+  );
   const checkAssignmentSchedules = useAssignmentStore(
     (state) => state.checkAssignmentSchedules
   );
   const onTimeChange = (time: Moment | null) => {
-    console.log(time);
     setTime(time);
   };
   const onDateChange = (value: Moment) => {
@@ -83,7 +86,7 @@ const App: React.FC<Props> = (props): JSX.Element => {
   const saveSchedule = async (date: Moment, time: Moment) => {
     setIsSavingSchedule(true);
 
-    let scheduleDate: any = date?.set("hours", time.hours());
+    let scheduleDate: Moment = date?.set("hours", time.hours());
     scheduleDate = date.set("minutes", time.minutes());
     scheduleDate = date.set("seconds", time.seconds());
     scheduleDate = date.set("milliseconds", time.milliseconds());
@@ -92,11 +95,12 @@ const App: React.FC<Props> = (props): JSX.Element => {
       scheduleId: "",
       instituteId: tokenData.instituteId as any,
       assignmentId: selectedAssignment?.id as any,
-      quizId: urlParamsData.quizId as any,
+      quizId: selectedAssignmentConfigurations?.quizId as any,
       studentId: urlParamsData.studentId as any,
       courseId: urlParamsData.courseId as any,
       scheduleDate: scheduleDate.toISOString(),
       status: 0,
+      guid: urlParamsData.guid as any,
     };
 
     let response = await axios.post(
@@ -134,6 +138,8 @@ const App: React.FC<Props> = (props): JSX.Element => {
       width={"50pc"}
       footer={[
         <Button
+          type="primary"
+          key="save"
           disabled={!date || !time}
           onClick={handleClose}
           loading={isSavingSchedule}
@@ -151,12 +157,12 @@ const App: React.FC<Props> = (props): JSX.Element => {
             onChange={onDateChange}
             disabledDate={(current) => {
               let upperBound: number = 0;
-              upperBound = moment(props.assignmentConfig.availableUntil).diff(
+              upperBound = moment(selectedAssignment?.lock_at).diff(
                 moment(),
                 "days"
               );
               return (
-                moment().add(0, "days") >= current ||
+                moment().add(2, "days") >= current ||
                 moment().add(upperBound + 1, "days") <= current
               );
             }}

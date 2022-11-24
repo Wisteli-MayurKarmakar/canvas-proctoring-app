@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { getWebSocketUrl } from "../../APIs/apiservices";
+import { useAppStore } from "../../store/AppSotre";
 
 interface Props {
   authToken: string;
@@ -18,6 +19,7 @@ const RoomScan: React.FC<Props> = (props): JSX.Element => {
   let readyToSendVideo = isRecording === false && true;
   let liveCapSource = React.useRef<any>(null);
   let recordedCapSource = React.useRef<any>(null);
+  const tokenData = useAppStore((state) => state.tokenData);
 
   const sendVideoFeed = (vdoChunks: any) => {
     let jsn: {
@@ -25,10 +27,8 @@ const RoomScan: React.FC<Props> = (props): JSX.Element => {
     } = {
       evt: "uploadvideo",
       payload: {
-        filename:
-          `${props.guid}_${props.courseId}_${props.quizId}_${props.studentId}` +
-          "_rmvdo",
-        mimetype: "video/" + "webm",
+        filename: `${tokenData.instituteId}_${props.courseId}_${props.quizId}_${props.studentId}_rmvdo`,
+        mimetype: "video/webm",
       },
     };
     jsn.file = vdoChunks;
@@ -41,7 +41,6 @@ const RoomScan: React.FC<Props> = (props): JSX.Element => {
     let data: any = [];
 
     recorder.ondataavailable = (event) => {
-      sendVideoFeed(event.data);
       data.push(event.data);
     };
     recorder.start();
@@ -98,6 +97,7 @@ const RoomScan: React.FC<Props> = (props): JSX.Element => {
       .then(() => startRecording(liveCapSource.current.captureStream()))
       .then((recordedChunks: any) => {
         let recordedBlob = new Blob(recordedChunks, { type: "video/webm" });
+        sendVideoFeed(recordedBlob);
         recordedCapSource.current.src = URL.createObjectURL(recordedBlob);
         setRecordedMedia(recordedBlob);
       })
@@ -163,7 +163,6 @@ const RoomScan: React.FC<Props> = (props): JSX.Element => {
           </button>
         </div>
       )}
-    
     </div>
   );
 };

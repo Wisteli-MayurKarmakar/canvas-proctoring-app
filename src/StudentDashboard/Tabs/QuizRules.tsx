@@ -1,8 +1,6 @@
 import {
-  CheckOutlined,
   CheckSquareOutlined,
   CloseCircleOutlined,
-  CloseOutlined,
 } from "@ant-design/icons";
 import { Col, Row } from "antd";
 import React, { useEffect } from "react";

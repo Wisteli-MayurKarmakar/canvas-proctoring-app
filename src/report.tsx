@@ -1,7 +1,8 @@
 import { Modal, Timeline } from "antd";
-import React from "react";
+import React, { useState } from "react";
 
-import {getMedia} from "./apiConfigs"
+import { getMedia } from "./apiConfigs";
+import { useAppStore } from "./store/AppSotre";
 
 interface Props {
   show: boolean;
@@ -32,6 +33,8 @@ const Report: React.FC<Props> = ({
   fileName,
   configuration,
 }): JSX.Element => {
+  const tokenData = useAppStore((state) => state.tokenData);
+
   return (
     <Modal
       visible={show}
@@ -79,9 +82,7 @@ const Report: React.FC<Props> = ({
             <div className="box-border h-64 w-80 p-4 border-4 rounded">
               {configuration.recordWebcam ? (
                 <video controls className="object-fill rounded">
-                  <source
-                    src={`${getMedia}/${fileName}_vdo/webm`}
-                  ></source>
+                  <source src={`${getMedia}/${fileName}_vdo/webm`}></source>
                 </video>
               ) : (
                 <div className="flex items-center justify-center">
@@ -95,9 +96,7 @@ const Report: React.FC<Props> = ({
             <div className="box-border h-64 w-80 p-4 border-4 rounded">
               {configuration.recordScreen ? (
                 <video controls className="object-fill rounded">
-                  <source
-                    src={`${getMedia}/${fileName}_scr/webm`}
-                  ></source>
+                  <source src={`${getMedia}/${fileName}_scr/webm`}></source>
                 </video>
               ) : (
                 <div className="flex items-center justify-center">
@@ -114,7 +113,7 @@ const Report: React.FC<Props> = ({
               {configuration.roomScan ? (
                 <video controls className="object-fill rounded">
                   <source
-                    src={`${getMedia}/media/${guid}_${courseId}_${quizId}_${studentId}_rmvdo/webm`}
+                    src={`${getMedia}/${tokenData.instituteId}_${courseId}_${quizId}_${studentId}_rmvdo/webm`}
                   ></source>
                 </video>
               ) : (

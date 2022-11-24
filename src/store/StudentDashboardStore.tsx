@@ -1,15 +1,18 @@
 import axios from "axios";
-import produce from "immer";
-import moment from "moment";
 import create from "zustand";
 import { devtools } from "zustand/middleware";
 import { getLtiCanvasConfigByAssignment, getScheduling } from "../apiConfigs";
 import { useAppStore } from "./AppSotre";
 
 type Assignment = {
-  due_at: string;
   id: number;
   name: string;
+  due_at: string;
+  lock_at: string;
+  unlock_at: string;
+  allowed_attempts: number;
+  question_count: number;
+  time_limit: number;
   studentAuthed: boolean;
 };
 
@@ -62,15 +65,30 @@ type StudentEnrollments = {
 
 type CommonStudentDashboardStore = {
   enrollments?: StudentEnrollments;
+  loggedInUserEnrollmentType: string;
   setEnrollments: (data: StudentEnrollments) => void;
+  setLoggedInUserEnrollmentType: (type: string) => void;
+};
+
+type Schedule = {
+  assignmentId: number;
+  courseId: number;
+  instituteId: number;
+  quizId: number;
+  scheduleDate: string;
+  scheduleId: string;
+  status: number;
+  studentId: number;
 };
 
 type AssignmentStore = {
   assignments?: Assignment[];
   selectedAssignment?: Assignment;
   selectedAssignmentConfigurations?: AssignmentConfiguration;
+  selectedAssignmentSchedules: Schedule | null;
   schedulesAvailable: boolean;
   isProctoredAssignment: boolean;
+  isNewTabOpen?: boolean;
   checkAssignmentSchedules: () => void;
   setAssignments: (assignments: Assignment[]) => void;
   setSelectedAssignment: (assignment: Assignment) => void;
@@ -95,9 +113,11 @@ const getAssignmentSchedule = async () => {
 
   const assignmentId = useAssignmentStore.getState().selectedAssignment?.id;
   const instituteId = useAppStore.getState().tokenData.instituteId;
-  const quizId = useAppStore.getState().urlParamsData.quizId;
+  const quizId =
+    useAssignmentStore.getState().selectedAssignmentConfigurations?.quizId;
   const courseId = useAppStore.getState().urlParamsData.courseId;
   const studentId = useAppStore.getState().urlParamsData.studentId;
+  const guid = useAppStore.getState().urlParamsData.guid;
 
   let data = {
     scheduleId: "",
@@ -107,6 +127,7 @@ const getAssignmentSchedule = async () => {
     studentId: studentId,
     courseId: courseId,
     scheduleDate: "",
+    guid: guid,
     status: "0",
   };
 
@@ -126,6 +147,9 @@ const getAssignmentSchedule = async () => {
     );
 
     if (response.status === 200) {
+      useAssignmentStore.setState({
+        selectedAssignmentSchedules: response.data,
+      });
       if (Object.keys(data).length > 0) {
         res = true;
       }
@@ -134,17 +158,18 @@ const getAssignmentSchedule = async () => {
   } catch (err) {}
 };
 
-const checkIfProctored = async (
-  assignmentConfig: AssignmentConfiguration
-) => {
+const checkIfProctored = async (assignmentConfig: AssignmentConfiguration) => {
   let resProctoring: boolean = false;
 
-  if (assignmentConfig.instructorProctored || assignmentConfig.examdLiveLaunch) {
+  if (
+    assignmentConfig.instructorProctored ||
+    assignmentConfig.examdLiveLaunch ||
+    assignmentConfig.examdProctored
+  ) {
     resProctoring = true;
     useAssignmentStore.setState({ isProctoredAssignment: resProctoring });
-
-    await getAssignmentSchedule();
   }
+  await getAssignmentSchedule();
 };
 
 export const useAssignmentStore = create<AssignmentStore>()(
@@ -152,6 +177,8 @@ export const useAssignmentStore = create<AssignmentStore>()(
     (set, get) => ({
       isProctoredAssignment: false,
       schedulesAvailable: false,
+      selectedAssignmentSchedules: null,
+      isNewTabOpen: false,
       setAssignments: (assignments: Assignment[]) => {
         let assignmentsWithStudentAuthStatus = assignments.map(
           (assignment: Assignment) => {
@@ -170,6 +197,7 @@ export const useAssignmentStore = create<AssignmentStore>()(
           isProctoredAssignment: false,
           schedulesAvailable: false,
           selectedAssignmentConfigurations: undefined,
+          selectedAssignmentSchedules: null,
         });
         get().assignments?.forEach((item: Assignment) => {
           if (item.id === assignment.id) {
@@ -185,22 +213,6 @@ export const useAssignmentStore = create<AssignmentStore>()(
           selectedAssignmentConfigurations: res,
         });
         await checkIfProctored(res);
-        // if (res) {
-        //   let flag: {
-        //     resProctoring: boolean;
-        //     resSchedule: boolean;
-        //   } = await checkIfProctored(res);
-        //   console.log("here", flag);
-
-        //   set({
-        //     isProctoredAssignment: flag.resProctoring,
-        //     schedulesAvailable: flag.resSchedule,
-        //   });
-        // } else {
-        //   set({
-        //     selectedAssignmentConfigurations: undefined,
-        //   });
-        // }
       },
       setAssignmentConfiguration: (configuration: AssignmentConfiguration) => {
         set({
@@ -237,6 +249,7 @@ export const useCommonStudentDashboardStore =
   create<CommonStudentDashboardStore>()(
     devtools(
       (set) => ({
+        loggedInUserEnrollmentType: "",
         setEnrollments: (studentEnrollments: StudentEnrollments) => {
           set({
             enrollments: studentEnrollments,
@@ -244,6 +257,11 @@ export const useCommonStudentDashboardStore =
         },
         setStudentAuthed: (flag: boolean) => {
           set({});
+        },
+        setLoggedInUserEnrollmentType: (type: string) => {
+          set({
+            loggedInUserEnrollmentType: type,
+          });
         },
       }),
       { name: "Common Student_Dashboard_Store" }

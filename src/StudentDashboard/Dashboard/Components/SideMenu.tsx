@@ -170,10 +170,11 @@ const SideMenu: React.FC = (): JSX.Element => {
           userId={enrollment?.user_id as any}
         />
       )}
-      {showAccessibilityModal && (
+      {showAccessibilityModal && urlParamsData.studentId && (
         <AssibilityModal
           visible={showAccessibilityModal}
           onClose={() => setShowAccessibilityModal(false)}
+          studentId={urlParamsData.studentId}
         />
       )}
     </div>

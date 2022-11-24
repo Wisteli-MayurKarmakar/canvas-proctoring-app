@@ -12,20 +12,10 @@ import {
   getCanvasAssignmentDetails,
   fetchAccountsByCourseAndEnrollemntType,
 } from "../apiConfigs";
-import { userAuthenticationStore } from "../store/autheticationStore";
 import { useAppStore } from "../store/AppSotre";
 import moment from "moment";
 
-interface Props {
-  courseId: string;
-  authData: any;
-  userId: string;
-  guid: string;
-  studentId: string;
-  accountId: string;
-}
-
-const Authentication: React.FC<Props> = (props): JSX.Element => {
+const Authentication: React.FC = (): JSX.Element => {
   let [quizzes, setQuizzes] = React.useState<Object | null>(null);
   const [enrollments, setEnrollments] = React.useState<Object | null>(null);
   const [showAuthModal, setShowAuthModal] = React.useState<boolean>(false);
@@ -43,12 +33,9 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
   const [selectedQuizTitle, setSelectedQuizTitle] = React.useState<
     string | null
   >(null);
-  // let checkAvailabilityInterval: any = null;
-  const urlParamsData = useAppStore((state) => state.urlParamsData);
+
   const socket = getWebSocketUrl();
-  const authenticationData = userAuthenticationStore(
-    (state) => state.authenticationData
-  );
+  const { urlParamsData, tokenData } = useAppStore((state) => state);
 
   const quizzesColumns = [
     {
@@ -58,27 +45,15 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
     },
     {
       dataIndex: "",
-      key: "due_at",
-      title: `Due by`,
+      key: "lock_at",
+      title: `Available Until`,
       render: (row: any) => {
-        return moment(row.due_at).format("DD/MM/YYYY hh:mm a");
+        if ("lock_at" in row) {
+          return moment(row.lock_at).format("DD/MM/YYYY hh:mm a");
+        }
+        return "N/A";
       },
     },
-    // {
-    //   dataIndex: "allowed_attempts",
-    //   key: "allowed_attempts",
-    //   title: "Attempts allowed",
-    // },
-    // {
-    //   dataIndex: "question_count",
-    //   key: "question_count",
-    //   title: "Questions",
-    // },
-    // {
-    //   dataIndex: "time_limit",
-    //   key: "time_limit",
-    //   title: `Duration`,
-    // },
   ];
 
   const enrollmentsColumns = [
@@ -120,10 +95,10 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
 
   const getStudentProofs = async (studentId: string) => {
     let picProof = await axios.get(
-      `${viewCanvasProfile}${props.guid}/${studentId}`,
+      `${viewCanvasProfile}${urlParamsData.guid}/${studentId}`,
       {
         headers: {
-          Authorization: `Bearer ${props.authData.data.access_token}`,
+          Authorization: `Bearer ${tokenData.lmsAccessToken}`,
         },
         responseType: "arraybuffer",
       }
@@ -142,12 +117,15 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
       setStudentPhoto(URL.createObjectURL(blob));
     }
 
-    let idProof = await axios.get(`${downloadDL}${props.guid}/${studentId}`, {
-      headers: {
-        Authorization: `Bearer ${props.authData.data.access_token}`,
-      },
-      responseType: "arraybuffer",
-    });
+    let idProof = await axios.get(
+      `${downloadDL}${urlParamsData.guid}/${studentId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${tokenData.lmsAccessToken}`,
+        },
+        responseType: "arraybuffer",
+      }
+    );
 
     if (
       idProof.headers["content-type"] === "image/jpeg" ||
@@ -177,18 +155,16 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
     getStudentProofs(row.id);
   };
 
-  const fetchQuizzesByCourseId = async (courseId: string): Promise<void> => {
+  const fetchQuizzesByCourseId = async (): Promise<void> => {
     axios
       .get(
-        `${getCanvasAssignmentDetails}/${authenticationData?.instituteId}/${urlParamsData.guid}/${props.courseId}/${authenticationData?.lmsAccessToken}`
+        `${getCanvasAssignmentDetails}/${tokenData.instituteId}/${urlParamsData.guid}/${urlParamsData.courseId}/${tokenData.lmsAccessToken}`
       )
       .then((response) => {
         let assignments = response.data.filter((assignment: any) => {
-          if ("due_at" in assignment) {
-            if (moment(assignment.due_at).isSameOrAfter(moment())) {
-              assignment.key = assignment.id;
-              return assignment;
-            }
+          if (assignment.id !== 0) {
+            assignment.key = assignment.id;
+            return assignment;
           }
         });
         // setQuizzes(response.data);
@@ -202,17 +178,19 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
   const fetchCourseEnrollments = async (courseId: string): Promise<void> => {
     axios
       .get(
-        `${fetchAccountsByCourseAndEnrollemntType}/${props.courseId}/student/${authenticationData?.instituteId}/${props.authData.data.access_token}`
+        `${fetchAccountsByCourseAndEnrollemntType}/${urlParamsData.courseId}/student/${tokenData?.instituteId}/${tokenData.lmsAccessToken}`
       )
       .then((response) => {
         let temp: any = {};
 
         let enrollments = response.data.map((enrollment: any) => {
           temp[enrollment.id] = "NOT JOINED";
+
           return {
             ...enrollment,
+            key: enrollment.id,
             user_id: enrollment.id,
-            course_id: props.courseId,
+            course_id: urlParamsData.courseId,
           };
         });
 
@@ -225,9 +203,8 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
   };
 
   const connectSocket = (id: any) => {
-    let room = "rm_" + props.courseId + "_" + id;
-    let user = "chat_" + props.userId + "_" + "instr";
-    console.log(room)
+    let room = "rm_" + urlParamsData.courseId + "_" + id;
+    let user = "chat_" + urlParamsData.userId + "_" + "instr";
 
     if (!socket.connected) {
       socket.connect();
@@ -311,19 +288,39 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
   };
 
   const getStudentAuthStat = (data: any) => {
-    if (data.courseId === props.courseId && data.assignmentId === authForQuizId && props.studentId === data.studentId) {
+    if (
+      data.courseId === urlParamsData.courseId &&
+      data.assignmentId === authForQuizId &&
+      urlParamsData.studentId === data.studentId
+    ) {
       setStudentAuthed(true);
     }
-  }
+  };
+
+  const handleRefreshTable = () => {
+    setQuizzes(null);
+    fetchQuizzesByCourseId();
+  };
 
   useEffect(() => {
-    fetchQuizzesByCourseId(props.courseId);
-    fetchCourseEnrollments(props.courseId);
-  }, []);
+    if (urlParamsData.courseId) {
+      fetchQuizzesByCourseId();
+      fetchCourseEnrollments(urlParamsData.courseId);
+    }
+  }, [urlParamsData.courseId]);
 
   return (
-    <div className="flex flex-col mx-auto w-4/5">
+    <div className="flex flex-col mx-auto w-4/5 gap-4">
       <h2 className="text-center text-2xl underline">Live Authentication</h2>
+      <div className="flex space-x-2 justify-end">
+        <button
+          type="button"
+          onClick={handleRefreshTable}
+          className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
+        >
+          Refresh Table
+        </button>
+      </div>
       {quizzes && enrollments && stuLiveStatusObj ? (
         <Grid
           data={quizzes}
@@ -349,6 +346,9 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
         quizId &&
         selectedRow &&
         selectedQuizTitle &&
+        urlParamsData.courseId &&
+        urlParamsData.userId &&
+        urlParamsData.guid &&
         !showWait && (
           <Modal
             visible={showAuthModal}
@@ -368,15 +368,15 @@ const Authentication: React.FC<Props> = (props): JSX.Element => {
             ]}
           >
             <AuthenticateUser
-              authConfigs={props.authData}
+              authConfigs={tokenData}
               quizTitle={selectedQuizTitle}
-              courseId={props.courseId}
+              courseId={urlParamsData.courseId}
               studentPhoto={studentPhoto}
               studentId={studentId}
               quizId={quizId}
               selectedRow={selectedRow}
-              userId={props.userId}
-              guid={props.guid}
+              userId={urlParamsData.userId}
+              guid={urlParamsData.guid}
               updateStudentAuthStatus={getStudentAuthStat}
             />
           </Modal>

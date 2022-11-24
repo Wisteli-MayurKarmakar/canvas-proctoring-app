@@ -1,3 +1,5 @@
+import axios from "axios";
+
 let baseUrl: string | undefined = process.env.REACT_APP_BASE_URL;
 
 const getEndPoints: string = `${baseUrl}cdn/urls/xproctor/1`;
@@ -60,21 +62,45 @@ const getLtiCanvasConfigByAssignment: string = `${baseUrl}student/api/v1/getLtiC
 
 const getMedia: string = `${baseUrl}media`;
 
-const saveScheduling: string = `${baseUrl}canvaslms/api/v1/saveLtiSchedule`;
+const saveScheduling: string = `${baseUrl}student/api/v1/saveLtiSchedule`;
 
-const getScheduling: string = `${baseUrl}canvaslms/api/v1/getLtiSchedule`;
+const getScheduling: string = `${baseUrl}student/api/v1/getLtiSchedule`;
 
-const getCanvasAssignmentDetails: string =`${baseUrl}student/api/v1/getCanvasAssignmentDetails`
+const getCanvasAssignmentDetails: string = `${baseUrl}student/api/v1/getCanvasAssignmentDetails`;
 
-const fetchAccountsByCourseAndEnrollemntType: string =`${baseUrl}student/api/v1/fetchAccountsByCourseAndEnrollemntType`
+const fetchAccountsByCourseAndEnrollemntType: string = `${baseUrl}student/api/v1/fetchAccountsByCourseAndEnrollemntType`;
+
+const fetchCanvasEnrollmentsByInstituteForThreeHours: string = `${baseUrl}student/api/v1/fetchCanvasEnrollmentsByInstituteForThreeHours`;
+
+const fetchCanvasEnrollmentsByInstituteForTwentyFourHours: string = `${baseUrl}student/api/v1/fetchCanvasEnrollmentsByInstituteForTwentyFourHours`;
+
+const fetchCanvasEnrollmentsByInstituteForSevenDays: string = `${baseUrl}student/api/v1/fetchCanvasEnrollmentsByInstituteForSevenDays`;
+
+const getGetCanvasQuizDetails: string = `${baseUrl}student/api/v1/getGetCanvasQuizDetails`;
+
+const saveLtiAccessibility: string = `${baseUrl}student/api/v1/saveLtiAccessibility`;
+
+const getLtiAccessibility: string = `${baseUrl}student/api/v1/getLtiAccessibility`;
+
+const saveLtiAccessibilityApproval: string = `${baseUrl}student/api/v1/saveLtiAccessibilityApproval`;
+
+const getLtiAccessibilityApproval: string = `${baseUrl}student/api/v1/getLtiAccessibilityApproval`;
 
 export {
   getEndPoints,
   fetchAccountsByCourseAndEnrollemntType,
   saveScheduling,
   getCanvasAssignmentDetails,
+  getGetCanvasQuizDetails,
+  saveLtiAccessibility,
+  saveLtiAccessibilityApproval,
+  getLtiAccessibilityApproval,
+  getLtiAccessibility,
   getScheduling,
   canvasEnrollmentsByCourseId,
+  fetchCanvasEnrollmentsByInstituteForThreeHours,
+  fetchCanvasEnrollmentsByInstituteForTwentyFourHours,
+  fetchCanvasEnrollmentsByInstituteForSevenDays,
   autoCompleteSetup,
   saveLtiCanvasConfig,
   getLtiCanvasConfigByGuidCourseIdQuizId,

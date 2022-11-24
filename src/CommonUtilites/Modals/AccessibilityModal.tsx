@@ -1,4 +1,4 @@
-import { Button, DatePicker, Modal, Input, message } from "antd";
+import { Button, DatePicker, Modal, Input, message, Select } from "antd";
 import React, { useEffect, useState } from "react";
 import AccessibleIcon from "@mui/icons-material/Accessible";
 import PhoneInTalkIcon from "@mui/icons-material/PhoneInTalk";
@@ -7,23 +7,33 @@ import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import BlindIcon from "@mui/icons-material/Blind";
 import SignLanguageIcon from "@mui/icons-material/SignLanguage";
 import TtyIcon from "@mui/icons-material/Tty";
-import moment from "moment";
+import moment, { Moment } from "moment";
 import { useAccessiblityStore } from "../../store/globalStore";
+import { useCommonStudentDashboardStore } from "../../store/StudentDashboardStore";
+import { useAppStore } from "../../store/AppSotre";
+import axios from "axios";
+import { getLtiAccessibility, saveLtiAccessibility } from "../../apiConfigs";
 
 type Props = {
   visible: boolean;
   onClose: () => void;
+  studentId: string;
 };
 
 const AssibilityModal: React.FC<Props> = (props): JSX.Element => {
   const { TextArea } = Input;
   const [standardOptionError, setStandardOptionError] =
     useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(false);
   const [customOptionError, setCustomOptionError] = useState<boolean>(false);
-  const schoolHasDoc1 = useAccessiblityStore((state) => state.schoolHasDoc1);
-  const schoolHasDoc2 = useAccessiblityStore((state) => state.schoolHasDoc2);
   const doc1 = useAccessiblityStore((state) => state.doc1);
+  const [loading, setLoading] = useState<boolean>(false);
+  const accessibilityState = useAccessiblityStore((state) => state);
+  const setHumanAssistantNeeded = useAccessiblityStore(
+    (state) => state.setHumanAssistantNeeded
+  );
+  const humanAssistantNeeded = useAccessiblityStore(
+    (state) => state.humanAssistant
+  );
   const doc2 = useAccessiblityStore((state) => state.doc2);
   const standardOptions = useAccessiblityStore(
     (state) => state.standardOptions
@@ -35,6 +45,9 @@ const AssibilityModal: React.FC<Props> = (props): JSX.Element => {
   const customOptionSelected = useAccessiblityStore(
     (state) => state.customOptionSelected
   );
+  const loggedInUserEnrollmentType = useCommonStudentDashboardStore(
+    (state) => state.loggedInUserEnrollmentType
+  );
   const setDoc1 = useAccessiblityStore((state) => state.setDoc1);
   const setDoc2 = useAccessiblityStore((state) => state.setDoc2);
   const setStandardOptionSelecton = useAccessiblityStore(
@@ -43,12 +56,53 @@ const AssibilityModal: React.FC<Props> = (props): JSX.Element => {
   const setCustomOptionSelected = useAccessiblityStore(
     (state) => state.setCustomOptionSelected
   );
-  const setSchoolHasDoc1 = useAccessiblityStore(
-    (state) => state.setSchoolHasDoc1
+  const setStudentMessage = useAccessiblityStore(
+    (state) => state.setStudentMessage
   );
-  const setSchoolHasDoc2 = useAccessiblityStore(
-    (state) => state.setSchoolHasDoc2
+  const setExtraTimeValue = useAccessiblityStore(
+    (state) => state.setExtraTimeValue
   );
+  const setApproveStandard = useAccessiblityStore(
+    (state) => state.setApproveStandard
+  );
+  const setApproveCustom = useAccessiblityStore(
+    (state) => state.setApproveCustom
+  );
+  const approveStandard = useAccessiblityStore(
+    (state) => state.approveStandard
+  );
+  const minExtra = useAccessiblityStore((state) => state.minExtra);
+  const defaultMinExtra: string = minExtra.toString() + " mins";
+
+  const facerecognitionIssue = useAccessiblityStore(
+    (state) => state.customOptions.facerecognitionIssue
+  );
+  const needAbreak = useAccessiblityStore(
+    (state) => state.customOptions.needAbreak
+  );
+  const shorttermDisability = useAccessiblityStore(
+    (state) => state.customOptions.shorttermDisability
+  );
+  const setAccessibilityConfigurations = useAccessiblityStore(
+    (state) => state.setAccessibilityConfigurations
+  );
+  const startDate: Moment = moment(
+    useAccessiblityStore((state) => state.startDate)
+  );
+  const endDate: Moment = moment(
+    useAccessiblityStore((state) => state.endDate)
+  );
+  const setStartDate = useAccessiblityStore((state) => state.setStartDate);
+  const setEndDate = useAccessiblityStore((state) => state.setEndDate);
+  const humanAssistant = useAccessiblityStore((state) => state.humanAssistant);
+  const messageStudent = useAccessiblityStore((state) => state.messageStudent);
+  const messageInstructor = useAccessiblityStore(
+    (state) => state.messageInstructor
+  );
+
+  const approveCustom = useAccessiblityStore((state) => state.approveCustom);
+  const urlParamsData = useAppStore((state) => state.urlParamsData);
+  const tokenData = useAppStore((state) => state.tokenData);
 
   const deafIcon: JSX.Element = (
     <svg
@@ -72,22 +126,33 @@ const AssibilityModal: React.FC<Props> = (props): JSX.Element => {
     </svg>
   );
   const standardAccessiblityOptions: any = {
-    phone: <PhoneInTalkIcon style={{ fontSize: 50 }} />,
-    psycology: <PsychologyIcon style={{ fontSize: 50 }} />,
-    barilley: <DragIndicatorIcon style={{ fontSize: 50 }} />,
-    blind: <BlindIcon style={{ fontSize: 50 }} />,
-    deaf: deafIcon,
-    handicapped: <AccessibleIcon style={{ fontSize: 50 }} />,
-    cc: ccIcon,
-    singleLanguage: <SignLanguageIcon style={{ fontSize: 50 }} />,
-    teleTypwriter: <TtyIcon style={{ fontSize: 50 }} />,
+    mobility: <PhoneInTalkIcon style={{ fontSize: 50 }} />,
+    cognitiveChallange: <PsychologyIcon style={{ fontSize: 50 }} />,
+    brailleNeeded: <DragIndicatorIcon style={{ fontSize: 50 }} />,
+    lowVision: <BlindIcon style={{ fontSize: 50 }} />,
+    hearingImpaired: deafIcon,
+    hhndSignal: <AccessibleIcon style={{ fontSize: 50 }} />,
+    ccNeeded: ccIcon,
+    auditoryChallange: <SignLanguageIcon style={{ fontSize: 50 }} />,
+    tty: <TtyIcon style={{ fontSize: 50 }} />,
   };
 
+  const extraTimeOptions: { value: string; lable: string }[] = [
+    { value: "10 mins", lable: "10" },
+    { value: "20 mins", lable: "20" },
+    { value: "30 mins", lable: "30" },
+    { value: "45 mins", lable: "45" },
+    { value: "60 mins", lable: "60" },
+  ];
+
   const customAccessibilityOptions: any = {
-    faceRecog: "Face recognition issue",
-    extraTime: "Extra time required",
-    needBreak: "Need a break during quiz",
-    shortDisability: "Short term disability",
+    facerecognitionIssue: "Face recognition issue",
+    extratimeRequired: "Extra time required",
+    needAbreak: "Need a break during quiz",
+    shorttermDisability: "Short term disability",
+    idByPass: "Id by pass",
+    roomScanIssue: "Room scan issue",
+    dualMonitorNeeded: "Dual monitor needed",
   };
 
   const handleStandardOptionClick = (option: string) => {
@@ -106,6 +171,9 @@ const AssibilityModal: React.FC<Props> = (props): JSX.Element => {
   };
 
   const handleUploadDoc2 = (e: any) => {
+    if (accessibilityState.schoolCustom) {
+      return;
+    }
     let file: any = e.target.files[0];
     if (file) {
       setDoc2(file);
@@ -118,9 +186,51 @@ const AssibilityModal: React.FC<Props> = (props): JSX.Element => {
     }
   }, [standardOptionError, customOptionError, loading]);
 
+  const saveAccessibilityData = async () => {
+    let stdOptions: any = {};
+    let options: any = { ...standardOptions };
+    Object.keys(options).forEach((key: any) => {
+      stdOptions[key] = options[key];
+    });
+
+    const data: any = {
+      accessibilityId: "",
+      instituteId: tokenData.instituteId,
+      studentId: parseInt(props.studentId as any),
+      ...stdOptions,
+      facerecognitionIssue: facerecognitionIssue,
+      shorttermDisability: shorttermDisability,
+      documentstandardRef: "string",
+      schoolStandard: accessibilityState.schoolStandard,
+      needAbreak: needAbreak,
+      minExtra: minExtra,
+      documentCustomref: "string",
+      schoolCustom: accessibilityState.schoolCustom,
+      startDate: startDate,
+      endDate: endDate,
+      humanAssistant: humanAssistant,
+      studentMessage: messageStudent,
+      instructorMessage: messageInstructor,
+      approveStandard: approveStandard,
+      approveCustom: approveCustom,
+    };
+    setLoading(true);
+    let response = await axios.post(saveLtiAccessibility, {
+      ...data,
+    });
+
+    if (response.status === 200) {
+      message.success("Accessibility settings save successfully");
+      setLoading(false);
+      props.onClose();
+    } else {
+      message.success("Failed to save accessibility settings");
+    }
+  };
+
   const handleSubmit = () => {
     if (standardOptionSelected) {
-      if (!schoolHasDoc1 && !doc1) {
+      if (!accessibilityState.schoolStandard && !doc1) {
         setStandardOptionError(true);
       } else {
         setStandardOptionError(false);
@@ -128,13 +238,48 @@ const AssibilityModal: React.FC<Props> = (props): JSX.Element => {
     }
 
     if (customOptionSelected) {
-      if (!schoolHasDoc2 && !doc2) {
+      if (!accessibilityState.schoolCustom && !doc2) {
         setCustomOptionError(true);
       } else {
         setCustomOptionError(false);
       }
     }
+
+    saveAccessibilityData();
   };
+
+  const handleStudentMessage = (value: string) => {
+    setStudentMessage(value);
+  };
+
+  const handleExtraTimeSelect = (value: string) => {
+    setExtraTimeValue(parseInt(value));
+  };
+
+  const getAccessibilityConfig = async () => {
+    let payload = {
+      instituteId: tokenData.instituteId,
+      studentId: urlParamsData.studentId,
+    };
+    let response = await axios.post(`${getLtiAccessibility}`, payload);
+    if (response.status === 200) {
+      setAccessibilityConfigurations(response.data);
+    }
+  };
+
+  const handleHasDocFor = (docFor: string) => {
+    if (docFor === "standard") {
+      accessibilityState.setSchoolStandard(!accessibilityState.schoolStandard);
+    } else {
+      accessibilityState.setSchoolCustom(!accessibilityState.schoolCustom);
+    }
+  };
+
+  useEffect(() => {
+    if (loggedInUserEnrollmentType === "StudentEnrollment") {
+      getAccessibilityConfig();
+    }
+  }, []);
 
   return (
     <Modal
@@ -142,7 +287,7 @@ const AssibilityModal: React.FC<Props> = (props): JSX.Element => {
       visible={props.visible}
       onCancel={props.onClose}
       maskClosable={false}
-      width={"70pc"}
+      width={"90pc"}
       footer={[
         <Button key="cancel" onClick={props.onClose} disabled={loading && true}>
           Cancel
@@ -207,19 +352,54 @@ const AssibilityModal: React.FC<Props> = (props): JSX.Element => {
             </div>
           </div>
         )}
-        <div className="flex flex-row h-full items-start gap-2">
-          <div className="flex flex-col w-full justify-center gap-4">
+        <div className="flex flex-col xl:flex-row w-full xl:h-full items-start gap-4">
+          <div className="flex flex-col h-full w-full justify-center gap-4">
             <label className="flex text-gray-700 text-2xl font-semibold w-full items-start justify-start">
               Standard
             </label>
-            <div className="flex flex-row h-full w-full items-center gap-2 flex-wrap">
+            <div className="flex w-full justify-start mt-2">
+              <div className="form-check">
+                <input
+                  className="form-check-input appearance-none h-4 w-4 border border-gray-300 rounded-sm bg-white checked:bg-blue-600 checked:border-blue-600 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer"
+                  type="checkbox"
+                  checked={accessibilityState.schoolStandard}
+                  id="flexCheckDefault"
+                  onChange={() => handleHasDocFor("standard")}
+                />
+                <label
+                  className="form-check-label inline-block text-black font-semibold"
+                  htmlFor="flexCheckDefault"
+                >
+                  School has the document for standard accessibility
+                </label>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 md:flex md:flex-row md:flex-wrap md:h-2/3 md:w-full gap-1">
               {Object.keys(standardOptions).map(
                 (item: string, index: number) => {
+                  if (index === 4) {
+                    return (
+                      <div
+                        key={index}
+                        onClick={() => handleStandardOptionClick(item)}
+                        className={`flex box-border border-2 shadow-lg rounded w-36 h-28 items-cente hover:bg-blue-400 hover:fill-white justify-center self-center cursor-pointer ${
+                          standardOptionSelected &&
+                          standardOptionSelected === item
+                            ? "bg-blue-400 fill-white"
+                            : "bg-white text-black"
+                        }`}
+                      >
+                        <div className="flex items-center justify-center h-full">
+                          {standardAccessiblityOptions[item]}
+                        </div>
+                      </div>
+                    );
+                  }
                   return (
                     <div
                       key={index}
                       onClick={() => handleStandardOptionClick(item)}
-                      className={`flex box-border border-2 shadow-lg rounded w-36 h-32 items-cente justify-center self-center hover:bg-blue-400 hover:text-white cursor-pointer ${
+                      className={`flex box-border border-2 shadow-lg rounded w-36 h-28 items-cente hover:bg-blue-400 hover:text-white justify-center self-center cursor-pointer ${
                         standardOptionSelected &&
                         standardOptionSelected === item
                           ? "bg-blue-400 text-white"
@@ -243,7 +423,10 @@ const AssibilityModal: React.FC<Props> = (props): JSX.Element => {
               </label>
               <div className="flex flex-row w-full gap-4 justify-start">
                 <input
-                  className="flex w-72 text-sm text-black bg-gray-50 rounded border border-gray-300 cursor-pointer focus:outline-none dark:placeholder-gray-400"
+                  disabled={accessibilityState.schoolStandard}
+                  className={`flex w-72 text-sm text-black bg-gray-50 rounded border ${
+                    accessibilityState.schoolStandard && "cursor-not-allowed"
+                  } border-gray-300 cursor-pointer focus:outline-none dark:placeholder-gray-400`}
                   id="file_input"
                   type="file"
                   onChange={handleUploadDoc1}
@@ -251,52 +434,65 @@ const AssibilityModal: React.FC<Props> = (props): JSX.Element => {
                 <div className="flex space-x-2 justify-center">
                   <button
                     type="button"
-                    className="inline-block px-6 py-1.5 bg-blue-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
+                    disabled={accessibilityState.schoolStandard}
+                    className={`inline-block px-6 py-1.5 ${
+                      accessibilityState.schoolStandard
+                        ? "bg-gray-300"
+                        : "bg-blue-600"
+                    } text-white font-medium text-xs
+                     leading-tight uppercase rounded shadow-md ${
+                       !accessibilityState.schoolStandard &&
+                       `hover:bg-blue-700 hover:shadow-lg
+                      focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800
+                       active:shadow-lg transition duration-150 ease-in-out`
+                     }`}
                   >
                     Upload
                   </button>
                 </div>
               </div>
-              <div className="flex w-full justify-start mt-4">
-                <div className="form-check">
-                  <input
-                    className="form-check-input appearance-none h-4 w-4 border border-gray-300 rounded-sm bg-white checked:bg-blue-600 checked:border-blue-600 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer"
-                    type="checkbox"
-                    value=""
-                    id="flexCheckDefault"
-                    onClick={() => setSchoolHasDoc1(!schoolHasDoc1)}
-                  />
-                  <label
-                    className="form-check-label inline-block text-black font-semibold"
-                    htmlFor="flexCheckDefault"
-                  >
-                    School has the document for standard accessibility
-                  </label>
-                </div>
-              </div>
             </div>
           </div>
-          <div className="flex flex-col w-1/2 justify-center gap-4">
+          <div className="flex flex-col w-full justify-center gap-4">
             <label className="flex text-gray-700 text-2xl font-semibold w-full items-start justify-start">
               Custom
             </label>
-            <div className="flex flex-row w-full justify-center gap-2">
+            <div className="flex w-full justify-start mt-2">
+              <div className="form-check">
+                <input
+                  className="form-check-input appearance-none h-4 w-4 border border-gray-300 rounded-sm bg-white checked:bg-blue-600 checked:border-blue-600 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer"
+                  type="checkbox"
+                  checked={accessibilityState.schoolCustom}
+                  id="flexCheckDefault"
+                  onChange={() => handleHasDocFor("custom")}
+                />
+                <label
+                  className="form-check-label inline-block text-black font-semibold"
+                  htmlFor="flexCheckDefault"
+                >
+                  School has the document for custom accessiblity
+                </label>
+              </div>
+            </div>
+            <div className="flex flex-row w-full flex-wrap justify-start gap-2">
               {Object.keys(customOptions).map((item: string, index: number) => {
-                return (
-                  <div
-                    key={index}
-                    onClick={() => handlCustomOptionClick(item)}
-                    className={`flex box-border border-2 shadow-lg rounded w-36 h-32 items-center justify-center  hover:bg-blue-400 hover:text-white cursor-pointer p-2 ${
-                      customOptionSelected && customOptionSelected === item
-                        ? "bg-blue-400 text-white"
-                        : "bg-white text-black"
-                    }`}
-                  >
-                    <p className="font-semibold break-words text-center">
-                      {customAccessibilityOptions[item]}
-                    </p>
-                  </div>
-                );
+                if (item !== "extratimeRequired") {
+                  return (
+                    <div
+                      key={index}
+                      onClick={() => handlCustomOptionClick(item)}
+                      className={`flex box-border border-2 shadow-lg rounded w-36 h-28 items-center justify-center  hover:bg-blue-400 hover:text-white cursor-pointer p-2 ${
+                        customOptionSelected && customOptionSelected === item
+                          ? "bg-blue-400 text-white"
+                          : "bg-white text-black"
+                      }`}
+                    >
+                      <p className="font-semibold break-words text-center">
+                        {customAccessibilityOptions[item]}
+                      </p>
+                    </div>
+                  );
+                }
               })}
             </div>
             <div className="flex flex-row h-full items-center gap-4">
@@ -304,10 +500,12 @@ const AssibilityModal: React.FC<Props> = (props): JSX.Element => {
                 <label className="flex text-gray-700 text-lg font-semibold items-start justify-start">
                   Start Date:
                 </label>
+
                 <DatePicker
                   defaultValue={moment()}
-                  disabledDate={(current) =>
-                    current <= moment().add(-1, "days")
+                  value={startDate}
+                  onChange={(date: Moment | null, dateString: string) =>
+                    date && setStartDate(date)
                   }
                   format="MM/DD/YYYY"
                 />
@@ -318,12 +516,45 @@ const AssibilityModal: React.FC<Props> = (props): JSX.Element => {
                 </label>
                 <DatePicker
                   defaultValue={moment()}
+                  value={endDate}
                   format="MM/DD/YYYY"
+                  onChange={(date: Moment | null, dateString: string) =>
+                    date && setEndDate(date)
+                  }
                   className="w-full"
                 />
               </div>
             </div>
-            <div className="flex flex-col h-full items-center gap-2">
+            <div className="flex flex-row h-full items-start gap-4">
+              <div className="flex flex-row h-full items-center gap-8">
+                <div className="flex flex-col justify-center gap-1">
+                  <label className="flex text-gray-700 text-lg font-semibold items-start justify-start">
+                    Extra time (in mins):
+                  </label>
+                  <Select
+                    onChange={handleExtraTimeSelect}
+                    options={[...extraTimeOptions]}
+                    value={defaultMinExtra}
+                  />
+                </div>
+                <div className="flex flex-row h-full items-center md:mt-8">
+                  <input
+                    className="form-check-input appearance-none h-4 w-4 border border-gray-300 rounded-sm bg-white checked:bg-blue-600 checked:border-blue-600 focus:outline-none transition duration-200 bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer"
+                    type="checkbox"
+                    checked={humanAssistantNeeded}
+                    id="flexCheckDefault"
+                    onChange={() => setHumanAssistantNeeded()}
+                  />
+                  <label
+                    className="form-check-label inline-block text-black font-semibold"
+                    htmlFor="flexCheckDefault"
+                  >
+                    Human assistant needed
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col h-full xl:mt-8 gap-2">
               <label
                 className="flex text-gray-700 text-lg font-semibold w-full items-start justify-start"
                 htmlFor="doc2"
@@ -332,43 +563,116 @@ const AssibilityModal: React.FC<Props> = (props): JSX.Element => {
               </label>
               <div className="flex flex-row w-full gap-4 justify-start">
                 <input
-                  className="flex w-72 text-sm text-black bg-gray-50 rounded border border-gray-300 cursor-pointer focus:outline-none dark:placeholder-gray-400"
+                  disabled={accessibilityState.schoolCustom}
+                  className={`flex w-72 text-sm text-black bg-gray-50 rounded border ${
+                    accessibilityState.schoolCustom && "cursor-not-allowed"
+                  } border-gray-300 cursor-pointer focus:outline-none dark:placeholder-gray-400`}
                   id="file_input"
                   type="file"
                   onChange={handleUploadDoc2}
                 />
                 <div className="flex space-x-2 justify-center">
                   <button
+                    disabled={accessibilityState.schoolCustom}
                     type="button"
-                    className="inline-block px-6 py-1.5 bg-blue-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
+                    className={`inline-block px-6 py-1.5 ${
+                      accessibilityState.schoolCustom
+                        ? "bg-gray-300"
+                        : "bg-blue-600"
+                    } text-white font-medium text-xs
+                     leading-tight uppercase rounded shadow-md ${
+                       !accessibilityState.schoolCustom &&
+                       `hover:bg-blue-700 hover:shadow-lg
+                      focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800
+                       active:shadow-lg transition duration-150 ease-in-out`
+                     }`}
                   >
                     Upload
                   </button>
                 </div>
               </div>
-              <div className="flex w-full justify-start mt-4">
-                <div className="form-check">
-                  <input
-                    className="form-check-input appearance-none h-4 w-4 border border-gray-300 rounded-sm bg-white checked:bg-blue-600 checked:border-blue-600 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer"
-                    type="checkbox"
-                    value=""
-                    id="flexCheckDefault"
-                    onClick={() => setSchoolHasDoc2(!schoolHasDoc2)}
-                  />
-                  <label
-                    className="form-check-label inline-block text-black font-semibold"
-                    htmlFor="flexCheckDefault"
-                  >
-                    School has the document for custom accessiblity
-                  </label>
-                </div>
-              </div>
             </div>
+          </div>
+          <div className="flex flex-col gap-4 w-2/4 xl:w-full justify-center">
             <div className="flex flex-col w-full justify-center gap-2">
               <label className="flex text-gray-700 text-lg font-semibold w-full items-start justify-start">
-                Message:
+                Message from student:
               </label>
-              <TextArea rows={6} />
+              <TextArea
+                rows={4}
+                onChange={(e) => handleStudentMessage(e.target.value)}
+                disabled={
+                  loggedInUserEnrollmentType === "TeacherEnrollment"
+                    ? true
+                    : false
+                }
+                value={messageStudent}
+              />
+            </div>
+            <div className="flex flex-col w-full justify-center gap-2">
+              <label className="flex text-gray-700 text-lg font-semibold w-2/4 xl:w-full items-start justify-start">
+                Message from Instructor:
+              </label>
+              <TextArea
+                rows={4}
+                value={accessibilityState.messageInstructor}
+                disabled={
+                  loggedInUserEnrollmentType === "StudentEnrollment"
+                    ? true
+                    : false
+                }
+                onChange={(e) =>
+                  accessibilityState.setInstructorMessage(e.target.value)
+                }
+              />
+            </div>
+            <div className="flex flex-row h-full items-center gap-8">
+              <div className="form-check">
+                <input
+                  className={`form-check-input appearance-none h-4 w-4 border ${
+                    loggedInUserEnrollmentType === "StudentEnrollment" &&
+                    "cursor-not-allowed"
+                  } border-gray-300 rounded-sm bg-white checked:bg-blue-600 checked:border-blue-600
+                   focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer`}
+                  type="checkbox"
+                  id="flexCheckDefault"
+                  onChange={(e) => setApproveCustom(e.target.checked)}
+                  disabled={
+                    loggedInUserEnrollmentType === "StudentEnrollment"
+                      ? true
+                      : false
+                  }
+                />
+                <label
+                  className="form-check-label inline-block text-black font-semibold"
+                  htmlFor="flexCheckDefault"
+                >
+                  Denied
+                </label>
+              </div>
+              <div className="form-check">
+                <input
+                  className={`form-check-input appearance-none h-4 w-4 border ${
+                    loggedInUserEnrollmentType === "StudentEnrollment" &&
+                    "cursor-not-allowed"
+                  } border-gray-300 rounded-sm bg-white checked:bg-blue-600 checked:border-blue-600
+                   focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer`}
+                  type="checkbox"
+                  id="flexCheckDefault"
+                  onChange={(e) => setApproveStandard(e.target.checked)}
+                  disabled={
+                    loggedInUserEnrollmentType === "StudentEnrollment"
+                      ? true
+                      : false
+                  }
+                />
+                <label
+                  className="form-check-label inline-block text-black font-semibold"
+                  htmlFor="flexCheckDefault"
+                >
+                  Approved
+                </label>
+              </div>
             </div>
           </div>
         </div>
