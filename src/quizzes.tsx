@@ -2,7 +2,6 @@ import axios from "axios";
 import React, { useEffect } from "react";
 import $ from "jquery";
 import { useStudentStore } from "./store/globalStore";
-import { userAuthenticationStore } from "./store/autheticationStore";
 import { useAssignmentStore } from "./store/StudentDashboardStore";
 import { useAppStore } from "./store/AppSotre";
 import Layout from "./StudentDashboard/Dashboard/Layout/Layout";

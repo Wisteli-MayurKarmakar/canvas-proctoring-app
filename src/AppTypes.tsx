@@ -18,6 +18,18 @@ type Quiz = {
   title: string;
 };
 
+type Assignment = {
+  id: number;
+  name: string;
+  due_at: string;
+  lock_at: string;
+  unlock_at: string;
+  allowed_attempts: number;
+  question_count: number;
+  time_limit: number;
+  studentAuthed: boolean;
+};
+
 type QuizTypeProctoringByQuiz = {
   allowed_attempts?: number;
   due_at?: string;
@@ -320,4 +332,5 @@ export type {
   CourseDetails,
   CouseDetails,
   BillingData,
+  Assignment
 };

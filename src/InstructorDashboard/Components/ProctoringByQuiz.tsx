@@ -76,7 +76,7 @@ const ProcotoringByQuiz: React.FC = (): JSX.Element => {
       .catch((err) => {
         console.log(err);
       });
-      let roomName: string = `${urlParamsData.guid}_${urlParamsData.courseId}_${urlParamsData.studentId}_assgn_status`
+      let roomName: string = `${urlParamsData.guid}_${urlParamsData.courseId}_assgn_status`
       let userName: string = `${urlParamsData.studentId}_instr_assgn_status`
       let messagType: string = "ASSGN_STAT_REQ"
       let dataToSend: any = {}

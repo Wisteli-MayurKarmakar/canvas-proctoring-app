@@ -2,8 +2,15 @@ import { io, Socket } from "socket.io-client";
 import create from "zustand";
 import { devtools } from "zustand/middleware";
 import { webSocketUrl } from "../APIs/apiservices";
-import { ClientToServerEvents, ServerToClientEvents } from "../AppTypes";
-import { useCommonStudentDashboardStore } from "./StudentDashboardStore";
+import {
+  ClientToServerEvents,
+  ServerToClientEvents,
+  Assignment,
+} from "../AppTypes";
+import {
+  useAssignmentStore,
+  useCommonStudentDashboardStore,
+} from "./StudentDashboardStore";
 
 type DataToSend = {
   assingmentName: string;
@@ -11,7 +18,7 @@ type DataToSend = {
 };
 
 type AssignmentDetails = {
-  assignmentId: string;
+  assignmentName: string;
   active: boolean;
 };
 
@@ -96,8 +103,8 @@ export const useSocketStore = create<SocketStore>()(
                 let incomingMsgs: IncomingMessage = {
                   ...get().messagesIncoming,
                 };
-                incomingMsgs[msg.msg.assignmentName] = {
-                  assignmentId: msg.msg.assignmentId,
+                incomingMsgs[msg.msg.assignmentId] = {
+                  assignmentName: msg.msg.assignmentName,
                   active: true,
                 };
                 set({
@@ -108,8 +115,8 @@ export const useSocketStore = create<SocketStore>()(
                 let incomingMsgs: IncomingMessage = {
                   ...get().messagesIncoming,
                 };
-                incomingMsgs[msg.msg.assignmentName] = {
-                  assignmentId: msg.msg.assignmentId,
+                incomingMsgs[msg.msg.assignmentId] = {
+                  assignmentName: msg.msg.assignmentName,
                   active: false,
                 };
                 set({
@@ -118,9 +125,13 @@ export const useSocketStore = create<SocketStore>()(
               }
             } else {
               if (msg.msgType === "ASSGN_STAT_REQ") {
-                set({
-                  assgnStatRequesting: true,
-                });
+                let assignment: Assignment = useAssignmentStore.getState()
+                  .selectedAssignment as any;
+                if (msg.msg.assignmentId === assignment.id.toString()) {
+                  set({
+                    assgnStatRequesting: true,
+                  });
+                }
               }
             }
           }

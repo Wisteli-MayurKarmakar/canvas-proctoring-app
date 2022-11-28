@@ -9,6 +9,7 @@ import moment, { Moment } from "moment";
 import { useStudentStore } from "./store/globalStore";
 import ProctoringEndInfoModal from "./ProctoringEndInfoModal";
 import { useAppStore } from "./store/AppSotre";
+import { useSocketStore } from "./store/SocketStore";
 
 //@ts-ignore
 import SebConfigDev from "./assets/seb_settings/SebClientSettingsDev.seb";
@@ -81,15 +82,14 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
   var stream: any = null;
   var offer: any = null;
   const assignmentStore = useAssignmentStore((state) => state);
-  const authenticationData = userAuthenticationStore(
-    (state) => state.authenticationData
-  );
   const selectedAssignmentSchedule = useAssignmentStore(
     (state) => state.selectedAssignmentSchedules
   );
   const selectedAssignment = useAssignmentStore(
     (state) => state.selectedAssignment
   );
+  const { createConnection, sendAssgnStatus, assgnStatRequesting } =
+    useSocketStore((state) => state);
   const { urlParamsData, tokenData } = useAppStore((state) => state);
   const TURN_SERVER_URL = "turn:examd.us:3478?transport=tcp";
   const TURN_SERVER_USERNAME = "webRtcUser";
@@ -106,6 +106,15 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
       // }
     ],
   };
+
+  if (assgnStatRequesting) {
+    const assignmentId = assignmentStore.selectedAssignment?.id.toString();
+    const assignmentName = assignmentStore.selectedAssignment?.name;
+    const msgType: string = "ASSGN_PROC_START";
+    if (assignmentId && assignmentName) {
+      sendAssgnStatus(assignmentId, assignmentName, msgType);
+    }
+  }
 
   const setConfigByQuizCourseGuid = async () => {
     if (props.assignment) {
@@ -226,8 +235,19 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
       setShowWait(true);
       return;
     }
-
     startProctoring();
+    const roomName: string = `${urlParamsData.guid}_${urlParamsData.courseId}_assgn_status`;
+    const userName: string = `${urlParamsData.studentId}_instr_assgn_status`;
+    const msgType: string = "ASSGN_PROC_START";
+    if (
+      urlParamsData.assignmentId &&
+      assignmentStore.selectedAssignment?.name
+    ) {
+      createConnection(roomName, userName, msgType, {
+        assignmentId: urlParamsData.assignmentId,
+        assingmentName: assignmentStore.selectedAssignment.name,
+      });
+    }
   };
 
   const sendMsgViaSocket = (msgType: any, data: any) => {
