@@ -1,17 +1,28 @@
 import React, { useState } from "react";
+import { useAppStore } from "../../store/AppSotre";
 import ProctoringByQuiz from "../Components/ProctoringByQuiz";
 import ProctoringByTime from "../Components/ProctoringByTime";
 
-
 const LiveProctoring: React.FC = (): JSX.Element => {
   const [loadPage, setLoadPage] = useState<string>("byquiz");
+  const { courseDetails } = useAppStore.getState();
 
   const handleClick = (page: string) => {
     setLoadPage(page);
   };
 
+  let courseName: string = "";
+  if (courseDetails) {
+    courseName = courseDetails.name;
+  }
+
   return (
     <div className="flex flex-col h-full w-full items-center justify-center gap-8">
+      {courseName !== "" && (
+        <h2 className="text-center text-2xl underline">
+          Course Name - {courseName}
+        </h2>
+      )}
       <div className="flex flex-row h-full items-center gap-8">
         <button
           type="button"

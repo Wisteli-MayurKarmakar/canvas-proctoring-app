@@ -86,6 +86,12 @@ const saveLtiAccessibilityApproval: string = `${baseUrl}student/api/v1/saveLtiAc
 
 const getLtiAccessibilityApproval: string = `${baseUrl}student/api/v1/getLtiAccessibilityApproval`;
 
+const getLtiScheduleByQuizId: string = `${baseUrl}student/api/v1/getLtiScheduleByQuizId`;
+
+const saveLtiBillingRate: string = `${baseUrl}student/api/v1/saveLtiBillingRate`;
+
+const getLtiBillingRate: string = `${baseUrl}student/api/v1/getLtiBillingRate`;
+
 export {
   getEndPoints,
   fetchAccountsByCourseAndEnrollemntType,
@@ -94,9 +100,12 @@ export {
   getGetCanvasQuizDetails,
   saveLtiAccessibility,
   saveLtiAccessibilityApproval,
+  saveLtiBillingRate,
+  getLtiBillingRate,
   getLtiAccessibilityApproval,
   getLtiAccessibility,
   getScheduling,
+  getLtiScheduleByQuizId,
   canvasEnrollmentsByCourseId,
   fetchCanvasEnrollmentsByInstituteForThreeHours,
   fetchCanvasEnrollmentsByInstituteForTwentyFourHours,

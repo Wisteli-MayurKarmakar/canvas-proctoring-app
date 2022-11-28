@@ -141,14 +141,14 @@ export const useBillingStore = create<BillingStore>()(
           errorMsg: "",
         },
         startDate: {
-          value: moment().format("MM-DD-YYYY"),
+          value: moment().toISOString(),
           label: "Start Date",
           placeholder: "",
           hasError: false,
           errorMsg: "",
         },
         endDate: {
-          value: moment().add(1, "years").format("MM-DD-YYYY"),
+          value: moment().add(1, "years").toISOString(),
           label: "End Date",
           placeholder: "",
           hasError: false,

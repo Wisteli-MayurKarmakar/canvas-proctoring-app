@@ -26,6 +26,11 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/tw-elements/dist/css/index.min.css"
     />
+    <script>
+      const urlPath = "%REACT_APP_BASE_URL%" + "cdn/static/js/xproctor-0.0.3.min.js"
+      document.write("<script type='text/javascript' src='"+ urlPath + "' defer crossorigin='anonymous'><\/scr" + "ipt>");
+    </script>
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script
       defer
@@ -38,11 +43,11 @@
       crossorigin="anonymous"
     ></script>
 
-    <script
+    <!-- <script
       defer
       src="https://examd.online/cdn/static/js/xproctor-0.0.3.min.js"
       crossorigin="anonymous"
-    ></script>
+    ></script> -->
     <!-- Disable print option from browser -->
     <script type="text/css">
       @media print{

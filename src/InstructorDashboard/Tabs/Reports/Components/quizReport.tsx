@@ -11,9 +11,11 @@ import {
   getLtiCVideoRef,
   fetchAccountsByCourseAndEnrollemntType,
   getGetCanvasQuizDetails,
+  getCanvasAssignmentDetails,
 } from "../../../../apiConfigs";
 import { userAuthenticationStore } from "../../../../store/autheticationStore";
 import { useAppStore } from "../../../../store/AppSotre";
+import moment from "moment";
 
 const QuizReports: FunctionComponent = (): JSX.Element => {
   let [quizConfigs, setQuizConfigs] = React.useState<any>([]);
@@ -43,12 +45,15 @@ const QuizReports: FunctionComponent = (): JSX.Element => {
   const getCourseQuizesById = () => {
     axios
       .get(
-        `${getGetCanvasQuizDetails}/${tokenData.instituteId}/${urlParamsData.guid}/${urlParamsData.courseId}/${tokenData.lmsAccessToken}/`
+        `${getCanvasAssignmentDetails}/${tokenData.instituteId}/${urlParamsData.guid}/${urlParamsData.courseId}/${tokenData.lmsAccessToken}/`
       )
       .then((res: any) => {
-        let quizzes: any = res.data.map((item: any) => {
-          item.key = item.id;
-          return item;
+        let quizzes: any = res.data.filter((item: any) => {
+          if (item.id > 0) {
+            item.key = item.quizId;
+            item.id = item.quizId
+            return item;
+          }
         });
         setQuizData(quizzes);
       })
@@ -237,14 +242,23 @@ const QuizReports: FunctionComponent = (): JSX.Element => {
 
   let columns = [
     {
-      dataIndex: "title",
+      dataIndex: "quizName",
       key: "title",
       title: `Quiz Name`,
     },
     {
-      dataIndex: "quiz_type",
-      key: "quiz_type",
-      title: `Quiz Type`,
+      dataIndex: "",
+      key: "lock_at",
+      title: `Available Until`,
+      render: (row: any) => {
+        if ("lock_at" in row) {
+          let offsetTime: string = moment().utcOffset().toString();
+          let scheduleDate: string = row["lock_at"].replace("Z", "");
+          return moment(scheduleDate + `.${offsetTime}Z`).format(
+            "MM-DD-YYYY hh:mm a"
+          );
+        }
+      },
     },
     {
       dataIndex: "allowed_attempts",
@@ -316,6 +330,7 @@ const QuizReports: FunctionComponent = (): JSX.Element => {
               },
               onExpandedRowsChange: (row: any) => {
                 if (row.length > 0) {
+                  console.log(row)
                   getQuizConfigs(row[row.length - 1]);
                 }
               },
@@ -323,7 +338,7 @@ const QuizReports: FunctionComponent = (): JSX.Element => {
           />
         ) : (
           <p className="font-bold text-center mt-5">
-            Fetching data. Please wait...
+            Fetching quizzes. Please wait...
           </p>
         )}
       </div>
@@ -340,7 +355,6 @@ const QuizReports: FunctionComponent = (): JSX.Element => {
             data={null}
             exceptions={exceptions}
             profilePic={profilePic}
-            // studentId={row.user.id}
             studentId={row.id}
             quizId={selectedQuiz.id}
             courseId={urlParamsData.courseId}

@@ -167,7 +167,7 @@ const Quzzies: React.FC<Props> = (props) => {
         console.log(err);
       });
 
-    if (urlParamsData.assignmentId !== "") {
+    if (urlParamsData.assignmentId) {
       getQuizConfigs(urlParamsData.assignmentId as string);
     }
 

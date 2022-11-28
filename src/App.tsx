@@ -70,32 +70,19 @@ function App() {
   const setUserId = async () => {
     let url_string = window.location.href;
     let url = new URL(url_string);
-    // let userId = url.searchParams.get("userId");
-    // let courseId = url.searchParams.get("courseId");
-    // let toolConsumerGuid = url.searchParams.get("toolConsumerGuid");
-    // let loginId = url.searchParams.get("loginId");
+    let userId = url.searchParams.get("userId");
+    let courseId = url.searchParams.get("courseId");
+    let toolConsumerGuid = url.searchParams.get("toolConsumerGuid");
+    let loginId = url.searchParams.get("loginId");
     let studentId = url.searchParams.get("studentId");
-    // let invokeUrl = url.searchParams.get("invokeUrl");
+    let invokeUrl = url.searchParams.get("invokeUrl");
     let assignmentId: string | null = url.searchParams.get("assignmentId");
     let accId = url.searchParams.get("accoundId");
     let newTab = url.searchParams.get("newTab");
     let isAuthed = url.searchParams.get("auth");
 
-    // Test params
-    // let studentId = "43";
-
-    // Instructor -> set student 42; student -> set student 1/ 41
-    let loginId = "ncghosh@gmail.com";
-    // let courseId = "2";
-    // let quizId = "67";
-    // let assignmentId = "375";
-    let courseId = "24";
-    let userId = "1";
-    let toolConsumerGuid = "Examd";
-    // let invokeUrl: string =
-    //   "https://canvas.examd.ai/courses/2/external_content/success/external_tool_redirect";
-    let invokeUrl: string =
-      "https://canvas.examd.online/courses/24/external_content/success/external_tool_redirect";
+    //use url -->
+    //http://localhost:3000/lti/config?studentId=43&assignmentId=366&loginId=ncghosh@gmail.com&courseId=24&userId=1&courseId=24&invokeUrl=https://canvas.examd.online/courses/24/external_content/success/external_tool_redirect&accountId=4&toolConsumerGuid=Examd
 
     if (!accId) {
       accId = "1";

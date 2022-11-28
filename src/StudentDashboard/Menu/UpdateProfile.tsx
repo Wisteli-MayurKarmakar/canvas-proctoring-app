@@ -1,7 +1,13 @@
 import { Button, message, Modal } from "antd";
 import axios from "axios";
 import React, { useEffect } from "react";
-import {uploadCanvasDL, uploadCanvasProfile, viewCanvasProfile, downloadDL, getLtiStudentProfileDetails} from "../../apiConfigs"
+import {
+  uploadCanvasDL,
+  uploadCanvasProfile,
+  viewCanvasProfile,
+  downloadDL,
+  getLtiStudentProfileDetails,
+} from "../../apiConfigs";
 
 interface Props {
   show: boolean;
@@ -35,14 +41,11 @@ const UpdateProfile: React.FC<Props> = (props): JSX.Element => {
 
   const getUserProfileDetails = () => {
     axios
-      .post(
-        `${getLtiStudentProfileDetails}${props.guid}/${props.userId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${props.authToken}`,
-          },
-        }
-      )
+      .post(`${getLtiStudentProfileDetails}${props.guid}/${props.userId}`, {
+        headers: {
+          Authorization: `Bearer ${props.authToken}`,
+        },
+      })
       .then((resp) => {
         setUserDetails(resp.data);
       })
@@ -410,7 +413,7 @@ const UpdateProfile: React.FC<Props> = (props): JSX.Element => {
                       onClick={() => handleDeleteMedia("picture")}
                       className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
                     >
-                      Delete
+                      Update
                     </button>
                     {localProfilPic && (
                       <button
@@ -484,7 +487,7 @@ const UpdateProfile: React.FC<Props> = (props): JSX.Element => {
                       onClick={() => handleDeleteMedia("id")}
                       className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
                     >
-                      Delete
+                      Update
                     </button>
                     {localIdPic && (
                       <button

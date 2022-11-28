@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import Grid from "../CommonUtilites/Grid";
 import axios from "axios";
 import AuthenticateUser from "./AuthenticateUser";
@@ -11,17 +11,20 @@ import {
   downloadDL,
   getCanvasAssignmentDetails,
   fetchAccountsByCourseAndEnrollemntType,
+  getScheduling,
+  getLtiScheduleByQuizId,
 } from "../apiConfigs";
 import { useAppStore } from "../store/AppSotre";
 import moment from "moment";
 
 const Authentication: React.FC = (): JSX.Element => {
   let [quizzes, setQuizzes] = React.useState<Object | null>(null);
-  const [enrollments, setEnrollments] = React.useState<Object | null>(null);
+  const [enrollments, setEnrollments] = React.useState<any>(null);
   const [showAuthModal, setShowAuthModal] = React.useState<boolean>(false);
   const [authForQuizId, setAuthForQuizId] = React.useState<any>(null);
   let [studentPhoto, setStudentPhoto] = React.useState<any>(null);
   const [studentAuthed, setStudentAuthed] = React.useState<boolean>(false);
+  const [assingmentSchedules, setAssignmentSchedules] = useState<any>(null);
   const [studentAvailableForAuth, setStudentAvailableForAuth] =
     React.useState<boolean>(false);
   let [studentId, setStudentId] = React.useState<any>(null);
@@ -35,7 +38,9 @@ const Authentication: React.FC = (): JSX.Element => {
   >(null);
 
   const socket = getWebSocketUrl();
-  const { urlParamsData, tokenData } = useAppStore((state) => state);
+  const { urlParamsData, tokenData, courseDetails } = useAppStore(
+    (state) => state
+  );
 
   const quizzesColumns = [
     {
@@ -66,11 +71,20 @@ const Authentication: React.FC = (): JSX.Element => {
       },
     },
     {
-      dataIndex: "status",
-      key: "enrollment_state",
-      title: `Status`,
+      dataIndex: "",
+      key: "scheduleDate",
+      title: `Schedule Date`,
       render: (row: any) => {
-        return row;
+        if (assingmentSchedules) {
+          let timezoneOffset: string = `.${moment().utcOffset().toString()}Z`;
+          return moment(row.scheduleDate + timezoneOffset).format(
+            "MM-DD-YYYY hh:mm a"
+          );
+        }
+        if (assingmentSchedules === false) {
+          return "Not scheduled";
+        }
+        return "Getting schedule...";
       },
     },
     {
@@ -283,7 +297,37 @@ const Authentication: React.FC = (): JSX.Element => {
     });
   };
 
+  useEffect(() => {
+    if (assingmentSchedules) {
+      let students: any = [...enrollments];
+      students.forEach((student: any) => {
+        student.scheduleDate = assingmentSchedules.scheduleDate;
+      });
+      setEnrollments(students);
+    }
+  }, [assingmentSchedules]);
+
+  const getAssignmentSchedules = (quizId: string) => {
+    let payload = {
+      instituteId: tokenData.instituteId,
+      quizId: quizId,
+      courseId: urlParamsData.courseId,
+      status: 0,
+      guid: urlParamsData.guid,
+    };
+    axios
+      .post(`${getLtiScheduleByQuizId}`, { ...payload })
+      .then((response: any) => {
+        setAssignmentSchedules(response.data);
+      })
+      .catch((error: any) => {
+        setAssignmentSchedules(false);
+      });
+  };
+
   const getExpandedRow = (row: any) => {
+    getAssignmentSchedules(row.quizId);
+    setAssignmentSchedules(null);
     connectSocket(row.id);
   };
 
@@ -309,9 +353,18 @@ const Authentication: React.FC = (): JSX.Element => {
     }
   }, [urlParamsData.courseId]);
 
+  let courseName: string = "";
+  if (courseDetails) {
+    courseName = courseDetails.name;
+  }
+
   return (
     <div className="flex flex-col mx-auto w-4/5 gap-4">
-      <h2 className="text-center text-2xl underline">Live Authentication</h2>
+      {courseName !== "" && (
+        <h2 className="text-center text-2xl underline">
+          Course Name - {courseName}
+        </h2>
+      )}
       <div className="flex space-x-2 justify-end">
         <button
           type="button"
@@ -337,7 +390,7 @@ const Authentication: React.FC = (): JSX.Element => {
           studentAuthStatus={studentAuthed}
         />
       ) : (
-        <div className="flex flex-col gap-6 justify-center items-center h-screen">
+        <div className="flex flex-col gap-6 justify-center items-center h-full">
           <h2 className="text-sm">Fetching assignments. Please wait...</h2>
         </div>
       )}

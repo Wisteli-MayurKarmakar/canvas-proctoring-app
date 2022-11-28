@@ -1,14 +1,19 @@
-import { DatePicker, Table } from "antd";
+import { DatePicker, message, Table } from "antd";
+import axios from "axios";
 // import { useForm } from "antd/lib/form/Form";
 import moment, { Moment } from "moment";
-import React, { SyntheticEvent } from "react";
+import React, { SyntheticEvent, useState } from "react";
 import { isNumber } from "util";
+import { saveLtiBillingRate } from "../../apiConfigs";
 import {
   AddBillingPropertyTypes,
   BillingContactDetails,
+  BillingData,
   PastRecordTableColumns,
   ServicesAndBillingFieldTypes,
 } from "../../AppTypes";
+import WaitingModal from "../../CommonUtilites/WaitingModal";
+import { useAppStore } from "../../store/AppSotre";
 import { useBillingStore } from "../../store/BillingStore";
 
 const Billing: React.FC = (): JSX.Element => {
@@ -16,36 +21,17 @@ const Billing: React.FC = (): JSX.Element => {
   const handleServiceAndBillingDetailsUpdate = useBillingStore(
     (state) => state.handleServiceAndBillingDetailsUpdate
   );
+  const [isSavingData, setIsSavingData] = useState<boolean>(false);
   const handleContactDetailsUpdate = useBillingStore(
     (state) => state.handleContactDetailsUpdate
   );
   const handleResetValues = useBillingStore((state) => state.handleResetValues);
-
-  // const getRequiredInputFieldsRules = (
-  //   fieldName: string
-  // ): FormRequiredFieldRules[] => {
-  //   const formRules: FormRequiredFieldRules[] = [
-  //     {
-  //       required: true,
-  //       message: `Please enter ${fieldName}`,
-  //     },
-  //   ];
-  //   return formRules;
-  // };
-
-  // const getRequiredDropdownFieldsRules = (
-  //   fieldName: string
-  // ): FormRequiredFieldRules[] => {
-  //   const formRules: FormRequiredFieldRules[] = [
-  //     {
-  //       required: true,
-  //       message: `Please select ${fieldName}`,
-  //     },
-  //   ];
-  //   return formRules;
-  // };
-
-  // const form: any = useForm();
+  const { urlParamsData, tokenData } = useAppStore((state) => state);
+  const waitMessage: JSX.Element = (
+    <p className="text-center mx-auto text-lg font-semibold">
+      Saving billing information. Please wait...
+    </p>
+  );
 
   const tableColumns: PastRecordTableColumns[] = [
     {
@@ -140,10 +126,55 @@ const Billing: React.FC = (): JSX.Element => {
     return res;
   };
 
+  const saveBillingData = async () => {
+    const {
+      minQuiz,
+      productType,
+      paymentType,
+      billRate,
+      studentPay,
+      startDate,
+      endDate,
+      billCurrency,
+    } = billingStore.serviceAndBillingDetails;
+    const { email } = billingStore.contactDetails;
+    let data: BillingData = {
+      guid: urlParamsData.guid as string,
+      instituteId: parseInt(tokenData?.instituteId as string),
+      billingTier: "",
+      minNumber: parseInt(minQuiz.value),
+      productType: productType.value,
+      billingEmail: email.value,
+      studentPay: studentPay.value,
+      paymentType: paymentType.value,
+      billingRate: billRate.value === "" ? 0 : parseInt(billRate.value),
+      billingCurrency: billCurrency.value,
+      startDate: startDate.value,
+      endDate: endDate.value,
+    };
+
+    let response = await axios.post(`${saveLtiBillingRate}`, { ...data });
+    if (response.status === 200) {
+      message.success("Billing details save successfully");
+      setIsSavingData(false);
+      return;
+    }
+
+    if (response.status === 400) {
+      message.error("Failed to save details");
+      setIsSavingData(false);
+      return;
+    }
+  };
+
   const handleFormSubmit = (e: SyntheticEvent) => {
     e.preventDefault();
+    let hasError: boolean = validateFormValues();
 
-    let res: boolean = validateFormValues();
+    if (!hasError) {
+      // setIsSavingData(true);
+      // saveBillingData();
+    }
   };
 
   const handleBillingRate = (key: string, event: any) => {
@@ -736,6 +767,7 @@ const Billing: React.FC = (): JSX.Element => {
           type="submit"
           id="submit"
           key="Submit"
+          onClick={handleFormSubmit}
           className="inline-block px-4 py-1.5 bg-blue-600 text-white font-medium text-xs
            leading-tight rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700
             focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition
@@ -747,8 +779,14 @@ const Billing: React.FC = (): JSX.Element => {
       <label className="block text-gray-700 text-lg font-bold underline">
         Past Records:
       </label>
-      {/* <Table columns={tableColumns as []} /> */}
       <p className="text-center font-semibold">No records available</p>
+      {
+        <WaitingModal
+          visible={isSavingData}
+          message={waitMessage}
+          title={"Saving Data"}
+        />
+      }
     </form>
   );
 };

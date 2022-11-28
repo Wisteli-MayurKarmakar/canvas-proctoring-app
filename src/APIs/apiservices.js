@@ -2,7 +2,7 @@ import axios from "axios";
 import { io } from "socket.io-client";
 
 let env = process.env.NODE_ENV;
-let webSocketUrl =
+export let webSocketUrl =
   env === "development"
     ? "wss://examd.us:4921/"
     : "wss://examd.online:4921/";

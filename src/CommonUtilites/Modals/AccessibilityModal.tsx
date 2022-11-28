@@ -263,7 +263,13 @@ const AssibilityModal: React.FC<Props> = (props): JSX.Element => {
     };
     let response = await axios.post(`${getLtiAccessibility}`, payload);
     if (response.status === 200) {
-      setAccessibilityConfigurations(response.data);
+      let timeZoneOffset: string = "." + moment().utcOffset().toString() + "Z";
+      let accessibilityConfig = {
+        ...response.data,
+        endDate: response.data.endDate + timeZoneOffset,
+        startDate: response.data.startDate + timeZoneOffset,
+      };
+      setAccessibilityConfigurations(accessibilityConfig);
     }
   };
 

@@ -1,186 +1,116 @@
-import {
-  CheckSquareOutlined,
-  CloseCircleOutlined,
-} from "@ant-design/icons";
+import { CheckSquareOutlined, CloseCircleOutlined } from "@ant-design/icons";
 import { Col, Row } from "antd";
 import React, { useEffect } from "react";
+import { AssignmentConfiguration } from "../../AppTypes";
+import { useAssignmentStore } from "../../store/StudentDashboardStore";
 
 interface Props {
   quizConfig: any;
   isChecked: (flag: boolean) => void;
 }
 
-interface nestedObj {
-  [key: string]: any;
-}
-
 interface configAbbrPrototype {
-  [key: string]: nestedObj;
+  [key: string]: string;
 }
 
 let configAbbrs: configAbbrPrototype = {
-  recordWebcam: {
-    fullName: "Record Webcam",
-    icon: "",
-    isChecked: false,
-  },
-  recordScreen: {
-    fullName: "Record Screen",
-    icon: "",
-    isChecked: false,
-  },
-  recordAudio: {
-    fullName: "Record Audio",
-    icon: "",
-    isChecked: false,
-  },
-  chat: {
-    fullName: "Chat",
-    icon: "",
-    isChecked: false,
-  },
-  studentPicture: {
-    fullName: "Student Picture",
-    icon: "",
-    isChecked: false,
-  },
-  studentIdDl: {
-    fullName: "Student ID or DL",
-    icon: "",
-    isChecked: false,
-  },
-  roomScan: {
-    fullName: "Room Scan",
-    icon: "",
-    isChecked: false,
-  },
-  otp: {
-    fullName: "One Time Password",
-    icon: "",
-    isChecked: false,
-  },
-  calculatorAllowed: {
-    fullName: "Calculator",
-    icon: "",
-    isChecked: false,
-  },
-  scratchPadAllowed: {
-    fullName: "Scratch Pad",
-    icon: "",
-    isChecked: false,
-  },
-  liveHelp: {
-    fullName: "Live Help",
-    icon: "",
-    isChecked: false,
-  },
-  whitelistPages: {
-    fullName: "Whitelist Pages",
-    icon: "",
-    isChecked: false,
-  },
-  disableCopyPaste: {
-    fullName: "Disable Copy/ Paste",
-    icon: "",
-    isChecked: false,
-  },
-  disablePrinting: {
-    fullName: "Disable Printing",
-    icon: "",
-    isChecked: false,
-  },
-  lockdownBrowser: {
-    fullName: "Lock Down Browser",
-    icon: "",
-    isChecked: false,
-  },
-  multiplePerson: {
-    fullName: "Multiple Person",
-    icon: "",
-    isChecked: false,
-  },
-  cellPhone: {
-    fullName: "Cell Phone",
-    icon: "",
-    isChecked: false,
-  },
-  noPersonInRoom: {
-    fullName: "No Person In Room",
-    icon: "",
-    isChecked: false,
-  },
-  speaking: {
-    fullName: "Speaking",
-    icon: "",
-    isChecked: false,
-  },
-  postExamReview: {
-    fullName: "Post Exam Review",
-    icon: "",
-    isChecked: false,
-  },
-  examdLiveLaunch: {
-    fullName: "Examd Live Launch",
-    icon: "",
-    isChecked: false,
-  },
-  instructorProctored: {
-    fullName: "Instructor Proctored",
-    icon: "",
-    isChecked: false,
-  },
-  examdProctored: {
-    fullName: "Examd Proctored",
-    icon: "",
-    isChecked: false,
-  },
+  recordWebcam: "Record Webcam",
+  recordScreen: "Record Screen",
+
+  recordAudio: "Record Audio",
+
+  chat: "Chat",
+
+  studentPicture: "Student Picture",
+
+  studentIdDl: "Student ID or DL",
+
+  roomScan: "Room Scan",
+
+  otp: "One Time Password",
+
+  calculatorAllowed: "Calculator",
+
+  scratchPadAllowed: "Scratch Pad",
+
+  liveHelp: "Live Help",
+
+  whitelistPages: "Whitelist Pages",
+
+  disableCopyPaste: "Disable Copy/ Paste",
+
+  disablePrinting: "Disable Printing",
+
+  lockdownBrowser: "Lock Down Browser",
+
+  multiplePerson: "Multiple Person",
+
+  cellPhone: "Cell Phone",
+
+  noPersonInRoom: "No Person In Room",
+
+  speaking: "Speaking",
+
+  postExamReview: "Post Exam Review",
+
+  examdLiveLaunch: "Examd Live Launch",
+
+  instructorProctored: "Instructor Proctored",
+
+  examdProctored: "Examd Proctored",
 };
 
 const QuizRules: React.FC<Props> = (props) => {
   const fontWeight: string = "semibold";
-  const getQuizConfigs = (): JSX.Element[] => {
-    let items: JSX.Element[] = [];
-    let cols: JSX.Element[] = [];
+  const { selectedAssignmentConfigurations } = useAssignmentStore(
+    (state) => state
+  );
+  // const getQuizConfigs = (): JSX.Element[] => {
+  //   let items: JSX.Element[] = [];
+  //   let cols: JSX.Element[] = [];
 
-    let config = { ...props.quizConfig };
+  //   let config = { ...props.quizConfig };
+  //   delete config.idLtiCanvasConfig;
+  //   delete config.idUser;
+  //   delete config.toolConsumerInstanceGuid;
+  //   delete config.courseId;
+  //   delete config.quizId;
+  //   delete config.assignmentId;
+  //   delete config.whitelistPages;
+  //   delete config.moduleId;
+  //   delete config.timeLimit;
 
-    delete config.idLtiCanvasConfig;
-    delete config.idUser;
-    delete config.toolConsumerInstanceGuid;
-    delete config.courseId;
-    delete config.quizId;
-    delete config.assignmentId;
-    delete config.availableFrom;
-    delete config.availableUntil;
-    delete config.dueDate;
-    delete config.whitelistPages;
-    delete config.moduleId;
+  //   Object.entries(config).forEach((item: any, index: number) => {
+  //     let obj = configAbbrs[item[0]];
+  //     cols.push(
+  //       <Col span={4} key={index}>
+  //         <Row gutter={24} className="mt-4 mb-4" key={index.toString() + "a"}>
+  //           <Col
+  //             span={18}
+  //             key={index.toString() + "b"}
+  //             className="!self-center"
+  //           >
+  //             <p className="font-bold">{obj && obj.fullName}</p>
+  //           </Col>
+  //           <Col span={4} key={index.toString() + "c"}>
+  //             <p>
+  //               {item[1] ? (
+  //                 <CheckSquareOutlined
+  //                   style={{ background: "lightgreen", fontSize: 20 }}
+  //                 />
+  //               ) : (
+  //                 <CloseCircleOutlined style={{ color: "red", fontSize: 20 }} />
+  //               )}
+  //             </p>
+  //           </Col>
+  //         </Row>
+  //       </Col>
+  //     );
+  //   });
+  //   items.push(<Row gutter={24}>{cols}</Row>);
 
-    Object.entries(config).forEach((item: any, index: number) => {
-      let obj = configAbbrs[item[0]];
-      cols.push(
-        <Col span={4} key={index}>
-          <Row gutter={24} className="mt-4 mb-4" key={index.toString() + "a"}>
-            <Col span={18} key={index.toString() + "b"}>
-              <p className="font-bold">{obj && obj.fullName}</p>
-            </Col>
-            <Col span={4} key={index.toString() + "c"}>
-              <p>
-                {item[1] ? (
-                  <CheckSquareOutlined style={{ background: "lightgreen", fontSize: 20 }} />
-                ) : (
-                  <CloseCircleOutlined style={{ color: "red", fontSize: 20 }} />
-                )}
-              </p>
-            </Col>
-          </Row>
-        </Col>
-      );
-    });
-    items.push(<Row gutter={24}>{cols}</Row>);
-
-    return items;
-  };
+  //   return items;
+  // };
 
   const handleClick = (e: any) => {
     if (e.target.checked) {
@@ -248,9 +178,45 @@ const QuizRules: React.FC<Props> = (props) => {
           eligible for academic credit.
         </p>
       </div>
-      <div>
+      <div className="flex flex-col w-full justify-center gap-4">
         <p className="text-xl font-bold mb-2">QUIZ CONFIGURATIONS</p>
-        {getQuizConfigs()}
+        <div className="grid grid-cols-6 w-full justify-between gap-4">
+          {selectedAssignmentConfigurations &&
+            Object.keys(selectedAssignmentConfigurations).map((key: string, index: number) => {
+              if (
+                key !== "idLtiCanvasConfig" &&
+                key !== "idUser" &&
+                key !== "toolConsumerInstanceGuid" &&
+                key !== "courseId" &&
+                key !== "quizId" &&
+                key !== "assignmentId" &&
+                key !== "whitelistPages" &&
+                key !== "moduleId" &&
+                key !== "timeLimit"
+              ) {
+                return (
+                  <div className="flex flex-row h-full w-full items-center justify-between gap-2 col-span-1 pr-5" key={index}>
+                    <p className="text-bold font-lg text-[18px] font-semibold">
+                      {configAbbrs[key as keyof configAbbrPrototype]}
+                    </p>
+                    <p>
+                      {selectedAssignmentConfigurations[
+                        key as keyof AssignmentConfiguration
+                      ] ? (
+                        <CheckSquareOutlined
+                          style={{ background: "lightgreen", fontSize: 20 }}
+                        />
+                      ) : (
+                        <CloseCircleOutlined
+                          style={{ color: "red", fontSize: 20 }}
+                        />
+                      )}
+                    </p>
+                  </div>
+                );
+              }
+            })}
+        </div>
         <div className="flex flex-row gap-6 items-center pt-2 justify-center text-xl">
           <input type="checkbox" onClick={handleClick} />{" "}
           <b>Agree Quiz Rules </b>

@@ -36,7 +36,6 @@ import {
   fetchCanvasQuizzesByCourseId,
 } from "./apiConfigs";
 import { message, Tooltip } from "antd";
-import { userAuthenticationStore } from "./store/autheticationStore";
 import CustomizationSummary from "./CommonUtilites/CustomizationSummary";
 import { useQuizStore } from "./store/QuizStore";
 import WaitingModal from "./CommonUtilites/WaitingModal";
@@ -249,9 +248,6 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
   const [showSummary, setShowSummary] = useState<boolean>(false);
   const [quicKConfigSelected, setQuicKConfigSelected] = useState<string>("");
   let [isReset, setIsReset] = React.useState<boolean>(false);
-  const authenticationData = userAuthenticationStore(
-    (state) => state.authenticationData
-  );
   const { tokenData } = useAppStore((state) => state);
   const quizStoreState = useQuizStore((state) => state);
   const resetOptionSelection = (option: string) => {
@@ -404,7 +400,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
   const handleAutoCompleteSetup = async () => {
     try {
       let response = await axios.get(
-        `${autoCompleteSetup}${props.courseId}/${selectedQuiz.title}/${selectedQuiz.id}/${props.auth.data.access_token}/${authenticationData?.instituteId}`
+        `${autoCompleteSetup}${props.courseId}/${selectedQuiz.title}/${selectedQuiz.id}/${tokenData.lmsAccessToken}/${tokenData?.instituteId}`
       );
       setShowWaitingModal(false);
     } catch (e) {
@@ -468,7 +464,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
 
     axios
       .post(saveLtiCanvasConfig, allOptions, {
-        headers: { Authorization: `Bearer ${props.auth.data.access_token}` },
+        headers: { Authorization: `Bearer ${tokenData.lmsAccessToken}` },
       })
       .then((res) => {
         if (allOptions["assignmentId"] === 0) {

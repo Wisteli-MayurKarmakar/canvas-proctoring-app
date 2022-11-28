@@ -1,4 +1,4 @@
-import { Col, message, Row } from "antd";
+import { message } from "antd";
 import axios from "axios";
 import moment from "moment";
 import React, { useEffect } from "react";
@@ -6,13 +6,13 @@ import { getWebSocketUrl } from "../../APIs/apiservices";
 import LiveSreaming from "../Modals/LiveStreaming";
 import {
   fetchAccountsByCourseAndEnrollemntType,
-  getGetCanvasQuizDetails,
-  getScheduling,
   getCanvasAssignmentDetails,
+  getLtiScheduleByQuizId,
 } from "../../apiConfigs";
 import { userAuthenticationStore } from "../../store/autheticationStore";
 import { useAppStore } from "../../store/AppSotre";
 import { QuizTypeProctoringByQuiz } from "../../AppTypes";
+import { useSocketStore } from "../../store/SocketStore";
 
 const ProcotoringByQuiz: React.FC = (): JSX.Element => {
   const [quizzes, setQuizzes] = React.useState<any>(null);
@@ -35,6 +35,7 @@ const ProcotoringByQuiz: React.FC = (): JSX.Element => {
     (state) => state.authenticationData
   );
   const socket = getWebSocketUrl();
+  const {createConnection, messagesIncoming} = useSocketStore((state) => state)
 
   useEffect(() => {
     axios
@@ -75,6 +76,11 @@ const ProcotoringByQuiz: React.FC = (): JSX.Element => {
       .catch((err) => {
         console.log(err);
       });
+      let roomName: string = `${urlParamsData.guid}_${urlParamsData.courseId}_${urlParamsData.studentId}_assgn_status`
+      let userName: string = `${urlParamsData.studentId}_instr_assgn_status`
+      let messagType: string = "ASSGN_STAT_REQ"
+      let dataToSend: any = {}
+      createConnection(roomName, userName, messagType, dataToSend)
   }, []);
 
   const connectSocket = () => {
@@ -105,17 +111,21 @@ const ProcotoringByQuiz: React.FC = (): JSX.Element => {
   const getQuizSchedules = (quizId: number, assignmentId: string) => {
     let data = {
       instituteId: tokenData.instituteId,
-      assignmentId: assignmentId,
+      assignmentId: parseInt(assignmentId),
       quizId: quizId,
-      studentId: urlParamsData.studentId,
-      courseId: urlParamsData.courseId,
+      courseId: parseInt(urlParamsData.courseId as any),
+      status: 0,
       guid: urlParamsData.guid,
-      status: "0",
     };
     axios
-      .post(`${getScheduling}`, { ...data })
+      .post(`${getLtiScheduleByQuizId}`, { ...data })
       .then((response: any) => {
-        setSelectedQuizSchedules(response);
+        let offsetTime: string = moment().utcOffset().toString();
+        let schedule = {
+          ...response.data,
+          scheduleDate: response.data.scheduleDate + `.${offsetTime}Z`,
+        };
+        setSelectedQuizSchedules(schedule);
       })
       .catch((error: any) => {
         console.log(error);
@@ -127,8 +137,8 @@ const ProcotoringByQuiz: React.FC = (): JSX.Element => {
     Object.keys(temp).forEach((key) => {
       temp[key] = false;
     });
-    if (quizz.id) {
-      setSelectedQuiz(quizz);
+    if (quizz.quizId) {
+      setSelectedQuiz({ ...quizz, id: quizz.quizId });
       setSelectedQuizSchedules(null);
       getQuizSchedules(quizz.quizId, quizz.id);
       temp[quizz.id.toString()] = true;
@@ -166,10 +176,8 @@ const ProcotoringByQuiz: React.FC = (): JSX.Element => {
                   className="flex flex-col h-full w-full items-center justify-center"
                   key={index.toString() + "a"}
                 >
-                  {"name" in quizz ? (
-                    <p className="text-xl font-semibold">
-                      {quizz.name.split("-")[1]}
-                    </p>
+                  {"quizName" in quizz ? (
+                    <p className="text-xl font-semibold">{quizz.quizName}</p>
                   ) : (
                     <p className="text-xl font-semibold">{quizz.id}</p>
                   )}
@@ -200,7 +208,7 @@ const ProcotoringByQuiz: React.FC = (): JSX.Element => {
           enrollments.map((enrollment: any, index: number) => {
             return (
               <div
-                className="box-border border rounded shadow-lg w-36 h-36 bg-gray-100 text-black"
+                className="box-border border rounded shadow-lg w-40 h-40 bg-gray-100 text-black"
                 key={index}
               >
                 <div className="flex flex-col w-full h-full items-center justify-center gap-4 p-2">
@@ -220,11 +228,15 @@ const ProcotoringByQuiz: React.FC = (): JSX.Element => {
                   >
                     Live Stream
                   </button>
-                  {selectedQuiz && selectedQuizSchedules && (
-                    <p className="text-center">
+                  {selectedQuiz && selectedQuizSchedules ? (
+                    <p className="text-center font-semibold">
                       {moment(selectedQuizSchedules.scheduleDate).format(
                         "MM-DD-YYYY hh:mm a"
                       )}
+                    </p>
+                  ) : (
+                    selectedQuiz && <p className="text-center font-semibold">
+                      Not scheduled
                     </p>
                   )}
                 </div>

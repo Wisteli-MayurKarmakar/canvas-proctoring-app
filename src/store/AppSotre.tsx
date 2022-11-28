@@ -1,5 +1,8 @@
+import axios from "axios";
 import create from "zustand";
 import { devtools } from "zustand/middleware";
+import { fetchCanvasCourseDetailsByCourseId } from "../apiConfigs";
+import { CourseDetails } from "../AppTypes";
 const getUuid = require("uuid-by-string");
 
 type AuthenticationData = {
@@ -30,8 +33,21 @@ type AppStore = {
   loadPage?: string;
   urlParamsData: URLParamsData;
   tokenData: AuthenticationData;
+  courseDetails: CourseDetails;
   setTokenData: (data: AuthenticationData) => void;
   setUrlParamsData: (data: URLParamsData) => void;
+};
+
+const getCourseDetails = async (): Promise<CourseDetails | null> => {
+  const { courseId } = useAppStore.getState().urlParamsData;
+  const { lmsAccessToken, instituteId } = useAppStore.getState().tokenData;
+  let response = await axios.get(
+    `${fetchCanvasCourseDetailsByCourseId}/${courseId}/${lmsAccessToken}/${instituteId}`
+  );
+  if (response.status === 200) {
+    return response.data[0];
+  }
+  return null;
 };
 
 export const useAppStore = create<AppStore>()(
@@ -50,6 +66,13 @@ export const useAppStore = create<AppStore>()(
         newTab: false,
         loginId: null,
       },
+      courseDetails: {
+        account_id: "",
+        id: "",
+        name: "",
+        start_at: "",
+        uuid: "",
+      },
       tokenData: {
         instituteId: null,
         invokeUrl: null,
@@ -59,10 +82,16 @@ export const useAppStore = create<AppStore>()(
         lmsName: null,
         status: null,
       },
-      setTokenData: (data) => {
+      setTokenData: async (data) => {
         set({
           tokenData: { ...data },
         });
+        let courseDetails: CourseDetails | null = await getCourseDetails();
+        if (courseDetails) {
+          set({
+            courseDetails: courseDetails,
+          });
+        }
       },
       setUrlParamsData: (data: any) => {
         if (data.userId) {

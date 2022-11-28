@@ -178,6 +178,9 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
   }, [alertUser]);
 
   const handleStartExam = (): void => {
+    useAssignmentStore.setState({
+      isNewTabOpen: true,
+    });
     let isProctoredAssignment: boolean = assignmentStore.isProctoredAssignment;
     if (isProctoredAssignment) {
       if (selectedAssignmentSchedule) {
@@ -599,8 +602,9 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
   };
 
   const handleGoToQuiz = () => {
+    let origin: string = new URL(tokenData.invokeUrl as string).origin;
     window.open(
-      `https://canvas.examd.online/courses/${urlParamsData.courseId}/quizzes/${assignmentStore.selectedAssignmentConfigurations?.quizId}`
+      `${origin}/courses/${urlParamsData.courseId}/quizzes/${assignmentStore.selectedAssignmentConfigurations?.quizId}`
     );
   };
 

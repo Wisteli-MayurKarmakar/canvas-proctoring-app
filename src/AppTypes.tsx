@@ -1,3 +1,6 @@
+import { Moment } from "moment";
+import { type } from "os";
+
 type AllDates = {
   due_at: string;
   lock_at: string;
@@ -226,6 +229,14 @@ type BillingContactDetails = {
   country: AddBillingPropertyTypes;
 };
 
+type CouseDetails = {
+  account_id: string;
+  id: string;
+  name: string;
+  start_at: string;
+  uuid: string;
+};
+
 type FormRequiredFieldRules = {
   required: boolean;
   message: string;
@@ -247,12 +258,55 @@ type CourseDetails = {
   uuid: string;
 };
 
+//Socket.io server types
+
+type UserValidationData = {
+  evt: string;
+  room: string;
+  user: string;
+};
+
+type ChatData = {
+  evt: string;
+  room: string;
+  text: string;
+};
+
+type ClientToServerEvents = {
+  hello: () => void;
+  chat: (data: any) => void;
+};
+
+type ServerToClientEvents = {
+  validate: (validationData: UserValidationData) => void;
+  chat: (data: ChatData) => void;
+};
+
+// Billing data type 
+
+type BillingData = {
+  guid: string;
+  instituteId: number;
+  billingTier: string;
+  minNumber: number;
+  productType: string;
+  billingEmail: string;
+  studentPay: string;
+  paymentType: string;
+  billingRate: number;
+  billingCurrency: string;
+  startDate: string;
+  endDate: string;
+};
+
 export type {
   AllDates,
   Quiz,
   AppStore,
   QuizConfig,
   AssignmentConfiguration,
+  ServerToClientEvents,
+  ClientToServerEvents,
   defualtProctingSettings,
   ContactDetailsFieldTypes,
   InstituteAndAccessDetailsFieldTypes,
@@ -263,5 +317,7 @@ export type {
   FormRequiredFieldRules,
   PastRecordTableColumns,
   QuizTypeProctoringByQuiz,
-  CourseDetails
+  CourseDetails,
+  CouseDetails,
+  BillingData,
 };
