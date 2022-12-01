@@ -132,7 +132,12 @@ const LiveStreaming: React.FC<Props> = (props): JSX.Element => {
       visible={view}
       onCancel={close}
       footer={[
-        <Button key="close" onClick={close}>
+        <Button
+          key="close"
+          onClick={close}
+          type="primary"
+          className="!bg-blue-600 !rounded"
+        >
           Close
         </Button>,
       ]}

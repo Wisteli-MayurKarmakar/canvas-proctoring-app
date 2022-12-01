@@ -340,13 +340,12 @@ const AssignmentsInfo: React.FC = (): JSX.Element => {
                 </div>
               </div>
               <div className="rounded-lg bg-blue-100 p-2">
-                <p className="text-xl font-bold text-center text-blue-500">
+                {/* <p className="text-xl font-bold text-center text-blue-500">
                   This is the proctoring tab, please do not close this tab or
                   click "End Proctoring" button up until you submit the quiz.
-                </p>
+                </p> */}
                 <p className="text-xl font-bold text-center text-blue-500">
-                  Now, to take the quiz please go to the prior tab and click
-                  "Start Quiz" or click "Go to Quiz" button.
+                  To take the quiz please click "Go to Quiz" button.
                 </p>
               </div>
             </div>

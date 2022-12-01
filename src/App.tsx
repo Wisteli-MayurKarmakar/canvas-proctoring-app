@@ -26,12 +26,13 @@ function App() {
   let [isNewTab, setIsNewTab] = React.useState<any>(false);
   let [student, setStudent] = React.useState<any>(null);
   const { urlParamsData, tokenData } = useAppStore((state) => state);
-  const studentDashboardStore = useCommonStudentDashboardStore((state) => state)
-  const {setLoggedInUserEnrollmentType, setEnrollments} = useCommonStudentDashboardStore(
+  const studentDashboardStore = useCommonStudentDashboardStore(
     (state) => state
   );
-  const {setUrlParamsData, setTokenData} = useAppStore((state) => state)
-  
+  const { setLoggedInUserEnrollmentType, setEnrollments } =
+    useCommonStudentDashboardStore((state) => state);
+  const { setUrlParamsData, setTokenData } = useAppStore((state) => state);
+
   let userName = "ca6a42188e970ab77fab0e34";
   let password = "e5aa447e19ee4180b5ba1364";
 
@@ -80,6 +81,7 @@ function App() {
     let accId = url.searchParams.get("accoundId");
     let newTab = url.searchParams.get("newTab");
     let isAuthed = url.searchParams.get("auth");
+    let guid: string = "";
 
     //use url -->
     //http://localhost:3000/lti/config?studentId=43&assignmentId=366&loginId=ncghosh@gmail.com&courseId=24&userId=1&courseId=24&invokeUrl=https://canvas.examd.online/courses/24/external_content/success/external_tool_redirect&accountId=4&toolConsumerGuid=Examd
@@ -99,12 +101,16 @@ function App() {
     if (newTab === "true") {
       setIsNewTab(true);
     }
+
+    if (invokeUrl) {
+      guid = new URL(invokeUrl).origin.split("//")[1];
+    }
     let data = {
       courseId: !courseId ? null : courseId,
       userId: !userId ? null : userId,
       studentId: !studentId ? null : studentId,
       accountId: !accId ? null : accId,
-      guid: !toolConsumerGuid ? null : toolConsumerGuid,
+      guid: guid,
       invokeUrl: !invokeUrl ? null : invokeUrl,
       isAuthed: !isAuthed ? false : true,
       assignmentId:
@@ -148,6 +154,17 @@ function App() {
     getCanvasToken();
     setUserId();
   }, [urlParamsData.invokeUrl]);
+
+  let env = process.env.REACT_APP_ENV;
+  if (env === "DEV") {
+    window.ExamdAutoProctorJS.update_url =
+      "https://examd.us/cdn/urls/xproctor/1";
+  }
+
+  if (env === "PROD") {
+    window.ExamdAutoProctorJS.update_url =
+      "https://examd.online/cdn/urls/xproctor/1";
+  }
 
   if (
     tokenData &&

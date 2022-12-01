@@ -38,7 +38,7 @@ const ProctoringEndInfoModal: React.FC<Props> = (props): JSX.Element => {
               has finished.
             </p>
             <p className="text-lg font-semibold">
-              Press the close button to close proctoring.
+              Press the close button.
             </p>
           </>
         )}

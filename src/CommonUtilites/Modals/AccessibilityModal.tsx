@@ -263,7 +263,7 @@ const AssibilityModal: React.FC<Props> = (props): JSX.Element => {
     };
     let response = await axios.post(`${getLtiAccessibility}`, payload);
     if (response.status === 200) {
-      let timeZoneOffset: string = "." + moment().utcOffset().toString() + "Z";
+      let timeZoneOffset: string = "." + Math.abs(moment().utcOffset()).toString() + "Z";
       let accessibilityConfig = {
         ...response.data,
         endDate: response.data.endDate + timeZoneOffset,
@@ -295,10 +295,10 @@ const AssibilityModal: React.FC<Props> = (props): JSX.Element => {
       maskClosable={false}
       width={"90pc"}
       footer={[
-        <Button key="cancel" onClick={props.onClose} disabled={loading && true}>
+        <Button key="cancel" type="primary" onClick={props.onClose} disabled={loading && true} className="!bg-blue-600 !rounded">
           Cancel
         </Button>,
-        <Button key="submit" onClick={handleSubmit} loading={loading}>
+        <Button key="submit" type="primary" onClick={handleSubmit} loading={loading} className="!bg-blue-600 !rounded">
           {loading ? "Saving" : "Submit"}
         </Button>,
       ]}

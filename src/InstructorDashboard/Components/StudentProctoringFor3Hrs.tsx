@@ -124,7 +124,7 @@ const StudentProctoringFor3Hrs: React.FC<Props> = (props): JSX.Element => {
                     studentFirstBatch.map((student: Student, index: number) => {
                       return (
                         <div
-                          className="box-border border rounded shadow-lg w-36 h-40 bg-gray-100 text-black"
+                          className="box-border border rounded shadow-lg w-40 h-40 bg-gray-100 text-black"
                           key={index}
                         >
                           <div className="flex flex-col w-full h-full items-center justify-center gap-4 p-2">

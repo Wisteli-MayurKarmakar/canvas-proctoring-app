@@ -83,20 +83,19 @@ const ProctoringInfoModal: React.FC<Props> = (props): JSX.Element => {
       onCancel={props.close}
       maskClosable={false}
       footer={[
-        <Button key="close" onClick={() => props.close()}>
+        <Button key="close" onClick={() => props.close()} type="primary" className="!bg-blue-600 !rounded">
           Close
         </Button>,
       ]}
     >
       <div className="flex flex-col h-full w-full items-center justify-center">
-        <p className="text-xl font-bold uppercase">Proctoring has started</p>
+        <p className="text-xl font-bold uppercase">Proctoring</p>
         <p className="text-xl font-bold text-center text-blue-500">
-          This is the proctoring tab, please do not close this tab or click "End
-          Proctoring" button up until you submit the quiz.
+        Please allow the asked permission, so that Proctoring can start.
         </p>
         <p className="text-xl font-bold text-center text-blue-500">
-          Now, to take the quiz please go to the prior tab and click "Start
-          Quiz".
+          Now, to take the quiz please close this pop-up and click "Go to Quiz"
+          button.
         </p>
         {!props.onSeb && promptInfo}
         {!props.onSeb &&

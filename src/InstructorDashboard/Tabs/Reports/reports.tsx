@@ -1,7 +1,4 @@
-import axios from "axios";
-import React, { useEffect, useState } from "react";
-import { fetchCanvasCourseDetailsByCourseId } from "../../../apiConfigs";
-import { CourseDetails } from "../../../AppTypes";
+import React, { useState } from "react";
 import { useAppStore } from "../../../store/AppSotre";
 import QuizReports from "./Components/quizReport";
 

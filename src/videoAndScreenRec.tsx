@@ -15,7 +15,6 @@ import { useSocketStore } from "./store/SocketStore";
 import SebConfigDev from "./assets/seb_settings/SebClientSettingsDev.seb";
 //@ts-ignore
 import SebConfigLocal from "./assets/seb_settings/SebClientSettingsLocal.seb";
-import { userAuthenticationStore } from "./store/autheticationStore";
 import {
   getLtiCanvasConfigByAssignment,
   getQuizSubmissionsStateFromCanvas,
@@ -82,6 +81,7 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
   var stream: any = null;
   var offer: any = null;
   const assignmentStore = useAssignmentStore((state) => state);
+  const setAssignmentSubmitted = useAssignmentStore((state) => state.setAssignmentSubmitted)
   const selectedAssignmentSchedule = useAssignmentStore(
     (state) => state.selectedAssignmentSchedules
   );
@@ -119,7 +119,7 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
   const setConfigByQuizCourseGuid = async () => {
     if (props.assignment) {
       let response = await axios.get(
-        `${getLtiCanvasConfigByAssignment}/${props.assignment.id}`
+        `${getLtiCanvasConfigByAssignment}/${urlParamsData.guid}/${props.assignment.id}`
       );
 
       if (response.data) {
@@ -290,12 +290,13 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
     );
 
     if (response.status === 200) {
+      window.localStorage.setItem("assgnSubmit", "1");
       message.success(
         "Assignment submitted successfully. Please go to quiz page and continue. Thanks"
       );
       return;
     }
-
+    window.localStorage.setItem("assgnSubmit", "0");
     message.error("Something went wrong submitting the assignment.");
     return;
   };
@@ -535,6 +536,7 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
     let onSeb = url.searchParams.get("onSEBApp");
 
     localStorage.removeItem("tabClose");
+    localStorage.removeItem("assgnSubmit");
 
     if (props.isNewTab) {
       window.addEventListener("beforeunload", (event: any) => {
@@ -562,6 +564,16 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
     const url = window.location.href;
     const domain = url.split("/")[2].split(":")[0];
     setOpenNewTabPrompt(false);
+    if (!urlParamsData.newTab) {
+      window.addEventListener("storage", (event: StorageEvent) => {
+        let assgnSubmission = window.localStorage.getItem("assgnSubmit")
+        if (assgnSubmission) {
+          if (assgnSubmission === "1") {
+            setAssignmentSubmitted(true);
+          }
+        }
+      })
+    }
 
     if (domain !== "localhost") {
       window.open(
@@ -632,7 +644,7 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
     <div className="flex flex-col items-center justify-center">
       <div id="xmedia" className="flex flex-row"></div>
       <div className="container text-center flex justify-center gap-8 h-full items-center">
-        {!props.isNewTab && !assignmentStore.isNewTabOpen ? (
+        {!props.isNewTab && !assignmentStore.isNewTabOpen && (
           <button
             className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight rounded shadow-md hover:bg-blue-700 hover:shadow-lg
              focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
@@ -642,26 +654,27 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
           >
             Start Proctoring
           </button>
-        ) : (
-          <button
-            className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight rounded shadow-md hover:bg-blue-700 hover:shadow-lg
-             focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
-            onClick={handleGoToQuiz}
-          >
-            Go to Quiz
-          </button>
         )}
         {props.isNewTab && (
-          <button
-            className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight rounded shadow-md
+          <>
+            <button
+              className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight rounded shadow-md hover:bg-blue-700 hover:shadow-lg
+             focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
+              onClick={handleGoToQuiz}
+            >
+              Go to Quiz
+            </button>
+            <button
+              className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight rounded shadow-md
              hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg 
              transition duration-150 ease-in-out"
-            onClick={handleEndExam}
-            disabled={examStarted ? false : true}
-            style={{ cursor: examStarted ? "pointer" : "not-allowed" }}
-          >
-            End Proctoring
-          </button>
+              onClick={handleEndExam}
+              disabled={examStarted ? false : true}
+              style={{ cursor: examStarted ? "pointer" : "not-allowed" }}
+            >
+              End Proctoring
+            </button>
+          </>
         )}
       </div>
       {showProctoringAlert && quizConfig && (

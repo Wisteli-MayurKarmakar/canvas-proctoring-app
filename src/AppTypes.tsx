@@ -294,7 +294,7 @@ type ServerToClientEvents = {
   chat: (data: ChatData) => void;
 };
 
-// Billing data type 
+// Billing data type
 
 type BillingData = {
   guid: string;
@@ -311,15 +311,52 @@ type BillingData = {
   endDate: string;
 };
 
+type StudentDetails = {
+  idLtiStudentProfile: string;
+  guid: string;
+  idUser: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  idFileIndex1: string;
+  idFileIndex2: string;
+  idFileName1: string;
+  idFileName2: string;
+  status: number;
+  createUser: string | null;
+  createDate: string;
+  modifyUser: string | null;
+  modifyDate: string | null;
+};
+
+//Payments Type
+
+type PaymentStoreType = {
+  providers: string[];
+  selectedProvider: string;
+  billingEmail: string;
+  userDetails: StudentDetails;
+  message: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  setBillingEmail: (value: string) => void;
+  setProvider: (value: string) => void;
+  setMessage: (value: string) => void;
+  setUserDetails: () => void;
+};
+
 export type {
   AllDates,
   Quiz,
   AppStore,
   QuizConfig,
+  StudentDetails,
   AssignmentConfiguration,
   ServerToClientEvents,
   ClientToServerEvents,
   defualtProctingSettings,
+  PaymentStoreType,
   ContactDetailsFieldTypes,
   InstituteAndAccessDetailsFieldTypes,
   AddInsitutePropertyTypes,
@@ -332,5 +369,5 @@ export type {
   CourseDetails,
   CouseDetails,
   BillingData,
-  Assignment
+  Assignment,
 };

@@ -43,6 +43,8 @@ const AssignmentsContainer: React.FC<Props> = (props): JSX.Element => {
     (state) => state.selectedAssignment
   );
 
+  const assignmentSubmitted = useAssignmentStore((state) => state.assignmentSubmitted)
+
   const assignmentId = useAppStore((state) => state.urlParamsData.assignmentId);
 
   const handleSelectAssignment = (assignment: any): void => {
@@ -224,7 +226,7 @@ const AssignmentsContainer: React.FC<Props> = (props): JSX.Element => {
             !urlParamsData.newTab &&
             selectedAssignmentConfigurations &&
             !isProctoredAssignment &&
-            !schedulesAvailable && (
+            !schedulesAvailable && !assignmentSubmitted && (
               <div className="flex items-center justify-center">
                 <button
                   type="button"
@@ -241,7 +243,7 @@ const AssignmentsContainer: React.FC<Props> = (props): JSX.Element => {
             !urlParamsData.newTab &&
             selectedAssignmentConfigurations &&
             isProctoredAssignment &&
-            !schedulesAvailable && (
+            !schedulesAvailable && !assignmentSubmitted && (
               <div className="flex items-center justify-center">
                 <button
                   type="button"
@@ -258,7 +260,7 @@ const AssignmentsContainer: React.FC<Props> = (props): JSX.Element => {
             !urlParamsData.newTab &&
             selectedAssignmentConfigurations &&
             !isProctoredAssignment &&
-            schedulesAvailable && (
+            schedulesAvailable && !assignmentSubmitted && (
               <div className="flex items-center justify-center">
                 <button
                   type="button"

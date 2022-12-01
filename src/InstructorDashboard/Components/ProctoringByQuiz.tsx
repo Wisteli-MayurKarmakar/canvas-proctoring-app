@@ -1,4 +1,4 @@
-import { message } from "antd";
+import { Badge, Button, message, Table } from "antd";
 import axios from "axios";
 import moment from "moment";
 import React, { useEffect } from "react";
@@ -9,10 +9,13 @@ import {
   getCanvasAssignmentDetails,
   getLtiScheduleByQuizId,
 } from "../../apiConfigs";
-import { userAuthenticationStore } from "../../store/autheticationStore";
 import { useAppStore } from "../../store/AppSotre";
 import { QuizTypeProctoringByQuiz } from "../../AppTypes";
 import { useSocketStore } from "../../store/SocketStore";
+
+type QuizStatus = {
+  [key: string]: { ongoing: boolean };
+};
 
 const ProcotoringByQuiz: React.FC = (): JSX.Element => {
   const [quizzes, setQuizzes] = React.useState<any>(null);
@@ -31,11 +34,71 @@ const ProcotoringByQuiz: React.FC = (): JSX.Element => {
   const [socketUser, setSocketUser] = React.useState<any>(
     "chat_" + urlParamsData.userId
   );
-  const authenticationData = userAuthenticationStore(
-    (state) => state.authenticationData
-  );
+  const [quizzesStatus, setQuizzesStatus] = React.useState<QuizStatus>({});
   const socket = getWebSocketUrl();
-  const {createConnection, messagesIncoming} = useSocketStore((state) => state)
+  const { createConnection, messagesIncoming } = useSocketStore(
+    (state) => state
+  );
+
+  const studentCols = [
+    {
+      dataIndex: "",
+      key: "name",
+      title: "Name",
+      render: (row: any) => {
+        return row.name;
+      },
+    },
+    {
+      dataIndex: "",
+      key: "schedule",
+      title: "Schedule Date",
+      render: (row: any) => {
+        if (!quizzes) {
+          return "Fetching quizzes...";
+        }
+        if (selectedQuiz) {
+          if (selectedQuizSchedules) {
+            return moment(selectedQuizSchedules.scheduleDate).format(
+              "MM-DD-YYYY hh:mm a"
+            );
+          }
+          if (selectedQuizSchedules === false) {
+            return "Not Scheduled";
+          }
+          return "Getting schedules...";
+        }
+        return "Please select a quiz";
+      },
+    },
+    {
+      dataIndex: "",
+      key: "action",
+      title: "Action",
+      render: (row: any) => {
+        if (Object.keys(quizzesStatus).length > 0) {
+          return (
+            <Button
+              type="link"
+              disabled={
+                row.id in quizzesStatus && quizzesStatus[row.id].ongoing
+                  ? false
+                  : true
+              }
+              onClick={() => showLiveStreamModal(row)}
+            >
+              Live Stream
+            </Button>
+          );
+        }
+        return (
+          <Button type="link" disabled={true}>
+            Live Stream
+          </Button>
+        );
+      },
+    },
+  ];
 
   useEffect(() => {
     axios
@@ -44,12 +107,15 @@ const ProcotoringByQuiz: React.FC = (): JSX.Element => {
       )
       .then((res) => {
         let temp: any = {};
+        let quizzesStatus: QuizStatus = {};
         let quizzes = res.data.filter((item: any) => {
           if (item.id > 0) {
             temp[item.id] = false;
+            quizzesStatus[item.id] = { ongoing: false };
             return item;
           }
         });
+        setQuizzesStatus(quizzesStatus);
         setQzSelectTrack(temp);
         setQuizzes(quizzes);
       })
@@ -69,6 +135,7 @@ const ProcotoringByQuiz: React.FC = (): JSX.Element => {
           ...enrollment,
           user_id: enrollment.id,
           course_id: urlParamsData.courseId,
+          key: enrollment.id,
         }));
         setEnrollmentLiveStatus(temp);
         setEnrollments(enrollments);
@@ -76,11 +143,11 @@ const ProcotoringByQuiz: React.FC = (): JSX.Element => {
       .catch((err) => {
         console.log(err);
       });
-      let roomName: string = `${urlParamsData.guid}_${urlParamsData.courseId}_assgn_status`
-      let userName: string = `${urlParamsData.studentId}_instr_assgn_status`
-      let messagType: string = "ASSGN_STAT_REQ"
-      let dataToSend: any = {}
-      createConnection(roomName, userName, messagType, dataToSend)
+    let roomName: string = `${urlParamsData.guid}_${urlParamsData.courseId}_assgn_status`;
+    let userName: string = `${urlParamsData.studentId}_instr_assgn_status`;
+    let messagType: string = "ASSGN_STAT_REQ";
+    let dataToSend: any = {};
+    createConnection(roomName, userName, messagType, dataToSend);
   }, []);
 
   const connectSocket = () => {
@@ -120,7 +187,7 @@ const ProcotoringByQuiz: React.FC = (): JSX.Element => {
     axios
       .post(`${getLtiScheduleByQuizId}`, { ...data })
       .then((response: any) => {
-        let offsetTime: string = moment().utcOffset().toString();
+        let offsetTime: string = Math.abs(moment().utcOffset()).toString();
         let schedule = {
           ...response.data,
           scheduleDate: response.data.scheduleDate + `.${offsetTime}Z`,
@@ -128,6 +195,7 @@ const ProcotoringByQuiz: React.FC = (): JSX.Element => {
         setSelectedQuizSchedules(schedule);
       })
       .catch((error: any) => {
+        setSelectedQuizSchedules(false);
         console.log(error);
       });
   };
@@ -148,19 +216,65 @@ const ProcotoringByQuiz: React.FC = (): JSX.Element => {
   };
 
   const showLiveStreamModal = (enrollment: any) => {
-    if (!selectedQuiz) {
-      message.error("Please select a quiz");
-      return;
-    }
     setSelectedStudent(enrollment);
     setShowLiveStream(!showLiveStream);
   };
+
+  useEffect(() => {
+    if (messagesIncoming) {
+      let data = { ...quizzesStatus };
+      Object.keys(messagesIncoming).forEach((key: string) => {
+        if (key in data) {
+          data[key].ongoing = true;
+        }
+      });
+      setQuizzesStatus(data);
+    }
+  }, [messagesIncoming]);
 
   return (
     <div className="flex items-center flex-col justify-center w-full h-full gap-4">
       {quizzes ? (
         <div className="flex flex-row flex-wrap gap-6 justify-center h-5/6 w-full xl:h-full max-h-96 overflow-y-scroll">
           {quizzes.map((quizz: any, index: number) => {
+            if (quizzesStatus[quizz.id].ongoing) {
+              return (
+                <Badge.Ribbon
+                  text="Proctoring started"
+                  color="volcano"
+                  key={index}
+                >
+                  <div
+                    className={
+                      qzSelectTrack[quizz.id]
+                        ? `box-border h-32 w-48 border  p-4 rounded bg-blue-400 shadow-lg text-white hover:bg-blue-400`
+                        : `transition ease-in-out delay-50 hover:-translate-y-1 hover:scale-110 duration-200 box-border h-32 w-48 border  p-4 rounded text-black shadow-lg bg-white hover:bg-blue-400 hover:text-white`
+                    }
+                    style={{ cursor: "pointer" }}
+                    onClick={() => handleQuizClick(quizz)}
+                  >
+                    <div
+                      className="flex flex-col h-full w-full items-center justify-center"
+                      key={index.toString() + "a"}
+                    >
+                      {"quizName" in quizz ? (
+                        <p className="text-xl font-semibold">
+                          {quizz.quizName}
+                        </p>
+                      ) : (
+                        <p className="text-xl font-semibold">{quizz.id}</p>
+                      )}
+
+                      <p className="font-semibold">
+                        {"lock_at" in quizz
+                          ? moment(quizz.lock_at).format("MM-DD-YYYY h:mm A")
+                          : "Date - N/A"}
+                      </p>
+                    </div>
+                  </div>
+                </Badge.Ribbon>
+              );
+            }
             return (
               <div
                 className={
@@ -168,7 +282,6 @@ const ProcotoringByQuiz: React.FC = (): JSX.Element => {
                     ? `box-border h-32 w-48 border  p-4 rounded bg-blue-400 shadow-lg text-white hover:bg-blue-400`
                     : `transition ease-in-out delay-50 hover:-translate-y-1 hover:scale-110 duration-200 box-border h-32 w-48 border  p-4 rounded text-black shadow-lg bg-white hover:bg-blue-400 hover:text-white`
                 }
-                key={index}
                 style={{ cursor: "pointer" }}
                 onClick={() => handleQuizClick(quizz)}
               >
@@ -197,14 +310,23 @@ const ProcotoringByQuiz: React.FC = (): JSX.Element => {
           Fetching quizzes. Please wait ...
         </p>
       )}
-      <div className="inline-flex justify-center items-center w-full">
-        <hr className="my-8 w-full h-1 bg-gray-200 rounded border-0" />
-        <div className="absolute left-1/2 px-4 bg-white -translate-x-1/2">
-          <p className="text-lg font-semibold">Students</p>
+      {quizzes && enrollments && (
+        <div className="inline-flex justify-center items-center w-full">
+          <hr className="my-8 w-full h-1 bg-gray-200 rounded border-0" />
+          <div className="absolute left-1/2 px-4 bg-white -translate-x-1/2">
+            <p className="text-lg font-semibold">Students</p>
+          </div>
         </div>
-      </div>
+      )}
       <div className="flex flex-row flex-wrap w-full gap-8 h-full items-center justify-center">
-        {enrollments ? (
+        {enrollments && quizzes && (
+          <Table
+            dataSource={enrollments}
+            columns={studentCols}
+            bordered={true}
+          />
+        )}
+        {/* {enrollments ? (
           enrollments.map((enrollment: any, index: number) => {
             return (
               <div
@@ -235,9 +357,9 @@ const ProcotoringByQuiz: React.FC = (): JSX.Element => {
                       )}
                     </p>
                   ) : (
-                    selectedQuiz && <p className="text-center font-semibold">
-                      Not scheduled
-                    </p>
+                    selectedQuiz && (
+                      <p className="text-center font-semibold">Not scheduled</p>
+                    )
                   )}
                 </div>
               </div>
@@ -247,7 +369,7 @@ const ProcotoringByQuiz: React.FC = (): JSX.Element => {
           <p className="text-center font-semibold">
             Fetching students. Please wait...
           </p>
-        )}
+        )} */}
       </div>
 
       {showLiveStream && selectedStudent && selectedQuiz && (

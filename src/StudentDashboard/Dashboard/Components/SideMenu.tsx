@@ -7,8 +7,9 @@ import UpdateProfile from "../../Menu/UpdateProfile";
 import { useCommonStudentDashboardStore } from "../../../store/StudentDashboardStore";
 import { useWebCamStore } from "../../../store/globalStore";
 import { useAppStore } from "../../../store/AppSotre";
-import { Button, Modal, Tooltip } from "antd";
+import { Button, Modal } from "antd";
 import AssibilityModal from "../../../CommonUtilites/Modals/AccessibilityModal";
+import Payments from "./Payments";
 
 const SideMenu: React.FC = (): JSX.Element => {
   const [showModal, setShowModal] = useState<JSX.Element | null>(null);
@@ -21,6 +22,7 @@ const SideMenu: React.FC = (): JSX.Element => {
   const enrollment = useCommonStudentDashboardStore(
     (state) => state.enrollments
   );
+  const [showPayments, setShowPayments] = useState<boolean>(false);
   const urlParamsData = useAppStore((state) => state.urlParamsData);
   const tokenData = useAppStore((state) => state.tokenData);
   const stream = useWebCamStore((state) => state.stream);
@@ -51,6 +53,11 @@ const SideMenu: React.FC = (): JSX.Element => {
 
     if (modalName === "Accessiblity Options") {
       setShowAccessibilityModal(true);
+      return;
+    }
+
+    if (modalName === "Payment") {
+      setShowPayments(!showPayments);
       return;
     }
 
@@ -105,23 +112,6 @@ const SideMenu: React.FC = (): JSX.Element => {
       {!urlParamsData.newTab && (
         <div className="flex flex-col w-full box-border border-1 rounded bg-gray-200 gap-2 p-2 justify-center">
           {options.map((item: string, index: number) => {
-            if (item === "Payment") {
-              return (
-                <Tooltip title="Coming soon" placement="top" key={index}>
-                  <div
-                    className="flex space-x-2 space-y-4 text-center justify-center"
-                    key={index}
-                  >
-                    <p
-                      className="font-semibold text-base w-full inline-block py-2 bg-transparent leading-tight text-gray-500 cursor-not-allowed"
-                      // onClick={() => showSideOptionModal(item)}
-                    >
-                      {item}
-                    </p>
-                  </div>
-                </Tooltip>
-              );
-            }
             return (
               <div
                 className="flex space-x-2 space-y-4 text-center justify-center"
@@ -176,6 +166,9 @@ const SideMenu: React.FC = (): JSX.Element => {
           onClose={() => setShowAccessibilityModal(false)}
           studentId={urlParamsData.studentId}
         />
+      )}
+      {showPayments && (
+        <Payments visible={showPayments} close={() => setShowPayments(false)} />
       )}
     </div>
   );

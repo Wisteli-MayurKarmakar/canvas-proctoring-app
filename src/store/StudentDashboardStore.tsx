@@ -87,6 +87,7 @@ type AssignmentStore = {
   selectedAssignmentConfigurations?: AssignmentConfiguration;
   selectedAssignmentSchedules: Schedule | null;
   schedulesAvailable: boolean;
+  assignmentSubmitted: boolean;
   isProctoredAssignment: boolean;
   isNewTabOpen?: boolean;
   checkAssignmentSchedules: () => void;
@@ -94,11 +95,12 @@ type AssignmentStore = {
   setSelectedAssignment: (assignment: Assignment) => void;
   setAssignmentConfiguration: (configuration: AssignmentConfiguration) => void;
   setStudentAuthed: () => void;
+  setAssignmentSubmitted: (flag: boolean) => void;
 };
 
-const getQuizConfigs = async (assignmentId: number) => {
+const getQuizConfigs = async (assignmentId: number, guid: string) => {
   let response = await axios.get(
-    `${getLtiCanvasConfigByAssignment}/${assignmentId}`
+    `${getLtiCanvasConfigByAssignment}/${guid}/${assignmentId}`
   );
 
   if (response.status === 200) {
@@ -177,6 +179,7 @@ export const useAssignmentStore = create<AssignmentStore>()(
     (set, get) => ({
       isProctoredAssignment: false,
       schedulesAvailable: false,
+      assignmentSubmitted: false,
       selectedAssignmentSchedules: null,
       isNewTabOpen: false,
       setAssignments: (assignments: Assignment[]) => {
@@ -207,7 +210,8 @@ export const useAssignmentStore = create<AssignmentStore>()(
             });
           }
         });
-        let res = await getQuizConfigs(assignment.id);
+        const {urlParamsData} = useAppStore.getState()
+        let res = await getQuizConfigs(assignment.id, urlParamsData.guid as string);
 
         set({
           selectedAssignmentConfigurations: res,
@@ -239,6 +243,11 @@ export const useAssignmentStore = create<AssignmentStore>()(
       },
       checkAssignmentSchedules: async () => {
         await getAssignmentSchedule();
+      },
+      setAssignmentSubmitted: (flag: boolean) => {
+        set({
+          assignmentSubmitted: flag,
+        })
       },
     }),
     { name: "Assignment Store" }

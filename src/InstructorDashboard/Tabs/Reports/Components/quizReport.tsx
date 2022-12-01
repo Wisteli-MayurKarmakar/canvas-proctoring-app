@@ -1,6 +1,6 @@
 import "antd/dist/antd.css";
 import { message, Table } from "antd";
-import React, { FunctionComponent, useEffect } from "react";
+import React, { FunctionComponent, useEffect, useState } from "react";
 import axios from "axios";
 import Report from "../../../../report";
 import InfoModal from "../../../../infoModal";
@@ -10,37 +10,30 @@ import {
   getExceptions as getExceptionsUrl,
   getLtiCVideoRef,
   fetchAccountsByCourseAndEnrollemntType,
-  getGetCanvasQuizDetails,
   getCanvasAssignmentDetails,
+  getLtiScheduleByQuizId,
 } from "../../../../apiConfigs";
-import { userAuthenticationStore } from "../../../../store/autheticationStore";
 import { useAppStore } from "../../../../store/AppSotre";
 import moment from "moment";
 
 const QuizReports: FunctionComponent = (): JSX.Element => {
-  let [quizConfigs, setQuizConfigs] = React.useState<any>([]);
-  let [row, setRow] = React.useState<any>(null);
-  let [mediaFileName, setMediaFileName] = React.useState<string>("");
-  let [exceptions, setExceptions] = React.useState<any>(null);
-  let [currentRow, setCurrentRow] = React.useState<any>(null);
-  let [profilePic, setProfilePic] = React.useState<any>(null);
-  let [selectedQuizConfig, setSelectedQuizConfig] = React.useState<{
+  let [quizConfigs, setQuizConfigs] = useState<any>([]);
+  let [row, setRow] = useState<any>(null);
+  let [mediaFileName, setMediaFileName] = useState<string>("");
+  let [exceptions, setExceptions] = useState<any>(null);
+  let [currentRow, setCurrentRow] = useState<any>([]);
+  let [profilePic, setProfilePic] = useState<any>(null);
+  let [selectedQuizConfig, setSelectedQuizConfig] = useState<{
     [key: string]: boolean;
   }>({});
-  const [courseDetails, setCourseDetails] = React.useState<any>(null);
-  const [showRepModal, setShowRepModal] = React.useState<boolean>(false);
-  const [studList, setStudList] = React.useState<any>(null);
+  const [schedules, setSchedules] = useState<any>(null);
+  const [showRepModal, setShowRepModal] = useState<boolean>(false);
+  const [studList, setStudList] = useState<any>(null);
 
-  const [quizData, setQuizData] = React.useState<any[]>([]);
-  const [isFetchingReport, setIsFetchingReport] =
-    React.useState<boolean>(false);
-  let [selectedQuiz, setSelectedQuiz] = React.useState<any>(null);
-  const authenticationData = userAuthenticationStore(
-    (state) => state.authenticationData
-  );
+  const [quizData, setQuizData] = useState<any[]>([]);
+  const [isFetchingReport, setIsFetchingReport] = useState<boolean>(false);
+  let [selectedQuiz, setSelectedQuiz] = useState<any>(null);
   const { urlParamsData, tokenData } = useAppStore((state) => state);
-  const userName = "ca6a42188e970ab77fab0e34";
-  const password = "e5aa447e19ee4180b5ba1364";
 
   const getCourseQuizesById = () => {
     axios
@@ -51,7 +44,7 @@ const QuizReports: FunctionComponent = (): JSX.Element => {
         let quizzes: any = res.data.filter((item: any) => {
           if (item.id > 0) {
             item.key = item.quizId;
-            item.id = item.quizId
+            item.id = item.quizId;
             return item;
           }
         });
@@ -163,6 +156,18 @@ const QuizReports: FunctionComponent = (): JSX.Element => {
     });
 
     if (exceptions.data.data) {
+      if (exceptions.data.data.length > 0) {
+        exceptions.data.data.forEach((item: any) => {
+          let timezoneOffset: string = Math.abs(
+            moment().utcOffset()
+          ).toString();
+          let time: string = item[6].split(" ").join("T");
+          item[6] = moment(time + `.${timezoneOffset}Z`).format(
+            "MM-DD-YYYY hh:mm A"
+          );
+        });
+      }
+
       setExceptions(exceptions.data.data);
     }
   };
@@ -200,9 +205,7 @@ const QuizReports: FunctionComponent = (): JSX.Element => {
       return;
     }
     setRow(row);
-    // getUserProfilePicture(row.user.id);
     getUserProfilePicture(row.id);
-    // getVideoRefId(selectedQuiz.id, selectedQuiz.all_dates.due_at, row.user.id);
     getVideoRefId(selectedQuiz.id, selectedQuiz.due_at, row.id);
   };
 
@@ -221,11 +224,19 @@ const QuizReports: FunctionComponent = (): JSX.Element => {
       },
     },
     {
-      dataIndex: "status",
-      key: "enrollment_state",
-      title: `Status`,
+      dataIndex: "",
+      key: "scheduleDate",
+      title: `Schedule Date`,
       render: (row: any) => {
-        return row;
+        if (schedules) {
+          let offsetTime: string = Math.abs(moment().utcOffset()).toString();
+          let schedule = schedules.scheduleDate + `.${offsetTime}Z`;
+          return moment(schedule).format("MM-DD-YYYY h:mm A");
+        }
+        if (schedules === false) {
+          return "Not scheduled";
+        }
+        return "Getting schedule...";
       },
     },
     {
@@ -252,7 +263,7 @@ const QuizReports: FunctionComponent = (): JSX.Element => {
       title: `Available Until`,
       render: (row: any) => {
         if ("lock_at" in row) {
-          let offsetTime: string = moment().utcOffset().toString();
+          let offsetTime: string = Math.abs(moment().utcOffset()).toString();
           let scheduleDate: string = row["lock_at"].replace("Z", "");
           return moment(scheduleDate + `.${offsetTime}Z`).format(
             "MM-DD-YYYY hh:mm a"
@@ -276,6 +287,27 @@ const QuizReports: FunctionComponent = (): JSX.Element => {
       title: `Duration`,
     },
   ];
+
+  const getAssignmentSchedule = (assignmentId: number, quizId: string) => {
+    let data = {
+      instituteId: tokenData.instituteId,
+      assignmentId: assignmentId,
+      quizId: quizId,
+      courseId: parseInt(urlParamsData.courseId as any),
+      status: 0,
+      guid: urlParamsData.guid,
+    };
+    axios
+      .post(`${getLtiScheduleByQuizId}`, { ...data })
+      .then((response: any) => {
+        setSchedules(response.data);
+      })
+      .catch((error: any) => {
+        setSchedules(false);
+        console.log(error);
+      });
+  };
+
   return (
     <div className="container mx-auto mt-3">
       {quizData.length > 0 && (
@@ -322,15 +354,18 @@ const QuizReports: FunctionComponent = (): JSX.Element => {
                   return <p className="font-bold">Getting students...</p>;
                 }
               },
+              rowExpandable: (record) => true,
+              expandedRowKeys: currentRow,
               onExpand(expanded, record) {
                 if (expanded) {
+                  setSchedules(null);
+                  getAssignmentSchedule(record.assignment_id, record.quizId);
                   setSelectedQuiz(record);
-                  setCurrentRow(record.key);
+                  setCurrentRow([record.key]);
                 }
               },
               onExpandedRowsChange: (row: any) => {
                 if (row.length > 0) {
-                  console.log(row)
                   getQuizConfigs(row[row.length - 1]);
                 }
               },

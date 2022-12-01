@@ -155,7 +155,7 @@ const Billing: React.FC = (): JSX.Element => {
 
     let response = await axios.post(`${saveLtiBillingRate}`, { ...data });
     if (response.status === 200) {
-      message.success("Billing details save successfully");
+      message.success("Billing details saved successfully");
       setIsSavingData(false);
       return;
     }
@@ -172,8 +172,8 @@ const Billing: React.FC = (): JSX.Element => {
     let hasError: boolean = validateFormValues();
 
     if (!hasError) {
-      // setIsSavingData(true);
-      // saveBillingData();
+      setIsSavingData(true);
+      saveBillingData();
     }
   };
 
@@ -780,13 +780,13 @@ const Billing: React.FC = (): JSX.Element => {
         Past Records:
       </label>
       <p className="text-center font-semibold">No records available</p>
-      {
+      {isSavingData && (
         <WaitingModal
           visible={isSavingData}
           message={waitMessage}
           title={"Saving Data"}
         />
-      }
+      )}
     </form>
   );
 };

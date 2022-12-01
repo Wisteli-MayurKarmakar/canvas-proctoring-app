@@ -11,7 +11,6 @@ import {
   downloadDL,
   getCanvasAssignmentDetails,
   fetchAccountsByCourseAndEnrollemntType,
-  getScheduling,
   getLtiScheduleByQuizId,
 } from "../apiConfigs";
 import { useAppStore } from "../store/AppSotre";
@@ -54,7 +53,8 @@ const Authentication: React.FC = (): JSX.Element => {
       title: `Available Until`,
       render: (row: any) => {
         if ("lock_at" in row) {
-          return moment(row.lock_at).format("DD/MM/YYYY hh:mm a");
+          let timezoneOffset: string = `.${Math.abs(moment().utcOffset()).toString()}Z`;
+          return moment(row.lock_at.replace("Z", timezoneOffset)).format("DD/MM/YYYY hh:mm a");
         }
         return "N/A";
       },
@@ -76,7 +76,7 @@ const Authentication: React.FC = (): JSX.Element => {
       title: `Schedule Date`,
       render: (row: any) => {
         if (assingmentSchedules) {
-          let timezoneOffset: string = `.${moment().utcOffset().toString()}Z`;
+          let timezoneOffset: string = `.${Math.abs(moment().utcOffset()).toString()}Z`;
           return moment(row.scheduleDate + timezoneOffset).format(
             "MM-DD-YYYY hh:mm a"
           );

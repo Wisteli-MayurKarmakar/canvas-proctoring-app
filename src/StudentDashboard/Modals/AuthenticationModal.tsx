@@ -256,22 +256,43 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
       footer={
         stepNo >= 0 && stepNo < quizSteps.length - 1
           ? [
-              <Button key="close" onClick={() => props.close()}>
+              <Button
+                key="close"
+                onClick={() => props.close()}
+                type="primary"
+                className="!bg-blue-600 !rounded"
+              >
                 Close
               </Button>,
-              <Button key="next" onClick={handleNext} disabled={buttonDisabled}>
+              <Button
+                key="next"
+                onClick={handleNext}
+                disabled={buttonDisabled}
+                type="primary"
+                className={`${
+                  buttonDisabled
+                    ? "bg-gray-300 text-black"
+                    : "!bg-blue-600 !rounded"
+                }`}
+              >
                 Next Step
               </Button>,
             ]
           : stepNo === quizSteps.length - 1 && [
               <Button
                 key="close"
+                type="primary"
                 onClick={() => {
                   closeWebCamResources();
                   props.authComplete();
                   props.close();
                 }}
                 disabled={stuAuthenticated ? false : true}
+                className={`${
+                  stuAuthenticated
+                    ? "!bg-blue-600 !rounded"
+                    : "!bg-gray-300 text-black"
+                }`}
               >
                 Close
               </Button>,

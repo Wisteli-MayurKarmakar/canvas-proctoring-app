@@ -268,7 +268,7 @@ const UpdateProfile: React.FC<Props> = (props): JSX.Element => {
       width={"60pc"}
       maskClosable={false}
       footer={[
-        <Button key="close" onClick={props.close}>
+        <Button key="close" onClick={props.close} type="primary" className="!bg-blue-600 !rounded">
           Close
         </Button>,
         // <Button key="save" onClick={handleSave}>

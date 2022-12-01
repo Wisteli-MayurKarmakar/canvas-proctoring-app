@@ -192,7 +192,7 @@ const Quzzies: React.FC<Props> = (props) => {
   const getQuizConfigs = async (assignmentId: string) => {
     try {
       let response = await axios.get(
-        `${getLtiCanvasConfigByAssignment}/${assignmentId}`
+        `${getLtiCanvasConfigByAssignment}/${urlParamsData.guid}/${assignmentId}`
       );
 
       if (response.data) {
@@ -260,6 +260,8 @@ const Quzzies: React.FC<Props> = (props) => {
           <p className="text-center text-lg">
             Setting up proctoring. Please wait...
           </p>
+        ) : urlParamsData.assignmentId ? (
+          <p className="text-center text-lg">Getting assingment details...</p>
         ) : (
           <p className="text-center text-lg">Fetching assignments...</p>
         )}

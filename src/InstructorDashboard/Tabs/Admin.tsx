@@ -2,11 +2,18 @@ import React, { useState } from "react";
 import Enrollments from "../Components/Enrollments";
 import Institutions from "../Components/Institutions";
 import Billing from "../Components/Billing";
+import Notifications from "../Components/Notifications";
 
 const Admin: React.FC = (): JSX.Element => {
-  const [subOptionSelected, setSubOptionSelected] = useState<string>("Enrollments");
+  const [subOptionSelected, setSubOptionSelected] =
+    useState<string>("Enrollments");
 
-  const subMenus: string[] = ["Institute", "Billing", "Enrollments"];
+  const subMenus: string[] = [
+    "Institute",
+    "Billing",
+    "Enrollments",
+    "Notifications",
+  ];
 
   const handleSubOptionSelection = (option: string) => {
     setSubOptionSelected(option);
@@ -35,6 +42,7 @@ const Admin: React.FC = (): JSX.Element => {
       {subOptionSelected === "Enrollments" && <Enrollments />}
       {subOptionSelected === "Institute" && <Institutions />}
       {subOptionSelected === "Billing" && <Billing />}
+      {subOptionSelected === "Notifications" && <Notifications />}
     </div>
   );
 };

@@ -138,14 +138,20 @@ const Help: React.FC<Props> = (props): JSX.Element => {
       visible={props.visible}
       onCancel={props.onCancel}
       footer={[
-        <Button key="back" onClick={props.onCancel}>
+        <Button
+          key="back"
+          type="primary"
+          onClick={props.onCancel}
+          className="!bg-blue-600 !rounded"
+        >
           Close
         </Button>,
         <Button
           key="submit"
-          // type="primary"
+          type="primary"
           loading={isLoading}
           onClick={() => handleSubmit()}
+          className="!bg-blue-600 !rounded"
         >
           Submit
         </Button>,

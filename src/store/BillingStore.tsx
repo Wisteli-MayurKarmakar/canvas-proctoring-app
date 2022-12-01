@@ -32,7 +32,7 @@ export const useBillingStore = create<BillingStore>()(
       productTypes: [
         "Select product type",
         "AI",
-        "Launch Launch",
+        "Live Launch",
         "Instructor Proctored",
         "Lockdown Browser",
       ],
