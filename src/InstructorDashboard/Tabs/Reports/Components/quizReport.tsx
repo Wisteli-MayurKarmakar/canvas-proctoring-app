@@ -15,6 +15,9 @@ import {
 } from "../../../../apiConfigs";
 import { useAppStore } from "../../../../store/AppSotre";
 import moment from "moment";
+import { useProcotorJourneyStore } from "../../../../store/ProctorJourneyStore";
+import { StudentQuizReport } from "../../../../AppTypes";
+import { useAssignmentStore } from "../../../../store/StudentDashboardStore";
 
 const QuizReports: FunctionComponent = (): JSX.Element => {
   let [quizConfigs, setQuizConfigs] = useState<any>([]);
@@ -23,6 +26,8 @@ const QuizReports: FunctionComponent = (): JSX.Element => {
   let [exceptions, setExceptions] = useState<any>(null);
   let [currentRow, setCurrentRow] = useState<any>([]);
   let [profilePic, setProfilePic] = useState<any>(null);
+  const [studentResultsByQuiz, setStudentResultsByQuiz] =
+    useState<StudentQuizReport | null>(null);
   let [selectedQuizConfig, setSelectedQuizConfig] = useState<{
     [key: string]: boolean;
   }>({});
@@ -34,6 +39,9 @@ const QuizReports: FunctionComponent = (): JSX.Element => {
   const [isFetchingReport, setIsFetchingReport] = useState<boolean>(false);
   let [selectedQuiz, setSelectedQuiz] = useState<any>(null);
   const { urlParamsData, tokenData } = useAppStore((state) => state);
+  const { setJourneyDetails, journeyDetails, getJourneyDetails } =
+    useProcotorJourneyStore((state) => state);
+  const { setAssignmentConfiguration } = useAssignmentStore((state) => state);
 
   const getCourseQuizesById = () => {
     axios
@@ -92,6 +100,7 @@ const QuizReports: FunctionComponent = (): JSX.Element => {
       obj.config = config.data;
       configurations.push(obj);
       setQuizConfigs(configurations);
+      setAssignmentConfiguration(config.data);
     } else {
       message.error("Failed to get configurations");
       return;
@@ -204,10 +213,25 @@ const QuizReports: FunctionComponent = (): JSX.Element => {
       );
       return;
     }
+    getJourneyDetails(row.id);
     setRow(row);
     getUserProfilePicture(row.id);
     getVideoRefId(selectedQuiz.id, selectedQuiz.due_at, row.id);
   };
+
+  useEffect(() => {
+    if (journeyDetails) {
+      let reports: StudentQuizReport = {
+        [journeyDetails.quizId.toString()]: {
+          [journeyDetails.studentId.toString()]: journeyDetails.reportPass,
+        },
+      };
+      setStudentResultsByQuiz(reports);
+      if (!journeyDetails.reportReviwed) {
+        setJourneyDetails("reportReviwed", row.id, selectedQuiz.id);
+      }
+    }
+  }, [journeyDetails]);
 
   const handleRefreshTable = () => {
     setQuizData([]);
@@ -244,9 +268,58 @@ const QuizReports: FunctionComponent = (): JSX.Element => {
       key: "action",
       title: `Action`,
       render: (row: any) => {
+        if (!studentResultsByQuiz) {
+          return (
+            <button onClick={() => handleViewReport(row)}>
+              <p className="font-semibold">View Report</p>
+            </button>
+          );
+        }
+        if (journeyDetails) {
+          if (selectedQuiz.quizId in studentResultsByQuiz)
+            if (journeyDetails.studentId === parseInt(row.id)) {
+              if (journeyDetails.reportReviwed) {
+                return (
+                  <button onClick={() => handleViewReport(row)}>
+                    <p className="text-green-500 font-semibold">View Report</p>
+                  </button>
+                );
+              }
+              return (
+                <button onClick={() => handleViewReport(row)}>
+                  <p className="font-semibold">View Report</p>
+                </button>
+              );
+            }
+        }
         return (
-          <button onClick={() => handleViewReport(row)}>View Report</button>
+          <button onClick={() => handleViewReport(row)}>
+            <p className="font-semibold">View Report</p>
+          </button>
         );
+      },
+    },
+    {
+      dataIndex: "",
+      key: "result",
+      title: "Result",
+      render: (row: any) => {
+        if (!studentResultsByQuiz) {
+          return "Not available";
+        }
+        if (selectedQuiz.quizId in studentResultsByQuiz) {
+          if (row.id.toString() in studentResultsByQuiz[selectedQuiz.quizId]) {
+            return studentResultsByQuiz[selectedQuiz.quizId][
+              row.id.toString()
+            ] ? (
+              <p className="font-semibold text-green-600 text-lg">Pass</p>
+            ) : (
+              <p className="font-semibold text-red-500 text-lg">Fail</p>
+            );
+          }
+          return "Not available";
+        }
+        return "Not available";
       },
     },
   ];
@@ -362,6 +435,8 @@ const QuizReports: FunctionComponent = (): JSX.Element => {
                   getAssignmentSchedule(record.assignment_id, record.quizId);
                   setSelectedQuiz(record);
                   setCurrentRow([record.key]);
+                } else {
+                  setCurrentRow([]);
                 }
               },
               onExpandedRowsChange: (row: any) => {

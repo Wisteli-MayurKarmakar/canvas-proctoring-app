@@ -341,7 +341,7 @@ export const useStudentStore = create<StudentStore>()(
   devtools(
     (set) => ({
       studentQuizAuthObject: [],
-      currentTime: new Date(),
+      currentTime: moment(),
       authStepsCount: 0,
       setQuizAuthObj: (data: any) =>
         set(

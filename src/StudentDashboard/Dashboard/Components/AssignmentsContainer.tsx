@@ -1,5 +1,5 @@
 import { Tooltip } from "antd";
-import moment from "moment";
+import moment, { Moment } from "moment";
 import React, { useEffect, useRef, useState } from "react";
 import { useAssignmentStore } from "../../../store/StudentDashboardStore";
 import { useAppStore } from "../../../store/AppSotre";
@@ -8,44 +8,36 @@ import { useCommonStudentDashboardStore } from "../../../store/StudentDashboardS
 import VideoAndScreenRec from "../../../videoAndScreenRec";
 import DateTimePicker from "../../../CommonUtilites/DateTimePicker";
 
+
 type Props = {
   isNewTab: boolean;
 };
 
 const AssignmentsContainer: React.FC<Props> = (props): JSX.Element => {
   let [showAuthModal, setShowAuthModal] = useState<boolean>(false);
-  const assignments = useAssignmentStore((state) => state.assignments);
+  const {
+    assignments,
+    setStudentAuthed,
+    selectedAssignmentConfigurations,
+    selectedAssignmentSchedules,
+    isProctoredAssignment,
+    schedulesAvailable,
+    setSelectedAssignment,
+    selectedAssignment,
+    assignmentSubmitted
+  } = useAssignmentStore((state) => state);
+  const {tokenData, urlParamsData,} = useAppStore((state) => state);
+  const assignmentId = useAppStore((state) => state.urlParamsData.assignmentId);
   let [showDateTimePicker, setShowDateTimePicker] = useState<boolean>(false);
-  const urlParamsData = useAppStore((state) => state.urlParamsData);
   const inputRef = useRef<any>();
-  const tokenData = useAppStore((state) => state.tokenData);
   const enrollments = useCommonStudentDashboardStore(
     (state) => state.enrollments
   );
-  let showAuthentication: boolean = false;
-  let showStartProctoring: boolean = false;
-  const setStudentAuthed = useAssignmentStore(
-    (state) => state.setStudentAuthed
-  );
-  const selectedAssignmentConfigurations = useAssignmentStore(
-    (state) => state.selectedAssignmentConfigurations
-  );
-  const isProctoredAssignment = useAssignmentStore(
-    (state) => state.isProctoredAssignment
-  );
-  const schedulesAvailable = useAssignmentStore(
-    (state) => state.schedulesAvailable
-  );
-  const setSelectedAssignment = useAssignmentStore(
-    (state) => state.setSelectedAssignment
-  );
-  const selectedAssignment = useAssignmentStore(
-    (state) => state.selectedAssignment
-  );
-
-  const assignmentSubmitted = useAssignmentStore((state) => state.assignmentSubmitted)
-
-  const assignmentId = useAppStore((state) => state.urlParamsData.assignmentId);
+  const [disableAuth, setDisableAuth] = useState<boolean>(true);
+  const [showAuth, setShowAuth] = useState<boolean>(false);
+  const [showProctoring, setShowProctoring] = useState<boolean>(false);
+  let scheduleInterval: any = null;
+  let tenMinWindowInterval: any = null;
 
   const handleSelectAssignment = (assignment: any): void => {
     setSelectedAssignment(assignment);
@@ -57,11 +49,69 @@ const AssignmentsContainer: React.FC<Props> = (props): JSX.Element => {
 
   const handleStudentAuthentication = () => {
     setStudentAuthed();
+    setShowProctoring(true);
+    setShowAuth(false);
   };
 
   const handleStartAuthentication = () => {
     setShowAuthModal(true);
   };
+
+  useEffect(() => {
+    if (assignmentId) {
+      if (selectedAssignment && selectedAssignmentConfigurations) {
+        if (!selectedAssignment?.studentAuthed) {
+          if (!isProctoredAssignment) {
+            setShowAuth(true);
+            setDisableAuth(false);
+          }
+          if (isProctoredAssignment) {
+            if (schedulesAvailable) {
+              const currentTime: Moment = moment();
+              let timeZoneOffset: string = `.${Math.abs(
+                moment().utcOffset()
+              ).toString()}Z`;
+              const scheduleDate = moment(
+                `${selectedAssignmentSchedules?.scheduleDate + timeZoneOffset}`
+              );
+              if (currentTime.isSame(scheduleDate, "day")) {
+                let diffInMs: number = currentTime.diff(
+                  scheduleDate,
+                  "milliseconds"
+                );
+                if (0 > diffInMs) {
+                  setShowAuth(true);
+                  scheduleInterval = setInterval(() => {
+                    setShowAuth(false);
+                    clearInterval(scheduleInterval);
+                  }, Math.abs(diffInMs));
+                  tenMinWindowInterval = setInterval(() => {
+                    const diffInMin: number = currentTime.diff(
+                      scheduleDate,
+                      "minutes"
+                    );
+                    if (diffInMin >= -10 && diffInMin < 0) {
+                      setDisableAuth(false);
+                    }
+                    if (diffInMin === 0) {
+                      clearInterval(tenMinWindowInterval);
+                    }
+                  }, 1000);
+                }
+              } else {
+                setDisableAuth(true);
+                setShowAuth(false);
+              }
+            }
+          }
+        } else {
+          if (enrollments) {
+            setShowProctoring(true);
+          }
+        }
+      }
+    }
+  }, [selectedAssignmentSchedules]);
 
   useEffect(() => {
     document.addEventListener("keydown", (e) => {
@@ -70,23 +120,6 @@ const AssignmentsContainer: React.FC<Props> = (props): JSX.Element => {
       }
     });
   }, []);
-
-  if (assignmentId) {
-    if (selectedAssignment && selectedAssignmentConfigurations) {
-      if (!selectedAssignment?.studentAuthed) {
-        if (!isProctoredAssignment) {
-          showAuthentication = true;
-        }
-        if (schedulesAvailable) {
-          showAuthentication = true;
-        }
-      } else {
-        if (enrollments) {
-          showStartProctoring = true;
-        }
-      }
-    }
-  }
 
   if (assignments) {
     return (
@@ -127,29 +160,54 @@ const AssignmentsContainer: React.FC<Props> = (props): JSX.Element => {
             </div>
           </div>
           <div className="flex flex-row h-full w-full max-h-80 xl:max-h-92 items-center justify-center self-center mx-auto flex-wrap gap-4  overflow-y-scroll p-2">
-            {assignments.length > 0 ? assignments.map((assignment: any, index: number) => {
-              if ("lock_at" in assignment) {
-                if (moment(assignment.lock_at).isSameOrAfter(moment())) {
-                  return (
-                    <Tooltip
-                      key={index}
-                      placement="top"
-                      title={`${
-                        "Availale till - " +
-                        moment(assignment.lock_at).format("MM/DD/YYYY HH:MM a")
-                      }`}
-                    >
-                      <div className="flex flex-col gap-4" key={index}>
-                        <div
-                          key={index}
-                          onClick={() => handleSelectAssignment(assignment)}
-                          className={`transition ease-in-out delay-50 hover:-translate-y-1 hover:scale-110 duration-200 break-before-right cursor-pointer
+            {assignments.length > 0 ? (
+              assignments.map((assignment: any, index: number) => {
+                if ("lock_at" in assignment) {
+                  if (moment(assignment.lock_at).isSameOrAfter(moment())) {
+                    return (
+                      <Tooltip
+                        key={index}
+                        placement="top"
+                        title={`${
+                          "Availale till - " +
+                          moment(assignment.lock_at).format(
+                            "MM/DD/YYYY HH:MM a"
+                          )
+                        }`}
+                      >
+                        <div className="flex flex-col gap-4" key={index}>
+                          <div
+                            key={index}
+                            onClick={() => handleSelectAssignment(assignment)}
+                            className={`transition ease-in-out delay-50 hover:-translate-y-1 hover:scale-110 duration-200 break-before-right cursor-pointer
                           flex border box-border items-center justify-center h-40 w-48 p-4 rounded-lg bg-white shadow-md text-center
                           ${
                             selectedAssignment?.id === assignment.id
                               ? "hover:bg-blue-400 hover:text-white bg-blue-400 text-white"
                               : "hover:bg-blue-400 hover:text-white text-black"
                           }`}
+                          >
+                            <p className="font-semibold text-center w-full">
+                              {assignment.name}
+                            </p>
+                          </div>
+                        </div>
+                      </Tooltip>
+                    );
+                  }
+                  return (
+                    <Tooltip
+                      key={index}
+                      placement="top"
+                      title={`${
+                        "Availability expired - " +
+                        moment(assignment.lock_at).format("MM/DD/YYYY HH:MM a")
+                      }`}
+                    >
+                      <div className="flex flex-col gap-4" key={index}>
+                        <div
+                          className={`flex p-6 h-40 w-48 relative rounded-lg text-md shadow-lg border break-before-right
+                          font-semibold items-center justify-center text-center cursor-not-allowed bg-red-400 text-white`}
                         >
                           <p className="font-semibold text-center w-full">
                             {assignment.name}
@@ -160,18 +218,11 @@ const AssignmentsContainer: React.FC<Props> = (props): JSX.Element => {
                   );
                 }
                 return (
-                  <Tooltip
-                    key={index}
-                    placement="top"
-                    title={`${
-                      "Availability expired - " +
-                      moment(assignment.lock_at).format("MM/DD/YYYY HH:MM a")
-                    }`}
-                  >
+                  <Tooltip key={index} placement="top" title={"Not available"}>
                     <div className="flex flex-col gap-4" key={index}>
                       <div
                         className={`flex p-6 h-40 w-48 relative rounded-lg text-md shadow-lg border break-before-right
-                          font-semibold items-center justify-center text-center cursor-not-allowed bg-red-400 text-white`}
+                      font-semibold items-center justify-center text-center cursor-not-allowed bg-red-400 text-white`}
                       >
                         <p className="font-semibold text-center w-full">
                           {assignment.name}
@@ -180,24 +231,12 @@ const AssignmentsContainer: React.FC<Props> = (props): JSX.Element => {
                     </div>
                   </Tooltip>
                 );
-              }
-              return (
-                <Tooltip key={index} placement="top" title={"Not available"}>
-                  <div className="flex flex-col gap-4" key={index}>
-                    <div
-                      className={`flex p-6 h-40 w-48 relative rounded-lg text-md shadow-lg border break-before-right
-                      font-semibold items-center justify-center text-center cursor-not-allowed bg-red-400 text-white`}
-                    >
-                      <p className="font-semibold text-center w-full">
-                        {assignment.name}
-                      </p>
-                    </div>
-                  </div>
-                </Tooltip>
-              );
-            }) : (
-              <p className="text-center text-lg font-bold mx-auto">No assignments found.</p>
-            ) }
+              })
+            ) : (
+              <p className="text-center text-lg font-bold mx-auto">
+                No assignments found.
+              </p>
+            )}
           </div>
 
           {showAuthModal &&
@@ -226,7 +265,8 @@ const AssignmentsContainer: React.FC<Props> = (props): JSX.Element => {
             !urlParamsData.newTab &&
             selectedAssignmentConfigurations &&
             !isProctoredAssignment &&
-            !schedulesAvailable && !assignmentSubmitted && (
+            !schedulesAvailable &&
+            !assignmentSubmitted && (
               <div className="flex items-center justify-center">
                 <button
                   type="button"
@@ -243,7 +283,8 @@ const AssignmentsContainer: React.FC<Props> = (props): JSX.Element => {
             !urlParamsData.newTab &&
             selectedAssignmentConfigurations &&
             isProctoredAssignment &&
-            !schedulesAvailable && !assignmentSubmitted && (
+            !schedulesAvailable &&
+            !assignmentSubmitted && (
               <div className="flex items-center justify-center">
                 <button
                   type="button"
@@ -260,7 +301,8 @@ const AssignmentsContainer: React.FC<Props> = (props): JSX.Element => {
             !urlParamsData.newTab &&
             selectedAssignmentConfigurations &&
             !isProctoredAssignment &&
-            schedulesAvailable && !assignmentSubmitted && (
+            schedulesAvailable &&
+            !assignmentSubmitted && (
               <div className="flex items-center justify-center">
                 <button
                   type="button"
@@ -290,18 +332,23 @@ const AssignmentsContainer: React.FC<Props> = (props): JSX.Element => {
                 </button>
               </div>
             )}
-          {showAuthentication && (
+          {showAuth && (
             <div className="flex items-center justify-center">
               <button
                 type="button"
+                disabled={disableAuth}
                 onClick={() => handleStartAuthentication()}
-                className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
+                className={`inline-block px-6 py-2.5 ${
+                  disableAuth
+                    ? "bg-gray-200 cursor-not-allowed text-gray-400"
+                    : "bg-blue-600 text-white"
+                } font-medium text-xs leading-tight rounded shadow-md hover:shadow-lg`}
               >
                 Authentication for Proctoring
               </button>
             </div>
           )}
-          {showStartProctoring &&
+          {showProctoring &&
             enrollments &&
             selectedAssignmentConfigurations && (
               <VideoAndScreenRec
@@ -322,120 +369,12 @@ const AssignmentsContainer: React.FC<Props> = (props): JSX.Element => {
                 quizId={selectedAssignmentConfigurations.quizId}
               />
             )}
-          {/* {assignmentId && selectedAssignment?.studentAuthed === false
-            ? selectedAssignment &&
-              selectedAssignmentConfigurations &&
-              (!isProctoredAssignment ? (
-                <div className="flex items-center justify-center">
-                  <button
-                    type="button"
-                    onClick={() => handleStartAuthentication()}
-                    className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
-                  >
-                    Authentication for Proctoring
-                  </button>
-                </div>
-              ) : (
-                schedulesAvailable && (
-                  <div className="flex items-center justify-center">
-                    <button
-                      type="button"
-                      onClick={() => handleStartAuthentication()}
-                      className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
-                    >
-                      Authentication for Proctoring
-                    </button>
-                  </div>
-                )
-              ))
-            : selectedAssignment &&
-              selectedAssignmentConfigurations &&
-              enrollments && (
-                <VideoAndScreenRec
-                  assignment={selectedAssignment}
-                  username={enrollments.user.name}
-                  pass={""}
-                  procData={{}}
-                  token={tokenData.lmsAccessToken as any}
-                  id={urlParamsData.userId as any}
-                  isNewTab={urlParamsData.newTab as any}
-                  courseId={urlParamsData.courseId as any}
-                  toolConsumerGuid={urlParamsData.guid as any}
-                  isAuthed={urlParamsData.isAuthed as any}
-                  studentId={urlParamsData.studentId as any}
-                  quizConfig={selectedAssignmentConfigurations}
-                  accountId={urlParamsData.accountId as any}
-                  invokeUrl={urlParamsData.invokeUrl as any}
-                  quizId={selectedAssignmentConfigurations.quizId}
-                />
-              )} */}
-          {/* {!selectedAssignment?.studentAuthed &&
-          selectedAssignment &&
-          selectedAssignmentConfigurations &&
-          !isProctoredAssignment &&
-          assignmentId !== "" &&
-          assignmentId !== "null" ? (
-            <div className="flex items-center justify-center">
-              <div className="flex space-x-2 justify-center">
-                <button
-                  type="button"
-                  onClick={() => handleStartAuthentication()}
-                  className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
-                >
-                  Authentication for Proctoring
-                </button>
-              </div>
-            </div>
-          ) : (
-            !selectedAssignment?.studentAuthed &&
-            selectedAssignment &&
-            selectedAssignmentConfigurations &&
-            isProctoredAssignment &&
-            schedulesAvailable &&
-            assignmentId !== "" &&
-            assignmentId !== "null" && (
-              <div className="flex items-center justify-center">
-                <div className="flex space-x-2 justify-center">
-                  <button
-                    type="button"
-                    onClick={() => handleStartAuthentication()}
-                    className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
-                  >
-                    Authentication for Proctoring
-                  </button>
-                </div>
-              </div>
-            )
-          )} */}
         </div>
-        {/* {selectedAssignment?.studentAuthed &&
-          selectedAssignment &&
-          selectedAssignmentConfigurations &&
-          enrollments && (
-            <VideoAndScreenRec
-              assignment={selectedAssignment}
-              username={enrollments.user.name}
-              pass={""}
-              procData={{}}
-              token={tokenData.lmsAccessToken as any}
-              id={urlParamsData.userId as any}
-              isNewTab={urlParamsData.newTab as any}
-              courseId={urlParamsData.courseId as any}
-              toolConsumerGuid={urlParamsData.guid as any}
-              isAuthed={urlParamsData.isAuthed as any}
-              studentId={urlParamsData.studentId as any}
-              quizConfig={selectedAssignmentConfigurations}
-              accountId={urlParamsData.accountId as any}
-              invokeUrl={urlParamsData.invokeUrl as any}
-              quizId={selectedAssignmentConfigurations.quizId}
-            />
-          )} */}
         {showDateTimePicker && (
           <DateTimePicker
             visible={showDateTimePicker}
             close={handleDateTimePicker}
             assignment={selectedAssignment}
-            // handleDateTimeSelect={handleSchedule}
             assignmentConfig={selectedAssignmentConfigurations}
           />
         )}

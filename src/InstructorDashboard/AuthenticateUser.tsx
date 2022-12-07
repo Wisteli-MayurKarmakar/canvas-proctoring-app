@@ -4,6 +4,7 @@ import InfoModal from "../infoModal";
 import { getWebSocketUrl } from "../APIs/apiservices";
 import { useAssignmentStore } from "../store/StudentDashboardStore";
 import { useAppStore } from "../store/AppSotre";
+import { useProcotorJourneyStore } from "../store/ProctorJourneyStore";
 
 interface Props {
   authConfigs: any;
@@ -14,7 +15,9 @@ interface Props {
   userId: string;
   guid: string;
   studentPhoto: any;
+  selectedStudentId: any;
   studentId: any;
+  selectedQuizId: any;
   updateStudentAuthStatus: (data: any) => void;
 }
 
@@ -24,11 +27,16 @@ interface rtcStateProto {
 
 const AuthenticateUser: React.FC<Props> = (props): JSX.Element => {
   const [authStarted, setAuthStarted] = React.useState<boolean>(false);
-  const {urlParamsData, tokenData} = useAppStore((state) => state)
+  const { urlParamsData, tokenData } = useAppStore((state) => state);
   const user = "chat_" + urlParamsData.userId + "_" + "instr";
   const room = "rm_" + urlParamsData.courseId + "_" + props.quizId;
   let [isAuthenticated, setIsAuthenticated] = React.useState<boolean>(false);
-  const selectedAssignment = useAssignmentStore((state) => state.selectedAssignment)
+  const selectedAssignment = useAssignmentStore(
+    (state) => state.selectedAssignment
+  );
+  const { getJourneyDetails, setJourneyDetails } = useProcotorJourneyStore(
+    (state) => state
+  );
   const [authButtonDisabled, setAuthButtonDisabled] =
     React.useState<boolean>(true);
   let vdoDstRef = React.useRef<any>(null);
@@ -187,10 +195,18 @@ const AuthenticateUser: React.FC<Props> = (props): JSX.Element => {
 
   const handleSave = async () => {
     setIsAuthenticated(true);
-
+    setJourneyDetails(
+      "aiAuthentication",
+      props.selectedStudentId,
+      props.selectedQuizId
+    );
     let dataChannelState = await peerDataChannel.current.readyState;
     if (dataChannelState === "open") {
-      props.updateStudentAuthStatus({courseId: urlParamsData.courseId, assignmentId: selectedAssignment?.id, studentId: props.studentId})
+      props.updateStudentAuthStatus({
+        courseId: urlParamsData.courseId,
+        assignmentId: selectedAssignment?.id,
+        studentId: props.studentId,
+      });
       setIsAuthenticated(true);
       peerDataChannel.current.send(
         JSON.stringify({
@@ -204,6 +220,7 @@ const AuthenticateUser: React.FC<Props> = (props): JSX.Element => {
 
   useEffect(() => {
     connectSocket();
+    getJourneyDetails(props.selectedStudentId);
   }, []);
 
   return (

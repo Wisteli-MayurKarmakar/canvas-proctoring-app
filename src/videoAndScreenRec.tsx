@@ -24,6 +24,7 @@ import {
   submitAssignment,
 } from "./apiConfigs";
 import { useAssignmentStore } from "./store/StudentDashboardStore";
+import { useStudentJourneyStore } from "./store/StudentProctorJourneyStore";
 
 declare global {
   interface Window {
@@ -81,9 +82,11 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
   var stream: any = null;
   var offer: any = null;
   const assignmentStore = useAssignmentStore((state) => state);
-  const setAssignmentSubmitted = useAssignmentStore((state) => state.setAssignmentSubmitted)
-  const selectedAssignmentSchedule = useAssignmentStore(
-    (state) => state.selectedAssignmentSchedules
+  const setAssignmentSubmitted = useAssignmentStore(
+    (state) => state.setAssignmentSubmitted
+  );
+  const { getJourneyDetails, setJourneyDetails } = useStudentJourneyStore(
+    (state) => state
   );
   const selectedAssignment = useAssignmentStore(
     (state) => state.selectedAssignment
@@ -107,14 +110,19 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
     ],
   };
 
-  if (assgnStatRequesting) {
-    const assignmentId = assignmentStore.selectedAssignment?.id.toString();
-    const assignmentName = assignmentStore.selectedAssignment?.name;
-    const msgType: string = "ASSGN_PROC_START";
-    if (assignmentId && assignmentName) {
-      sendAssgnStatus(assignmentId, assignmentName, msgType);
+  useEffect(() => {
+    if (assgnStatRequesting) {
+      const assignmentId = assignmentStore.selectedAssignment?.id.toString();
+      const assignmentName = assignmentStore.selectedAssignment?.name;
+      const msgType: string = "ASSGN_PROC_START";
+      if (assignmentId && assignmentName) {
+        sendAssgnStatus(assignmentId, assignmentName, msgType);
+      }
     }
-  }
+  }, [assgnStatRequesting]);
+
+  // if (assgnStatRequesting) {
+  // }
 
   const setConfigByQuizCourseGuid = async () => {
     if (props.assignment) {
@@ -150,8 +158,12 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
     }
   }, [props]);
 
-  const saveLTIPrctoringRef = (videoId: string): void => {
-    axios.post(
+  const saveLTIPrctoringRef = async (
+    videoId: string,
+    startTime: Moment,
+    endTime: Moment
+  ) => {
+    let response = await axios.post(
       saveLtiVideoRef,
       {
         idLtiVideoRef: videoId,
@@ -163,6 +175,8 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
         courseId: props.courseId,
         toolConsumerInstanceGuid: props.toolConsumerGuid,
         examDate: selectedAssignment?.due_at,
+        examActualStartTime: startTime.toISOString(),
+        examActualEndTime: endTime.toISOString(),
       },
       {
         headers: {
@@ -190,43 +204,43 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
     useAssignmentStore.setState({
       isNewTabOpen: true,
     });
-    let isProctoredAssignment: boolean = assignmentStore.isProctoredAssignment;
-    if (isProctoredAssignment) {
-      if (selectedAssignmentSchedule) {
-        let time: Moment = moment();
-        let schedule: Moment = moment(
-          selectedAssignmentSchedule.scheduleDate + "Z"
-        );
-        let timeDiff: number = schedule.diff(time, "minutes");
+    // let isProctoredAssignment: boolean = assignmentStore.isProctoredAssignment;
+    // if (isProctoredAssignment) {
+    //   if (selectedAssignmentSchedule) {
+    //     let time: Moment = moment();
+    //     let schedule: Moment = moment(
+    //       selectedAssignmentSchedule.scheduleDate + "Z"
+    //     );
+    //     let timeDiff: number = schedule.diff(time, "minutes");
 
-        if (schedule.isAfter(time)) {
-          alert(
-            `This quiz is scheduled at ${schedule.format(
-              "MM/DD/YYYY hh:mm a"
-            )}. Please come back no more than 10 mins prior that on ${schedule.format(
-              "MM/DD/YYYY hh:mm a"
-            )}.`
-          );
-          return;
-        }
+    //     if (schedule.isAfter(time)) {
+    //       alert(
+    //         `This quiz is scheduled at ${schedule.format(
+    //           "MM/DD/YYYY hh:mm a"
+    //         )}. Please come back no more than 10 mins prior that on ${schedule.format(
+    //           "MM/DD/YYYY hh:mm a"
+    //         )}.`
+    //       );
+    //       return;
+    //     }
 
-        if (timeDiff < 0) {
-          if (
-            window.confirm(
-              `This assignment is scheduled at ${schedule.format(
-                "MM/DD/YYYY hh:mm a"
-              )} and can be taken on the scheduled date. Please come back 10 mins prior to ${schedule.format(
-                "hh:mm a"
-              )} to take the quiz. Thank you.`
-            )
-          ) {
-            startProctoring();
-            return;
-          }
-          return;
-        }
-      }
-    }
+    //     if (timeDiff < 0) {
+    //       if (
+    //         window.confirm(
+    //           `This assignment is scheduled at ${schedule.format(
+    //             "MM/DD/YYYY hh:mm a"
+    //           )} and can be taken on the scheduled date. Please come back 10 mins prior to ${schedule.format(
+    //             "hh:mm a"
+    //           )} to take the quiz. Thank you.`
+    //         )
+    //       ) {
+    //         startProctoring();
+    //         return;
+    //       }
+    //       return;
+    //     }
+    //   }
+    // }
 
     if (!props.assignment) {
       return;
@@ -290,6 +304,7 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
     );
 
     if (response.status === 200) {
+      setJourneyDetails("assignmentSubmitted");
       window.localStorage.setItem("assgnSubmit", "1");
       message.success(
         "Assignment submitted successfully. Please go to quiz page and continue. Thanks"
@@ -363,6 +378,9 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
         );
       } else {
         submitQuizAssignment();
+        setJourneyDetails("cameraAccess");
+        setJourneyDetails("microphoneAccess");
+        setJourneyDetails("screenShare");
       }
 
       channelsOpened = res;
@@ -398,24 +416,44 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
         stream.getTracks().forEach((track: any) => {});
       }
     }
-    saveLTIPrctoringRef(window.ExamdAutoProctorJS.randomExamId);
+    saveLTIPrctoringRef(
+      window.ExamdAutoProctorJS.randomExamId,
+      startTime,
+      startTime
+    );
   };
 
   const handleEndExam = async () => {
+    let endTime: Moment = moment();
     const response = await axios.get(
       `${getQuizSubmissionsStateFromCanvas}${urlParamsData.courseId}/${props.quizId}/Y/${tokenData.lmsAccessToken}/${tokenData.instituteId}`
     );
     if (response.data.length > 0) {
       if (startTime.isAfter(moment.utc(response.data[0]["started_at"]))) {
+        saveLTIPrctoringRef(
+          window.ExamdAutoProctorJS.randomExamId,
+          startTime,
+          endTime
+        );
         window.close();
         return;
       }
 
       if (!("finished_at" in response.data[0])) {
+        saveLTIPrctoringRef(
+          window.ExamdAutoProctorJS.randomExamId,
+          startTime,
+          endTime
+        );
         clearInterval(checkSubmissionInterval);
         setShowCloseProcPrompt(true);
       }
     } else {
+      saveLTIPrctoringRef(
+        window.ExamdAutoProctorJS.randomExamId,
+        startTime,
+        endTime
+      );
       window.close();
       return;
     }
@@ -509,6 +547,7 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
   }, [props.quizConfig]);
 
   const checkQuizSubmission = async () => {
+    let endTime: Moment = moment();
     let response = await axios.get(
       `${getQuizSubmissionsStateFromCanvas}${urlParamsData.courseId}/${props.quizId}/Y/${tokenData.lmsAccessToken}/${tokenData.instituteId}`
     );
@@ -521,8 +560,14 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
         let currentTime = moment();
         let quizFinishTime = moment.utc(response.data[0]["finished_at"]);
         if (currentTime.isAfter(quizFinishTime)) {
+          saveLTIPrctoringRef(
+            window.ExamdAutoProctorJS.randomExamId,
+            startTime,
+            endTime
+          );
           setQuizEnded(true);
           setShowCloseProcPrompt(true);
+          setJourneyDetails("quizSubmitted");
           await window.ExamdAutoProctorJS.stopRecording();
           clearInterval(checkSubmissionInterval);
         }
@@ -534,11 +579,11 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
     let url_string = window.location.href;
     let url = new URL(url_string);
     let onSeb = url.searchParams.get("onSEBApp");
-
     localStorage.removeItem("tabClose");
     localStorage.removeItem("assgnSubmit");
 
     if (props.isNewTab) {
+      getJourneyDetails();
       window.addEventListener("beforeunload", (event: any) => {
         completeQuizSubmission();
         closeTab();
@@ -566,13 +611,13 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
     setOpenNewTabPrompt(false);
     if (!urlParamsData.newTab) {
       window.addEventListener("storage", (event: StorageEvent) => {
-        let assgnSubmission = window.localStorage.getItem("assgnSubmit")
+        let assgnSubmission = window.localStorage.getItem("assgnSubmit");
         if (assgnSubmission) {
           if (assgnSubmission === "1") {
             setAssignmentSubmitted(true);
           }
         }
-      })
+      });
     }
 
     if (domain !== "localhost") {
@@ -658,8 +703,12 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
         {props.isNewTab && (
           <>
             <button
-              className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight rounded shadow-md hover:bg-blue-700 hover:shadow-lg
-             focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
+              disabled={assignmentStore.gotoQuiz ? false : true}
+              className={`inline-block px-6 py-2.5 ${
+                assignmentStore.gotoQuiz
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-400 text-black cursor-not-allowed"
+              } font-medium text-xs leading-tight rounded shadow-md transition duration-150 ease-in-out`}
               onClick={handleGoToQuiz}
             >
               Go to Quiz

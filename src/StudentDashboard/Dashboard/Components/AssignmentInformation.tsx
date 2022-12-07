@@ -1,23 +1,23 @@
 import React from "react";
 import { useAssignmentStore } from "../../../store/StudentDashboardStore";
 import { useAppStore } from "../../../store/AppSotre";
+import Timer from "../../../CommonUtilites/Timer";
 
 const AssignmentsInfo: React.FC = (): JSX.Element => {
   const isNewTab = useAppStore((state) => state.urlParamsData.newTab);
-  const marginTop: string = "4";
-  const selectedAssignment = useAssignmentStore(
-    (state) => state.selectedAssignment
-  );
-  const selectedAssignmentConfigurations = useAssignmentStore(
-    (state) => state.selectedAssignmentConfigurations
-  );
-  const schedulesAvailable = useAssignmentStore(
-    (state) => state.schedulesAvailable
-  );
-  const isProctoredAssignment = useAssignmentStore(
-    (state) => state.isProctoredAssignment
-  );
   const assignmentId = useAppStore((state) => state.urlParamsData.assignmentId);
+  const marginTop: string = "4";
+  const {
+    selectedAssignment,
+    selectedAssignmentConfigurations,
+    schedulesAvailable,
+    isProctoredAssignment,
+    scheduleExpired,
+    selectedAssignmentSchedules,
+    isNewTabOpen,
+    gotoQuiz,
+  } = useAssignmentStore((state) => state);
+
   let assignmentInfo: JSX.Element | null = null;
 
   if (!assignmentId) {
@@ -109,43 +109,99 @@ const AssignmentsInfo: React.FC = (): JSX.Element => {
                           clipRule="evenodd"
                         ></path>
                       </svg>
-                      <span className="text-lg font-semibold">
-                        Assignment selected: {selectedAssignment.name}. Please
-                        click <b>Start Proctoring button</b> to continue.
-                      </span>
+                      <div className="flex flex-col w-full justify-center">
+                        <p className="text-lg font-semibold text-center">
+                          Assignment selected: {selectedAssignment.name}.
+                        </p>
+                        {selectedAssignment.studentAuthed && !isNewTabOpen && (
+                          <div className="flex flex-col w-full justify-center">
+                            <div className="flex flex-row h-full w-full items-center justify-center gap-1">
+                              <p className="text-center text-lg w-ful font-semibold">
+                                Please start proctoring within
+                              </p>
+                              <Timer />
+                            </div>
+                            <p className="text-center text-lg font-semibold">
+                              To start proctoring please click{" "}
+                              <b>Start Proctoring</b> button. Thanks
+                            </p>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );
               } else {
-                assignmentInfo = (
-                  <div
-                    className={`flex flex-row w-full justify-center gap-4 mt-${marginTop}`}
-                  >
+                if (!scheduleExpired) {
+                  assignmentInfo = (
                     <div
-                      className="flex flex-row h-18 items-center p-4 mb-4 text-medium text-blue-700 bg-blue-100 rounded-lg dark:bg-blue-200 dark:text-blue-800"
-                      role="alert"
+                      className={`flex flex-row w-full justify-center gap-4 mt-${marginTop}`}
                     >
-                      <svg
-                        aria-hidden="true"
-                        className="flex-shrink-0 inline w-8 h-8 mr-3"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                        xmlns="http://www.w3.org/2000/svg"
+                      <div
+                        className="flex flex-row h-18 items-center p-4 mb-4 text-medium text-blue-700 bg-blue-100 rounded-lg dark:bg-blue-200 dark:text-blue-800"
+                        role="alert"
                       >
-                        <path
-                          fillRule="evenodd"
-                          d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                          clipRule="evenodd"
-                        ></path>
-                      </svg>
-                      <span className="text-lg font-semibold">
-                        Assignment selected: {selectedAssignment.name}. Please
-                        click <b>Authentication for proctoring button</b> to
-                        continue.
-                      </span>
+                        <svg
+                          aria-hidden="true"
+                          className="flex-shrink-0 inline w-8 h-8 mr-3"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                            clipRule="evenodd"
+                          ></path>
+                        </svg>
+                        <div className="flex flex-col w-full justify-center">
+                          <p className="text-lg font-semibold text-center">
+                            Assignment selected: {selectedAssignment.name}.
+                          </p>
+                          <p className="text-lg font-semibold text-center">
+                            Please click <b>Authentication for proctoring</b>{" "}
+                            button to continue.
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                );
+                  );
+                } else {
+                  assignmentInfo = (
+                    <div
+                      className={`flex flex-row w-full justify-center gap-4 mt-${marginTop}`}
+                    >
+                      <div
+                        className="flex flex-row h-18 items-center p-4 mb-4 text-medium text-blue-700 bg-blue-100 rounded-lg dark:bg-blue-200 dark:text-blue-800"
+                        role="alert"
+                      >
+                        <svg
+                          aria-hidden="true"
+                          className="flex-shrink-0 inline w-8 h-8 mr-3"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                            clipRule="evenodd"
+                          ></path>
+                        </svg>
+                        <div className="flex flex-col w-full justify-center">
+                          <p className="text-lg font-semibold text-center">
+                            Assignment selected: {selectedAssignment.name}.
+                          </p>
+                          <p className="text-lg font-semibold text-center">
+                            The schedule date/ time is expired. Please click{" "}
+                            <b>Reschedule</b> button to re-schedule the
+                            assignment. Thanks
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
               }
             } else if (
               selectedAssignment &&
@@ -268,10 +324,14 @@ const AssignmentsInfo: React.FC = (): JSX.Element => {
                         clipRule="evenodd"
                       ></path>
                     </svg>
-                    <span className="text-lg font-semibold">
-                      Assignment selected: {selectedAssignment.name}. Please
-                      click <b>Start Proctoring button</b> to continue.
-                    </span>
+                    <div className="flex flex-col w-full justify-center">
+                      <p className="text-lg font-semibold text-center">
+                        Assignment selected: {selectedAssignment.name}.
+                      </p>
+                      <p className="text-lg font-semibold text-center">
+                        Please click <b>Start Proctoring</b> button to continue.
+                      </p>
+                    </div>
                   </div>
                 </div>
               );
@@ -297,11 +357,15 @@ const AssignmentsInfo: React.FC = (): JSX.Element => {
                         clipRule="evenodd"
                       ></path>
                     </svg>
-                    <span className="text-lg font-semibold">
-                      Assignment selected: {selectedAssignment.name}. Please
-                      click <b>Authentication for proctoring button</b> to
-                      continue.
-                    </span>
+                    <div className="flex flex-col w-full justify-center">
+                      <p className="text-lg font-semibold text-center">
+                        Assignment selected: {selectedAssignment.name}.
+                      </p>
+                      <p className="text-lg font-semibold text-center">
+                        Please click <b>Authentication for proctoring</b> button
+                        to continue.
+                      </p>
+                    </div>
                   </div>
                 </div>
               );
@@ -310,7 +374,7 @@ const AssignmentsInfo: React.FC = (): JSX.Element => {
         }
         break;
       case true:
-        if (selectedAssignment) {
+        if (selectedAssignment && selectedAssignmentSchedules) {
           assignmentInfo = (
             <div className="flex flex-col w-full justify-center gap-8">
               <div
@@ -333,20 +397,28 @@ const AssignmentsInfo: React.FC = (): JSX.Element => {
                       clipRule="evenodd"
                     ></path>
                   </svg>
-                  <span className="font-lg font-semibold">
-                    Assignment selected: {selectedAssignment.name}. Proctoring
-                    is in progress.
-                  </span>
+                  <div className="flex flex-col w-full justify-center gap-2">
+                    <p className="text-lg font-semibold">
+                      Assignment selected: {selectedAssignment.name}. Proctoring
+                      is in progress.
+                    </p>
+                  </div>
                 </div>
               </div>
               <div className="rounded-lg bg-blue-100 p-2">
-                {/* <p className="text-xl font-bold text-center text-blue-500">
-                  This is the proctoring tab, please do not close this tab or
-                  click "End Proctoring" button up until you submit the quiz.
-                </p> */}
-                <p className="text-xl font-bold text-center text-blue-500">
-                  To take the quiz please click "Go to Quiz" button.
-                </p>
+                <div className="flex flex-col w-full justify-center gap-2">
+                  {!gotoQuiz && (
+                    <div className="flex flex-row h-full w-full items-center justify-center gap-1">
+                      <p className="text-xl text-center font-bold text-blue-500">
+                        Please start the quiz after
+                      </p>
+                      <Timer />
+                    </div>
+                  )}
+                  <p className="text-xl font-bold text-center text-blue-500">
+                    To take the quiz please click "Go to Quiz" button.
+                  </p>
+                </div>
               </div>
             </div>
           );

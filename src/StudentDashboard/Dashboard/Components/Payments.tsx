@@ -1,6 +1,6 @@
 import { Modal } from "antd";
 import axios from "axios";
-import React, { useEffect } from "react";
+import React, { RefObject, useEffect, useRef } from "react";
 import { getLtiStudentProfileDetails } from "../../../apiConfigs";
 import { useAppStore } from "../../../store/AppSotre";
 import { usePaymentsStore } from "../../../store/PaymentsStore";
@@ -25,18 +25,46 @@ const Payments: React.FC<Props> = ({ visible, close }): JSX.Element => {
     setMessage,
   } = usePaymentsStore((state) => state);
 
-  //   const { urlParamsData } = useAppStore.getState();
-  //   const getUserDetails = async () => {
-  //     let response = await axios.post(
-  //       `${getLtiStudentProfileDetails}/${urlParamsData.guid}/${urlParamsData.studentId}`
-  //     );
-  //     if (response.status === 200) {
-  //       setUserDetails({ ...response.data });
-  //     }
-  //   };
+  let paypal: any = useRef();
+
+  const handleProvider = (value: string) => {
+    if (value === "Paypal") {
+      (window as any).paypal
+        .Buttons({
+          style: {
+            layout: "horizontal",
+            color: "blue",
+            shape: "pill",
+            label: "pay",
+          },
+          createOrder: (data: any, action: any, error: any) => {
+            return action.order.create({
+              intent: "CAPTURE",
+              purchase_units: [
+                {
+                  description: "Test payment",
+                  amount: {
+                    currency_code: "USD",
+                    value: 1.0,
+                  },
+                },
+              ],
+            });
+          },
+          onApprove: async (data: any, actions: any) => {
+            const order = await actions.order.capture();
+            console.log(order);
+          },
+          onError: (err: any) => {
+            console.log(err);
+          },
+        })
+        .render(paypal.current);
+    }
+    setProvider(value);
+  };
 
   useEffect(() => {
-    // getUserDetails();
     setUserDetails();
   }, []);
 
@@ -93,7 +121,7 @@ const Payments: React.FC<Props> = ({ visible, close }): JSX.Element => {
             aria-label=".form-select-sm example"
             id="topicSelect"
             value={selectedProvider}
-            onChange={(e) => setProvider(e.target.value)}
+            onChange={(e) => handleProvider(e.target.value)}
           >
             {providers.map((item: string, index: number) => {
               return (
@@ -262,13 +290,12 @@ const Payments: React.FC<Props> = ({ visible, close }): JSX.Element => {
             placeholder="Your message"
           ></textarea>
         </div>
+        <div className="flex items-center justify-center">
+          <div ref={paypal} className="self-center"></div>
+        </div>
       </div>
     </Modal>
   );
-  //   if (firstName || lastName || email) {
-  //   }
-
-  //   return (
   //     <Modal
   //       visible={visible}
   //       onCancel={close}

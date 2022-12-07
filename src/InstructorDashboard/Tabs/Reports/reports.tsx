@@ -5,7 +5,7 @@ import QuizReports from "./Components/quizReport";
 const Reports: React.FC = (): JSX.Element => {
   const [loadPage, setLoadPage] = useState<string>("byquiz");
 
-  const { urlParamsData, tokenData, courseDetails } = useAppStore(
+  const { courseDetails } = useAppStore(
     (state) => state
   );
 

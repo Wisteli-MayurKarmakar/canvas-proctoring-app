@@ -1,4 +1,5 @@
 import axios from "axios";
+import moment, { Moment } from "moment";
 import create from "zustand";
 import { devtools } from "zustand/middleware";
 import { getLtiCanvasConfigByAssignment, getScheduling } from "../apiConfigs";
@@ -87,6 +88,8 @@ type AssignmentStore = {
   selectedAssignmentConfigurations?: AssignmentConfiguration;
   selectedAssignmentSchedules: Schedule | null;
   schedulesAvailable: boolean;
+  gotoQuiz: boolean;
+  scheduleExpired: boolean;
   assignmentSubmitted: boolean;
   isProctoredAssignment: boolean;
   isNewTabOpen?: boolean;
@@ -149,8 +152,16 @@ const getAssignmentSchedule = async () => {
     );
 
     if (response.status === 200) {
+      const today: Moment = moment()
+      const timezoneOffset: string = `.${Math.abs(moment().utcOffset()).toString()}Z`
+      const scheduleDate: Moment = moment(response.data.scheduleDate + timezoneOffset);
+      let scheduleExpired: boolean = false;
+      if (today.diff(scheduleDate, "minutes") > 0) {
+        scheduleExpired = true
+      }
       useAssignmentStore.setState({
         selectedAssignmentSchedules: response.data,
+        scheduleExpired: scheduleExpired
       });
       if (Object.keys(data).length > 0) {
         res = true;
@@ -180,6 +191,8 @@ export const useAssignmentStore = create<AssignmentStore>()(
       isProctoredAssignment: false,
       schedulesAvailable: false,
       assignmentSubmitted: false,
+      scheduleExpired: false,
+      gotoQuiz: false,
       selectedAssignmentSchedules: null,
       isNewTabOpen: false,
       setAssignments: (assignments: Assignment[]) => {

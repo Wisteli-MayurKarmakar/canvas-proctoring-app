@@ -155,17 +155,17 @@ const App: React.FC<Props> = (props): JSX.Element => {
             fullscreen={false}
             key="calendar"
             onChange={onDateChange}
-            disabledDate={(current) => {
-              let upperBound: number = 0;
-              upperBound = moment(selectedAssignment?.lock_at).diff(
-                moment(),
-                "days"
-              );
-              return (
-                moment().add(2, "days") >= current ||
-                moment().add(upperBound + 1, "days") <= current
-              );
-            }}
+            // disabledDate={(current) => {
+            //   let upperBound: number = 0;
+            //   upperBound = moment(selectedAssignment?.lock_at).diff(
+            //     moment(),
+            //     "days"
+            //   );
+            //   return (
+            //     moment().add(2, "days") >= current ||
+            //     moment().add(upperBound + 1, "days") <= current
+            //   );
+            // }}
           />
         </div>
         <div className="flex flex-col items-center justify-between h-full w-full gap-8">

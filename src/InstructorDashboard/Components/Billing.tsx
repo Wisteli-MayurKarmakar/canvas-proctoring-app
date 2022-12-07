@@ -1,15 +1,13 @@
-import { DatePicker, message, Table } from "antd";
+import { DatePicker, message } from "antd";
 import axios from "axios";
-// import { useForm } from "antd/lib/form/Form";
 import moment, { Moment } from "moment";
-import React, { SyntheticEvent, useState } from "react";
-import { isNumber } from "util";
+import React, { SyntheticEvent, useEffect, useState } from "react";
 import { saveLtiBillingRate } from "../../apiConfigs";
 import {
   AddBillingPropertyTypes,
   BillingContactDetails,
   BillingData,
-  PastRecordTableColumns,
+  // PastRecordTableColumns,
   ServicesAndBillingFieldTypes,
 } from "../../AppTypes";
 import WaitingModal from "../../CommonUtilites/WaitingModal";
@@ -26,6 +24,7 @@ const Billing: React.FC = (): JSX.Element => {
     (state) => state.handleContactDetailsUpdate
   );
   const handleResetValues = useBillingStore((state) => state.handleResetValues);
+  const getBillingDetails = useBillingStore((state) => state.getBillingDetails);
   const { urlParamsData, tokenData } = useAppStore((state) => state);
   const waitMessage: JSX.Element = (
     <p className="text-center mx-auto text-lg font-semibold">
@@ -33,48 +32,48 @@ const Billing: React.FC = (): JSX.Element => {
     </p>
   );
 
-  const tableColumns: PastRecordTableColumns[] = [
-    {
-      dataIndex: "",
-      key: "productType",
-      title: "Product Type",
-    },
-    {
-      dataIndex: "",
-      key: "supportType",
-      title: "Support Type",
-    },
-    {
-      dataIndex: "",
-      key: "studentProctor",
-      title: "Student/ Proctor",
-    },
-    {
-      dataIndex: "",
-      key: "paymentType",
-      title: "Payment Type",
-    },
-    {
-      dataIndex: "",
-      key: "billRate",
-      title: "Billing Rate",
-    },
-    {
-      dataIndex: "",
-      key: "status",
-      title: "Status",
-    },
-    {
-      dataIndex: "",
-      key: "startDate",
-      title: "Start Date",
-    },
-    {
-      dataIndex: "",
-      key: "endDate",
-      title: "End Date",
-    },
-  ];
+  // const tableColumns: PastRecordTableColumns[] = [
+  //   {
+  //     dataIndex: "",
+  //     key: "productType",
+  //     title: "Product Type",
+  //   },
+  //   {
+  //     dataIndex: "",
+  //     key: "supportType",
+  //     title: "Support Type",
+  //   },
+  //   {
+  //     dataIndex: "",
+  //     key: "studentProctor",
+  //     title: "Student/ Proctor",
+  //   },
+  //   {
+  //     dataIndex: "",
+  //     key: "paymentType",
+  //     title: "Payment Type",
+  //   },
+  //   {
+  //     dataIndex: "",
+  //     key: "billRate",
+  //     title: "Billing Rate",
+  //   },
+  //   {
+  //     dataIndex: "",
+  //     key: "status",
+  //     title: "Status",
+  //   },
+  //   {
+  //     dataIndex: "",
+  //     key: "startDate",
+  //     title: "Start Date",
+  //   },
+  //   {
+  //     dataIndex: "",
+  //     key: "endDate",
+  //     title: "End Date",
+  //   },
+  // ];
 
   const validateFormValues = (): boolean => {
     let { productType, paymentType, studentPay } =
@@ -194,6 +193,10 @@ const Billing: React.FC = (): JSX.Element => {
       e.preventDefault();
     }
   };
+
+  useEffect(() => {
+    getBillingDetails();
+  }, [getBillingDetails]);
 
   return (
     <form

@@ -227,28 +227,25 @@ const settingOptions: settingStruct = {
 };
 
 const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
-  let [optionsStatus, setOptionsStatus] = React.useState<optionCheckedProto>(
-    {}
-  );
-  let [quizzesStat, setQuizzesStat] = React.useState<any>();
-  let [checked, setChecked] = React.useState<checkTypes>(abbrs);
-  let [userSettings, setUserSettings] = React.useState<any>({});
-  let [applySettings, setApplySettings] = React.useState<boolean>(false);
-  const [quizzes, setQuizzes] = React.useState<any>(null);
-  const [selectedQuiz, setSelectedQuiz] = React.useState<any>(null);
-  let [quizSettings, setQuizSettings] = React.useState<any>(null);
-  const [showWaitingModal, setShowWaitingModal] =
-    React.useState<boolean>(false);
-  const [showConfigurations, setShowConfigurations] =
-    React.useState<boolean>(false);
-  let [quizConfig, setQuizConfig] = React.useState<any>(null);
-  let [configSaveStatus, setConfigSaveStatus] = React.useState<boolean>(false);
+  let [optionsStatus, setOptionsStatus] = useState<optionCheckedProto>({});
+  let [quizzesStat, setQuizzesStat] = useState<any>();
+  let [checked, setChecked] = useState<checkTypes>(abbrs);
+  let [userSettings, setUserSettings] = useState<any>({});
+  let [applySettings, setApplySettings] = useState<boolean>(false);
+  const [quizzes, setQuizzes] = useState<any>(null);
+  const [selectedQuiz, setSelectedQuiz] = useState<any>(null);
+  let [quizSettings, setQuizSettings] = useState<any>(null);
+  const [showWaitingModal, setShowWaitingModal] = useState<boolean>(false);
+  const [showConfigurations, setShowConfigurations] = useState<boolean>(false);
+  let [quizConfig, setQuizConfig] = useState<any>(null);
+  let [configSaveStatus, setConfigSaveStatus] = useState<boolean>(false);
   let [defaultSettingsOptionsChecked, setDefaultSettingsOptionsChecked] =
-    React.useState<any>(null);
+    useState<any>(null);
   const [showSummary, setShowSummary] = useState<boolean>(false);
   const [quicKConfigSelected, setQuicKConfigSelected] = useState<string>("");
-  let [isReset, setIsReset] = React.useState<boolean>(false);
+  let [isReset, setIsReset] = useState<boolean>(false);
   const { tokenData, courseDetails } = useAppStore((state) => state);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
   const quizStoreState = useQuizStore((state) => state);
   const resetOptionSelection = (option: string) => {
     let selectables: optionCheckedProto = { ...(checked[option] as {}) };
@@ -402,6 +399,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
       let response = await axios.get(
         `${autoCompleteSetup}${props.courseId}/${selectedQuiz.title}/${selectedQuiz.id}/${tokenData.lmsAccessToken}/${tokenData?.instituteId}`
       );
+      setIsSaving(!isSaving);
       setShowWaitingModal(false);
     } catch (e) {
       setShowWaitingModal(false);
@@ -461,7 +459,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
     if (quizConfig) {
       allOptions["assignmentId"] = quizConfig.assignmentId;
     }
-
+    setIsSaving(!isSaving);
     axios
       .post(saveLtiCanvasConfig, allOptions, {
         headers: { Authorization: `Bearer ${tokenData.lmsAccessToken}` },
@@ -474,6 +472,9 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
         setQuizConfig(allOptions);
         message.success("Configurations saved successfully");
         setConfigSaveStatus(true);
+        if (isSaving) {
+          setIsSaving(!isSaving);
+        }
       })
       .catch((err) => {
         setConfigSaveStatus(false);
@@ -902,6 +903,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
             </div>
             <div className="flex flex-row pt-4 gap-5 pb-4">
               <button
+                disabled={isSaving}
                 onClick={handleSubmit}
                 className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
               >

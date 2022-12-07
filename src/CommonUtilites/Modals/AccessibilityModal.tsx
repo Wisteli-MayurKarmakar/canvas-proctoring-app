@@ -25,53 +25,44 @@ const AssibilityModal: React.FC<Props> = (props): JSX.Element => {
   const [standardOptionError, setStandardOptionError] =
     useState<boolean>(false);
   const [customOptionError, setCustomOptionError] = useState<boolean>(false);
-  const doc1 = useAccessiblityStore((state) => state.doc1);
   const [loading, setLoading] = useState<boolean>(false);
-  const accessibilityState = useAccessiblityStore((state) => state);
-  const setHumanAssistantNeeded = useAccessiblityStore(
-    (state) => state.setHumanAssistantNeeded
-  );
-  const humanAssistantNeeded = useAccessiblityStore(
-    (state) => state.humanAssistant
-  );
-  const doc2 = useAccessiblityStore((state) => state.doc2);
-  const standardOptions = useAccessiblityStore(
-    (state) => state.standardOptions
-  );
-  const customOptions = useAccessiblityStore((state) => state.customOptions);
-  const standardOptionSelected = useAccessiblityStore(
-    (state) => state.standardOptionSelected
-  );
-  const customOptionSelected = useAccessiblityStore(
-    (state) => state.customOptionSelected
-  );
+  const {
+    schoolCustom,
+    schoolStandard,
+    humanAssistant,
+    doc1,
+    doc2,
+    standardOptions,
+    customOptions,
+    standardOptionSelected,
+    customOptionSelected,
+    approveStandard,
+    approveCustom,
+    messageStudent,
+    messageInstructor,
+    minExtra,
+    setStudentMessage,
+    setCustomOptionSelected,
+    setDoc1,
+    setDoc2,
+    setStandardOptionSelecton,
+    setSchoolCustom,
+    setSchoolStandard,
+    setInstructorMessage,
+    setHumanAssistantNeeded,
+    setExtraTimeValue,
+    setApproveStandard,
+    setApproveCustom,
+    setAccessibilityConfigurations,
+    setStartDate,
+    setEndDate,
+  } = useAccessiblityStore((state) => state);
+  const {urlParamsData, tokenData} = useAppStore((state) => state)
+
   const loggedInUserEnrollmentType = useCommonStudentDashboardStore(
     (state) => state.loggedInUserEnrollmentType
   );
-  const setDoc1 = useAccessiblityStore((state) => state.setDoc1);
-  const setDoc2 = useAccessiblityStore((state) => state.setDoc2);
-  const setStandardOptionSelecton = useAccessiblityStore(
-    (state) => state.setStandardOptionSelecton
-  );
-  const setCustomOptionSelected = useAccessiblityStore(
-    (state) => state.setCustomOptionSelected
-  );
-  const setStudentMessage = useAccessiblityStore(
-    (state) => state.setStudentMessage
-  );
-  const setExtraTimeValue = useAccessiblityStore(
-    (state) => state.setExtraTimeValue
-  );
-  const setApproveStandard = useAccessiblityStore(
-    (state) => state.setApproveStandard
-  );
-  const setApproveCustom = useAccessiblityStore(
-    (state) => state.setApproveCustom
-  );
-  const approveStandard = useAccessiblityStore(
-    (state) => state.approveStandard
-  );
-  const minExtra = useAccessiblityStore((state) => state.minExtra);
+
   const defaultMinExtra: string = minExtra.toString() + " mins";
 
   const facerecognitionIssue = useAccessiblityStore(
@@ -83,26 +74,12 @@ const AssibilityModal: React.FC<Props> = (props): JSX.Element => {
   const shorttermDisability = useAccessiblityStore(
     (state) => state.customOptions.shorttermDisability
   );
-  const setAccessibilityConfigurations = useAccessiblityStore(
-    (state) => state.setAccessibilityConfigurations
-  );
   const startDate: Moment = moment(
     useAccessiblityStore((state) => state.startDate)
   );
   const endDate: Moment = moment(
     useAccessiblityStore((state) => state.endDate)
   );
-  const setStartDate = useAccessiblityStore((state) => state.setStartDate);
-  const setEndDate = useAccessiblityStore((state) => state.setEndDate);
-  const humanAssistant = useAccessiblityStore((state) => state.humanAssistant);
-  const messageStudent = useAccessiblityStore((state) => state.messageStudent);
-  const messageInstructor = useAccessiblityStore(
-    (state) => state.messageInstructor
-  );
-
-  const approveCustom = useAccessiblityStore((state) => state.approveCustom);
-  const urlParamsData = useAppStore((state) => state.urlParamsData);
-  const tokenData = useAppStore((state) => state.tokenData);
 
   const deafIcon: JSX.Element = (
     <svg
@@ -171,7 +148,7 @@ const AssibilityModal: React.FC<Props> = (props): JSX.Element => {
   };
 
   const handleUploadDoc2 = (e: any) => {
-    if (accessibilityState.schoolCustom) {
+    if (schoolCustom) {
       return;
     }
     let file: any = e.target.files[0];
@@ -201,11 +178,11 @@ const AssibilityModal: React.FC<Props> = (props): JSX.Element => {
       facerecognitionIssue: facerecognitionIssue,
       shorttermDisability: shorttermDisability,
       documentstandardRef: "string",
-      schoolStandard: accessibilityState.schoolStandard,
+      schoolStandard: schoolStandard,
       needAbreak: needAbreak,
       minExtra: minExtra,
       documentCustomref: "string",
-      schoolCustom: accessibilityState.schoolCustom,
+      schoolCustom: schoolCustom,
       startDate: startDate,
       endDate: endDate,
       humanAssistant: humanAssistant,
@@ -230,7 +207,7 @@ const AssibilityModal: React.FC<Props> = (props): JSX.Element => {
 
   const handleSubmit = () => {
     if (standardOptionSelected) {
-      if (!accessibilityState.schoolStandard && !doc1) {
+      if (!schoolStandard && !doc1) {
         setStandardOptionError(true);
       } else {
         setStandardOptionError(false);
@@ -238,7 +215,7 @@ const AssibilityModal: React.FC<Props> = (props): JSX.Element => {
     }
 
     if (customOptionSelected) {
-      if (!accessibilityState.schoolCustom && !doc2) {
+      if (!schoolCustom && !doc2) {
         setCustomOptionError(true);
       } else {
         setCustomOptionError(false);
@@ -263,7 +240,8 @@ const AssibilityModal: React.FC<Props> = (props): JSX.Element => {
     };
     let response = await axios.post(`${getLtiAccessibility}`, payload);
     if (response.status === 200) {
-      let timeZoneOffset: string = "." + Math.abs(moment().utcOffset()).toString() + "Z";
+      let timeZoneOffset: string =
+        "." + Math.abs(moment().utcOffset()).toString() + "Z";
       let accessibilityConfig = {
         ...response.data,
         endDate: response.data.endDate + timeZoneOffset,
@@ -275,9 +253,9 @@ const AssibilityModal: React.FC<Props> = (props): JSX.Element => {
 
   const handleHasDocFor = (docFor: string) => {
     if (docFor === "standard") {
-      accessibilityState.setSchoolStandard(!accessibilityState.schoolStandard);
+      setSchoolStandard(!schoolStandard);
     } else {
-      accessibilityState.setSchoolCustom(!accessibilityState.schoolCustom);
+      setSchoolCustom(!schoolCustom);
     }
   };
 
@@ -295,10 +273,22 @@ const AssibilityModal: React.FC<Props> = (props): JSX.Element => {
       maskClosable={false}
       width={"90pc"}
       footer={[
-        <Button key="cancel" type="primary" onClick={props.onClose} disabled={loading && true} className="!bg-blue-600 !rounded">
+        <Button
+          key="cancel"
+          type="primary"
+          onClick={props.onClose}
+          disabled={loading && true}
+          className="!bg-blue-600 !rounded"
+        >
           Cancel
         </Button>,
-        <Button key="submit" type="primary" onClick={handleSubmit} loading={loading} className="!bg-blue-600 !rounded">
+        <Button
+          key="submit"
+          type="primary"
+          onClick={handleSubmit}
+          loading={loading}
+          className="!bg-blue-600 !rounded"
+        >
           {loading ? "Saving" : "Submit"}
         </Button>,
       ]}
@@ -368,7 +358,7 @@ const AssibilityModal: React.FC<Props> = (props): JSX.Element => {
                 <input
                   className="form-check-input appearance-none h-4 w-4 border border-gray-300 rounded-sm bg-white checked:bg-blue-600 checked:border-blue-600 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer"
                   type="checkbox"
-                  checked={accessibilityState.schoolStandard}
+                  checked={schoolStandard}
                   id="flexCheckDefault"
                   onChange={() => handleHasDocFor("standard")}
                 />
@@ -429,9 +419,9 @@ const AssibilityModal: React.FC<Props> = (props): JSX.Element => {
               </label>
               <div className="flex flex-row w-full gap-4 justify-start">
                 <input
-                  disabled={accessibilityState.schoolStandard}
+                  disabled={schoolStandard}
                   className={`flex w-72 text-sm text-black bg-gray-50 rounded border ${
-                    accessibilityState.schoolStandard && "cursor-not-allowed"
+                    schoolStandard && "cursor-not-allowed"
                   } border-gray-300 cursor-pointer focus:outline-none dark:placeholder-gray-400`}
                   id="file_input"
                   type="file"
@@ -440,14 +430,12 @@ const AssibilityModal: React.FC<Props> = (props): JSX.Element => {
                 <div className="flex space-x-2 justify-center">
                   <button
                     type="button"
-                    disabled={accessibilityState.schoolStandard}
+                    disabled={schoolStandard}
                     className={`inline-block px-6 py-1.5 ${
-                      accessibilityState.schoolStandard
-                        ? "bg-gray-300"
-                        : "bg-blue-600"
+                      schoolStandard ? "bg-gray-300" : "bg-blue-600"
                     } text-white font-medium text-xs
                      leading-tight uppercase rounded shadow-md ${
-                       !accessibilityState.schoolStandard &&
+                       !schoolStandard &&
                        `hover:bg-blue-700 hover:shadow-lg
                       focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800
                        active:shadow-lg transition duration-150 ease-in-out`
@@ -468,7 +456,7 @@ const AssibilityModal: React.FC<Props> = (props): JSX.Element => {
                 <input
                   className="form-check-input appearance-none h-4 w-4 border border-gray-300 rounded-sm bg-white checked:bg-blue-600 checked:border-blue-600 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer"
                   type="checkbox"
-                  checked={accessibilityState.schoolCustom}
+                  checked={schoolCustom}
                   id="flexCheckDefault"
                   onChange={() => handleHasDocFor("custom")}
                 />
@@ -547,7 +535,7 @@ const AssibilityModal: React.FC<Props> = (props): JSX.Element => {
                   <input
                     className="form-check-input appearance-none h-4 w-4 border border-gray-300 rounded-sm bg-white checked:bg-blue-600 checked:border-blue-600 focus:outline-none transition duration-200 bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer"
                     type="checkbox"
-                    checked={humanAssistantNeeded}
+                    checked={humanAssistant}
                     id="flexCheckDefault"
                     onChange={() => setHumanAssistantNeeded()}
                   />
@@ -569,9 +557,9 @@ const AssibilityModal: React.FC<Props> = (props): JSX.Element => {
               </label>
               <div className="flex flex-row w-full gap-4 justify-start">
                 <input
-                  disabled={accessibilityState.schoolCustom}
+                  disabled={schoolCustom}
                   className={`flex w-72 text-sm text-black bg-gray-50 rounded border ${
-                    accessibilityState.schoolCustom && "cursor-not-allowed"
+                    schoolCustom && "cursor-not-allowed"
                   } border-gray-300 cursor-pointer focus:outline-none dark:placeholder-gray-400`}
                   id="file_input"
                   type="file"
@@ -579,15 +567,13 @@ const AssibilityModal: React.FC<Props> = (props): JSX.Element => {
                 />
                 <div className="flex space-x-2 justify-center">
                   <button
-                    disabled={accessibilityState.schoolCustom}
+                    disabled={schoolCustom}
                     type="button"
                     className={`inline-block px-6 py-1.5 ${
-                      accessibilityState.schoolCustom
-                        ? "bg-gray-300"
-                        : "bg-blue-600"
+                      schoolCustom ? "bg-gray-300" : "bg-blue-600"
                     } text-white font-medium text-xs
                      leading-tight uppercase rounded shadow-md ${
-                       !accessibilityState.schoolCustom &&
+                       !schoolCustom &&
                        `hover:bg-blue-700 hover:shadow-lg
                       focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800
                        active:shadow-lg transition duration-150 ease-in-out`
@@ -621,15 +607,13 @@ const AssibilityModal: React.FC<Props> = (props): JSX.Element => {
               </label>
               <TextArea
                 rows={4}
-                value={accessibilityState.messageInstructor}
+                value={messageInstructor}
                 disabled={
                   loggedInUserEnrollmentType === "StudentEnrollment"
                     ? true
                     : false
                 }
-                onChange={(e) =>
-                  accessibilityState.setInstructorMessage(e.target.value)
-                }
+                onChange={(e) => setInstructorMessage(e.target.value)}
               />
             </div>
             <div className="flex flex-row h-full items-center gap-8">

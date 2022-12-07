@@ -1,12 +1,16 @@
+import axios from "axios";
 import moment from "moment";
 import create from "zustand";
 import { devtools } from "zustand/middleware";
+import { getLtiBillingRate } from "../apiConfigs";
 import {
   AddBillingPropertyTypes,
   BillingContactDetails,
+  BillingData,
   ContactDetailsFieldTypes,
   ServicesAndBillingFieldTypes,
 } from "../AppTypes";
+import { useAppStore } from "./AppSotre";
 
 type BillingStore = {
   productTypes: string[];
@@ -24,6 +28,25 @@ type BillingStore = {
   handleServiceAndBillingDetailsUpdate: (key: string, value: string) => void;
   handleContactDetailsUpdate: (key: string, value: string) => void;
   handleResetValues: () => void;
+  getBillingDetails: () => void;
+};
+
+const getBillingDeatilsByGuidInstituteId = async (
+  guid: string,
+  instituteId: number
+): Promise<BillingData | null> => {
+  let payload = {
+    guid: guid,
+    instituteId: instituteId,
+    startDate: moment().toISOString(),
+  };
+
+  let response = await axios.post(`${getLtiBillingRate}/`, { ...payload });
+
+  if (response.status === 200) {
+    return response.data as BillingData;
+  }
+  return null;
 };
 
 export const useBillingStore = create<BillingStore>()(
@@ -445,7 +468,7 @@ export const useBillingStore = create<BillingStore>()(
             ].errorMsg = "";
             serviceAndBillingDetails[
               key as keyof ServicesAndBillingFieldTypes
-            ].value = moment().add(1, "days").format("MM-DD-YYYY");
+            ].value = moment().add(1, "years").format("MM-DD-YYYY");
           }
         });
         Object.keys(contactDetails).forEach((key: string) => {
@@ -457,6 +480,41 @@ export const useBillingStore = create<BillingStore>()(
         set({
           serviceAndBillingDetails: { ...serviceAndBillingDetails },
         });
+      },
+      getBillingDetails: async () => {
+        const { urlParamsData, tokenData } = useAppStore.getState();
+        if (urlParamsData.guid && tokenData.instituteId) {
+          let details: BillingData | null =
+            await getBillingDeatilsByGuidInstituteId(
+              urlParamsData.guid,
+              parseInt(tokenData.instituteId)
+            );
+
+          if (details) {
+            let serviceAndBillingDetails: ServicesAndBillingFieldTypes =
+              get().serviceAndBillingDetails;
+            let contactDetails: ContactDetailsFieldTypes = get().contactDetails;
+            let timezoneOffset: string = `.${Math.abs(
+              moment().utcOffset()
+            ).toString()}Z`;
+            serviceAndBillingDetails.productType.value = details.productType;
+            contactDetails.email.value = details.billingEmail;
+            serviceAndBillingDetails.studentPay.value = details.studentPay;
+            serviceAndBillingDetails.paymentType.value = details.paymentType;
+            serviceAndBillingDetails.billRate.value =
+              details.billingRate.toString();
+            serviceAndBillingDetails.billCurrency.value =
+              details.billingCurrency;
+            serviceAndBillingDetails.startDate.value =
+              details.startDate + timezoneOffset;
+            serviceAndBillingDetails.endDate.value =
+              details.endDate + timezoneOffset;
+            set({
+              serviceAndBillingDetails: serviceAndBillingDetails,
+              contactDetails: contactDetails,
+            });
+          }
+        }
       },
     }),
     { name: "Add Billing Store" }

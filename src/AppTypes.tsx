@@ -41,6 +41,7 @@ type QuizTypeProctoringByQuiz = {
   time_limit?: number;
   title?: string;
   unlock_at?: string;
+  assignment_id?: string;
 };
 
 type AuthenticationData = {
@@ -297,9 +298,10 @@ type ServerToClientEvents = {
 // Billing data type
 
 type BillingData = {
+  billingId?: string;
   guid: string;
   instituteId: number;
-  billingTier: string;
+  billingTier?: string;
   minNumber: number;
   productType: string;
   billingEmail: string;
@@ -309,6 +311,7 @@ type BillingData = {
   billingCurrency: string;
   startDate: string;
   endDate: string;
+  status?: number;
 };
 
 type StudentDetails = {
@@ -346,13 +349,76 @@ type PaymentStoreType = {
   setUserDetails: () => void;
 };
 
+//Student Journey
+
+type StudentJourney = {
+  ltiStudentJourneyId?: string;
+  guid: string;
+  studentId: number;
+  assignmentId: number;
+  quizId: number;
+  status: number;
+  systemCheck: boolean;
+  privacyCheck: boolean;
+  examRules: boolean;
+  cameraAccess: boolean;
+  microphoneAccess: boolean;
+  screenShare: boolean;
+  assignmentSubmitted: boolean;
+  quizSubmitted: boolean;
+  courseId: number;
+};
+
+type StudentJourneyStore = {
+  journeyDetails: StudentJourney;
+  getJourneyDetails: () => void;
+  setJourneyDetails: (stepName: string) => void;
+}
+
+//Procotor Journey
+
+type ProctorJourney = {
+  ltiProctorJourneyId?: string;
+  guid: string;
+  studentId: number;
+  proctorId: number;
+  quizId: number;
+  proctorUser: string;
+  authenticatedBy: string;
+  reportReviwer: string;
+  status: number;
+  aiAuthentication: boolean;
+  reportReviwed: boolean;
+  reportPass: boolean;
+  courseId: number;
+};
+
+type ProctorJourneyStore = {
+  journeyDetails?: ProctorJourney | null;
+  getJourneyDetails: (studentId: string) => void;
+  setJourneyDetails: (stepName: string, studentId: string, quizId: string) => void;
+}
+
+// Student Quiz Report
+
+type StudentQuizReport = {
+  [key: string]: {
+    [key: string]: boolean | null;
+  }
+}
+
 export type {
   AllDates,
   Quiz,
   AppStore,
   QuizConfig,
   StudentDetails,
+  StudentJourneyStore,
+  ProctorJourneyStore,
   AssignmentConfiguration,
+  StudentQuizReport,
+  ProctorJourney,
+  StudentJourney,
   ServerToClientEvents,
   ClientToServerEvents,
   defualtProctingSettings,

@@ -1,5 +1,3 @@
-import axios from "axios";
-
 let baseUrl: string | undefined = process.env.REACT_APP_BASE_URL;
 
 const getEndPoints: string = `${baseUrl}cdn/urls/xproctor/1`;
@@ -92,11 +90,23 @@ const saveLtiBillingRate: string = `${baseUrl}student/api/v1/saveLtiBillingRate`
 
 const getLtiBillingRate: string = `${baseUrl}student/api/v1/getLtiBillingRate`;
 
+const saveLtiProctorJourney: string = `${baseUrl}student/api/v1/saveLtiProctorJourney`;
+
+const getLtiProctorJourney: string = `${baseUrl}student/api/v1/getLtiProctorJourney`;
+
+const saveLtiStudentJourney: string = `${baseUrl}student/api/v1/saveLtiStudentJourney`;
+
+const getLtiStudentJourney: string = `${baseUrl}student/api/v1/getLtiStudentJourney`;
+
 export {
   getEndPoints,
   fetchAccountsByCourseAndEnrollemntType,
   saveScheduling,
   getCanvasAssignmentDetails,
+  getLtiProctorJourney,
+  getLtiStudentJourney,
+  saveLtiProctorJourney,
+  saveLtiStudentJourney,
   getGetCanvasQuizDetails,
   saveLtiAccessibility,
   saveLtiAccessibilityApproval,

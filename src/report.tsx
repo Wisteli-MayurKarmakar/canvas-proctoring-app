@@ -3,6 +3,7 @@ import React, { useState } from "react";
 
 import { getMedia } from "./apiConfigs";
 import { useAppStore } from "./store/AppSotre";
+import { useProcotorJourneyStore } from "./store/ProctorJourneyStore";
 
 interface Props {
   show: boolean;
@@ -34,6 +35,11 @@ const Report: React.FC<Props> = ({
   configuration,
 }): JSX.Element => {
   const tokenData = useAppStore((state) => state.tokenData);
+  const {journeyDetails, setJourneyDetails} = useProcotorJourneyStore((state) => state)
+
+  const handleReportResult = (result: string) => {
+    setJourneyDetails(result, studentId, quizId)
+  }
 
   return (
     <Modal
@@ -153,6 +159,22 @@ const Report: React.FC<Props> = ({
               <p className="text-lg font-semibold">No exceptions...</p>
             )}
           </div>
+        </div>
+        <div className="flex flex-row h-full w-full items-center justify-center gap-4">
+          <button
+            type="button"
+            onClick={() => handleReportResult("fail")}
+            className="inline-block px-6 py-2.5 bg-red-500 text-white font-medium text-xs leading-tight rounded shadow-md transition duration-150 ease-in-out"
+          >
+            Fail
+          </button>
+          <button
+            type="button"
+            onClick={() => handleReportResult("pass")}
+            className="inline-block px-6 py-2.5 bg-green-500 text-white font-medium text-xs leading-tight rounded shadow-md transition duration-150 ease-in-out"
+          >
+            Pass
+          </button>
         </div>
       </div>
     </Modal>

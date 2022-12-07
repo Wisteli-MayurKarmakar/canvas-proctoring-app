@@ -7,6 +7,7 @@ import StudentAuthentication from "../../StudentDashboard/Tabs/StudentAuthentica
 import { useStudentStore } from "../../store/globalStore";
 import { useWebCamStore } from "../../store/globalStore";
 import { useAssignmentStore } from "../../store/StudentDashboardStore";
+import { useStudentJourneyStore } from "../../store/StudentProctorJourneyStore";
 
 interface Props {
   view: boolean;
@@ -39,6 +40,9 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
   let setAuthStepsCount = useStudentStore((state) => state.setAuthStepsCount);
   const selectedAssignment = useAssignmentStore(
     (state) => state.selectedAssignment
+  );
+  const { setJourneyDetails, getJourneyDetails } = useStudentJourneyStore(
+    (state) => state
   );
   let stream = useWebCamStore((state) => state.stream);
   let studIdWODash = props.courseId + "_" + selectedAssignment?.id;
@@ -139,12 +143,12 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
       },
       {
         name: "Privacy Policy",
-        key: "privacyPolicy",
+        key: "privacyCheck",
         component: <PrivacyPolicy isChecked={isAgree} showAgree={true} />,
       },
       {
         name: "Rules",
-        key: "rules",
+        key: "examRules",
         component: (
           <QuizRules quizConfig={props.quizConfig} isChecked={isAgree} />
         ),
@@ -186,12 +190,14 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
       }
       // setQuizSteps(steps);
     }
+    
     setAuthStepsCount(steps.length - 1);
 
     if (steps.length <= 4) {
       setQuizSteps(steps);
       setAuthConfigurations(config);
     }
+    getJourneyDetails();
   }, []);
 
   useEffect(() => {
@@ -220,6 +226,9 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
       props.studentId,
       selectedAssignment?.id as any
     );
+    if (quizSteps[stepNo].key !== "auth") {
+      setJourneyDetails(quizSteps[stepNo].key);
+    }
   };
 
   const closeWebCamResources = () => {

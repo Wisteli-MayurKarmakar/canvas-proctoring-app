@@ -76,12 +76,13 @@ const ProcotoringByQuiz: React.FC = (): JSX.Element => {
       key: "action",
       title: "Action",
       render: (row: any) => {
-        if (Object.keys(quizzesStatus).length > 0) {
+        if (Object.keys(quizzesStatus).length > 0 && selectedQuiz) {
           return (
             <Button
               type="link"
               disabled={
-                row.id in quizzesStatus && quizzesStatus[row.id].ongoing
+                quizzesStatus[selectedQuiz.assignment_id as keyof QuizStatus]
+                  .ongoing
                   ? false
                   : true
               }
@@ -206,7 +207,11 @@ const ProcotoringByQuiz: React.FC = (): JSX.Element => {
       temp[key] = false;
     });
     if (quizz.quizId) {
-      setSelectedQuiz({ ...quizz, id: quizz.quizId });
+      setSelectedQuiz({
+        ...quizz,
+        id: quizz.quizId,
+        assignmentId: quizz.assignment_id,
+      });
       setSelectedQuizSchedules(null);
       getQuizSchedules(quizz.quizId, quizz.id);
       temp[quizz.id.toString()] = true;
@@ -284,6 +289,7 @@ const ProcotoringByQuiz: React.FC = (): JSX.Element => {
                 }
                 style={{ cursor: "pointer" }}
                 onClick={() => handleQuizClick(quizz)}
+                key={index}
               >
                 <div
                   className="flex flex-col h-full w-full items-center justify-center"
