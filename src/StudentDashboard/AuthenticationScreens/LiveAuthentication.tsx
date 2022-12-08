@@ -47,7 +47,6 @@ const LiveAuthentication: React.FC<Props> = (props): JSX.Element => {
       // }
     ],
   };
-
   const startVideo = async () => {
     if (!props.authConfigs.examdLiveLaunch) {
       return;
@@ -209,7 +208,6 @@ const LiveAuthentication: React.FC<Props> = (props): JSX.Element => {
   useEffect(() => {
     sendActiveNotification();
     initWebCam();
-
     return () => {
       vStream.getTracks().forEach((track: any) => {
         track.stop();

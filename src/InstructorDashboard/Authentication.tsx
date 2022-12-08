@@ -27,9 +27,7 @@ const Authentication: React.FC = (): JSX.Element => {
   const [studentAvailableForAuth, setStudentAvailableForAuth] =
     React.useState<boolean>(false);
   let [studentId, setStudentId] = React.useState<any>(null);
-  const[selectedStudentId, setSelectedStudentId] = React.useState<null>(null);
   const [quizId, setQuizId] = React.useState<string | null>(null);
-  const [selectedQuizId, setSelectedQuizId] = React.useState<string>("");
   const [selectedRow, setSelectedRow] = React.useState<any>(null);
   let [showWait, setShowWait] = React.useState<boolean>(false);
   let [doAuth, setDoAuth] = React.useState<any>(null);
@@ -173,7 +171,6 @@ const Authentication: React.FC = (): JSX.Element => {
     setSelectedQuizTitle(selectedQuizTitle);
     setSelectedRow(row);
     setQuizId(quizId);
-    setSelectedStudentId(row.id);
     setShowWait(true);
     getStudentProofs(row.id);
   };
@@ -335,7 +332,6 @@ const Authentication: React.FC = (): JSX.Element => {
   };
 
   const getExpandedRow = (row: any) => {
-    setSelectedQuizId(row.quizId);
     getAssignmentSchedules(row.quizId);
     setAssignmentSchedules(null);
     connectSocket(row.id);
@@ -412,7 +408,6 @@ const Authentication: React.FC = (): JSX.Element => {
         urlParamsData.courseId &&
         urlParamsData.userId &&
         urlParamsData.guid &&
-        selectedStudentId &&
         !showWait && (
           <Modal
             visible={showAuthModal}
@@ -437,9 +432,7 @@ const Authentication: React.FC = (): JSX.Element => {
               courseId={urlParamsData.courseId}
               studentPhoto={studentPhoto}
               studentId={studentId}
-              selectedStudentId={selectedStudentId}
               quizId={quizId}
-              selectedQuizId={selectedQuizId}
               selectedRow={selectedRow}
               userId={urlParamsData.userId}
               guid={urlParamsData.guid}

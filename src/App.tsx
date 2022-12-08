@@ -155,16 +155,19 @@ function App() {
     setUserId();
   }, [urlParamsData.invokeUrl]);
 
-  let env = process.env.REACT_APP_ENV;
-  if (env === "DEV") {
-    window.ExamdAutoProctorJS.update_url =
-      "https://examd.us/cdn/urls/xproctor/1";
-  }
+  // useEffect(() => {
+  //   let env = process.env.REACT_APP_ENV;
+  //   if (env === "DEV") {
+  //     window.ExamdAutoProctorJS.update_url =
+  //       "https://examd.us/cdn/urls/xproctor/1";
+  //   }
+  
+  //   if (env === "PROD") {
+  //     window.ExamdAutoProctorJS.update_url =
+  //       "https://examd.online/cdn/urls/xproctor/1";
+  //   }
+  // }, [])
 
-  if (env === "PROD") {
-    window.ExamdAutoProctorJS.update_url =
-      "https://examd.online/cdn/urls/xproctor/1";
-  }
 
   if (
     tokenData &&

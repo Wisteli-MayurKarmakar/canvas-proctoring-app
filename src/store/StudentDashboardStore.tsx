@@ -156,12 +156,17 @@ const getAssignmentSchedule = async () => {
       const timezoneOffset: string = `.${Math.abs(moment().utcOffset()).toString()}Z`
       const scheduleDate: Moment = moment(response.data.scheduleDate + timezoneOffset);
       let scheduleExpired: boolean = false;
+      let gotoQuiz: boolean = false;
       if (today.diff(scheduleDate, "minutes") > 0) {
         scheduleExpired = true
       }
+      if (today.isAfter(scheduleDate, "milliseconds")) {
+        gotoQuiz = true
+      }
       useAssignmentStore.setState({
         selectedAssignmentSchedules: response.data,
-        scheduleExpired: scheduleExpired
+        scheduleExpired: scheduleExpired,
+        gotoQuiz: gotoQuiz
       });
       if (Object.keys(data).length > 0) {
         res = true;

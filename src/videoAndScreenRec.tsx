@@ -204,43 +204,7 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
     useAssignmentStore.setState({
       isNewTabOpen: true,
     });
-    // let isProctoredAssignment: boolean = assignmentStore.isProctoredAssignment;
-    // if (isProctoredAssignment) {
-    //   if (selectedAssignmentSchedule) {
-    //     let time: Moment = moment();
-    //     let schedule: Moment = moment(
-    //       selectedAssignmentSchedule.scheduleDate + "Z"
-    //     );
-    //     let timeDiff: number = schedule.diff(time, "minutes");
 
-    //     if (schedule.isAfter(time)) {
-    //       alert(
-    //         `This quiz is scheduled at ${schedule.format(
-    //           "MM/DD/YYYY hh:mm a"
-    //         )}. Please come back no more than 10 mins prior that on ${schedule.format(
-    //           "MM/DD/YYYY hh:mm a"
-    //         )}.`
-    //       );
-    //       return;
-    //     }
-
-    //     if (timeDiff < 0) {
-    //       if (
-    //         window.confirm(
-    //           `This assignment is scheduled at ${schedule.format(
-    //             "MM/DD/YYYY hh:mm a"
-    //           )} and can be taken on the scheduled date. Please come back 10 mins prior to ${schedule.format(
-    //             "hh:mm a"
-    //           )} to take the quiz. Thank you.`
-    //         )
-    //       ) {
-    //         startProctoring();
-    //         return;
-    //       }
-    //       return;
-    //     }
-    //   }
-    // }
 
     if (!props.assignment) {
       return;

@@ -27,7 +27,7 @@ const StudentIdDlVerification: React.FC<Props> = (props): JSX.Element => {
   let [showIdPicAlert, setShowIdPicAlert] = React.useState<boolean>(false);
   let [studentAuthed, setStudentAuthed] = React.useState<boolean>(false);
   let [authStarted, setAuthStarted] = React.useState<boolean>(false);
-  let [snapshotBlob, setSnapshotBlob] = React.useState<Blob | string>("");
+  // let [snapshotBlob, setSnapshotBlob] = React.useState<Blob | string>("");
   let [retryCount, setRetryCount] = React.useState<number>(0);
   let [isRetry, setIsRetry] = React.useState<boolean>(false);
   let [stream, setStream] = React.useState<MediaStream>();

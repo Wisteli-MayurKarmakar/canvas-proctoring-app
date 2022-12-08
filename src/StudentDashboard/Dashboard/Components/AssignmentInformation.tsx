@@ -2,6 +2,7 @@ import React from "react";
 import { useAssignmentStore } from "../../../store/StudentDashboardStore";
 import { useAppStore } from "../../../store/AppSotre";
 import Timer from "../../../CommonUtilites/Timer";
+import moment, { Moment } from "moment";
 
 const AssignmentsInfo: React.FC = (): JSX.Element => {
   const isNewTab = useAppStore((state) => state.urlParamsData.newTab);
@@ -328,9 +329,12 @@ const AssignmentsInfo: React.FC = (): JSX.Element => {
                       <p className="text-lg font-semibold text-center">
                         Assignment selected: {selectedAssignment.name}.
                       </p>
-                      <p className="text-lg font-semibold text-center">
-                        Please click <b>Start Proctoring</b> button to continue.
-                      </p>
+                      {!isNewTabOpen && (
+                        <p className="text-lg font-semibold text-center">
+                          Please click <b>Start Proctoring</b> button to
+                          continue.
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>

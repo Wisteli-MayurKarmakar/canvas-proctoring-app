@@ -28,7 +28,11 @@ const Payments: React.FC<Props> = ({ visible, close }): JSX.Element => {
   let paypal: any = useRef();
 
   const handleProvider = (value: string) => {
-    if (value === "Paypal") {
+    setProvider(value);
+  };
+
+  useEffect(() => {
+    if (selectedProvider === "Paypal") {
       (window as any).paypal
         .Buttons({
           style: {
@@ -61,8 +65,7 @@ const Payments: React.FC<Props> = ({ visible, close }): JSX.Element => {
         })
         .render(paypal.current);
     }
-    setProvider(value);
-  };
+  }, [selectedProvider]);
 
   useEffect(() => {
     setUserDetails();
@@ -291,7 +294,9 @@ const Payments: React.FC<Props> = ({ visible, close }): JSX.Element => {
           ></textarea>
         </div>
         <div className="flex items-center justify-center">
-          <div ref={paypal} className="self-center"></div>
+          {selectedProvider === "Paypal" && (
+            <div ref={paypal} className="self-center"></div>
+          )}
         </div>
       </div>
     </Modal>

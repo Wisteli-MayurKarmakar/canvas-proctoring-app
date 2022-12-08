@@ -56,62 +56,109 @@ const AssignmentsContainer: React.FC<Props> = (props): JSX.Element => {
   const handleStartAuthentication = () => {
     setShowAuthModal(true);
   };
+  
+
+  // useEffect(() => {
+  //   if (assignmentId) {
+  //     if (selectedAssignment && selectedAssignmentConfigurations) {
+  //       if (!selectedAssignment?.studentAuthed) {
+  //         if (!isProctoredAssignment) {
+  //           console.log("here")
+  //           setShowAuth(true);
+  //           setDisableAuth(false);
+  //         }
+  //         if (isProctoredAssignment) {
+  //           if (schedulesAvailable) {
+  //             const currentTime: Moment = moment();
+  //             let timeZoneOffset: string = `.${Math.abs(
+  //               moment().utcOffset()
+  //             ).toString()}Z`;
+  //             const scheduleDate = moment(
+  //               `${selectedAssignmentSchedules?.scheduleDate + timeZoneOffset}`
+  //             );
+  //             if (currentTime.isSame(scheduleDate, "day")) {
+  //               let diffInMs: number = currentTime.diff(
+  //                 scheduleDate,
+  //                 "milliseconds"
+  //               );
+  //               if (0 > diffInMs) {
+  //                 setShowAuth(true);
+  //                 scheduleInterval = setInterval(() => {
+  //                   setShowAuth(false);
+  //                   clearInterval(scheduleInterval);
+  //                 }, Math.abs(diffInMs));
+  //                 tenMinWindowInterval = setInterval(() => {
+  //                   const diffInMin: number = currentTime.diff(
+  //                     scheduleDate,
+  //                     "minutes"
+  //                   );
+  //                   if (diffInMin >= -10 && diffInMin < 0) {
+  //                     setDisableAuth(false);
+  //                   }
+  //                   if (diffInMin === 0) {
+  //                     clearInterval(tenMinWindowInterval);
+  //                   }
+  //                 }, 1000);
+  //               }
+  //             } else {
+  //               setDisableAuth(true);
+  //               setShowAuth(false);
+  //             }
+  //           }
+  //         }
+  //       } else {
+  //         if (enrollments) {
+  //           setShowProctoring(true);
+  //         }
+  //       }
+  //     }
+  //   }
+  // }, [selectedAssignmentSchedules]);
 
   useEffect(() => {
-    if (assignmentId) {
-      if (selectedAssignment && selectedAssignmentConfigurations) {
-        if (!selectedAssignment?.studentAuthed) {
-          if (!isProctoredAssignment) {
+    if (isProctoredAssignment) {
+      if (schedulesAvailable) {
+        const currentTime: Moment = moment();
+        let timeZoneOffset: string = `.${Math.abs(
+          moment().utcOffset()
+        ).toString()}Z`;
+        const scheduleDate = moment(
+          `${selectedAssignmentSchedules?.scheduleDate + timeZoneOffset}`
+        );
+        if (currentTime.isSame(scheduleDate, "day")) {
+          let diffInMs: number = currentTime.diff(
+            scheduleDate,
+            "milliseconds"
+          );
+          if (0 > diffInMs) {
             setShowAuth(true);
-            setDisableAuth(false);
-          }
-          if (isProctoredAssignment) {
-            if (schedulesAvailable) {
-              const currentTime: Moment = moment();
-              let timeZoneOffset: string = `.${Math.abs(
-                moment().utcOffset()
-              ).toString()}Z`;
-              const scheduleDate = moment(
-                `${selectedAssignmentSchedules?.scheduleDate + timeZoneOffset}`
+            scheduleInterval = setInterval(() => {
+              setShowAuth(false);
+              clearInterval(scheduleInterval);
+            }, Math.abs(diffInMs));
+            tenMinWindowInterval = setInterval(() => {
+              const diffInMin: number = currentTime.diff(
+                scheduleDate,
+                "minutes"
               );
-              if (currentTime.isSame(scheduleDate, "day")) {
-                let diffInMs: number = currentTime.diff(
-                  scheduleDate,
-                  "milliseconds"
-                );
-                if (0 > diffInMs) {
-                  setShowAuth(true);
-                  scheduleInterval = setInterval(() => {
-                    setShowAuth(false);
-                    clearInterval(scheduleInterval);
-                  }, Math.abs(diffInMs));
-                  tenMinWindowInterval = setInterval(() => {
-                    const diffInMin: number = currentTime.diff(
-                      scheduleDate,
-                      "minutes"
-                    );
-                    if (diffInMin >= -10 && diffInMin < 0) {
-                      setDisableAuth(false);
-                    }
-                    if (diffInMin === 0) {
-                      clearInterval(tenMinWindowInterval);
-                    }
-                  }, 1000);
-                }
-              } else {
-                setDisableAuth(true);
-                setShowAuth(false);
+              if (diffInMin >= -10 && diffInMin < 0) {
+                setDisableAuth(false);
               }
-            }
+              if (diffInMin === 0) {
+                clearInterval(tenMinWindowInterval);
+              }
+            }, 1000);
           }
         } else {
-          if (enrollments) {
-            setShowProctoring(true);
-          }
+          setDisableAuth(true);
+          setShowAuth(false);
         }
       }
+    } else {
+      setShowAuth(true);
+      setDisableAuth(false);
     }
-  }, [selectedAssignmentSchedules]);
+  }, [isProctoredAssignment, schedulesAvailable])
 
   useEffect(() => {
     document.addEventListener("keydown", (e) => {

@@ -15,14 +15,8 @@ interface Props {
   userId: string;
   guid: string;
   studentPhoto: any;
-  selectedStudentId: any;
   studentId: any;
-  selectedQuizId: any;
   updateStudentAuthStatus: (data: any) => void;
-}
-
-interface rtcStateProto {
-  [key: string]: boolean;
 }
 
 const AuthenticateUser: React.FC<Props> = (props): JSX.Element => {
@@ -41,7 +35,6 @@ const AuthenticateUser: React.FC<Props> = (props): JSX.Element => {
     React.useState<boolean>(true);
   let vdoDstRef = React.useRef<any>(null);
   const socket = getWebSocketUrl();
-  const [roomName, setRoomName] = React.useState<string>("");
   var peerConnection = React.useRef<any>(null);
   var peerDataChannel = React.useRef<any>(null);
   var destVideo: any = null;
@@ -59,27 +52,12 @@ const AuthenticateUser: React.FC<Props> = (props): JSX.Element => {
     ],
   };
 
-  const webRTCStates: rtcStateProto = {
-    offer: false,
-    answer: false,
-    icecandidateLocal: false,
-    icecandidateDest: false,
-  };
-
   const stopRecordingWebcam = (): void => {
     navigator.mediaDevices.getUserMedia({ video: true }).then((stream) => {
       stream.getTracks().forEach((track) => {
         track.stop();
       });
     });
-  };
-
-  const sendData = (data: any) => {
-    var jsn = {
-      room: roomName,
-      data: data,
-    };
-    socket.emit("rtcdata", jsn);
   };
 
   const createPeerConnection = async () => {
@@ -195,11 +173,6 @@ const AuthenticateUser: React.FC<Props> = (props): JSX.Element => {
 
   const handleSave = async () => {
     setIsAuthenticated(true);
-    setJourneyDetails(
-      "aiAuthentication",
-      props.selectedStudentId,
-      props.selectedQuizId
-    );
     let dataChannelState = await peerDataChannel.current.readyState;
     if (dataChannelState === "open") {
       props.updateStudentAuthStatus({
@@ -220,7 +193,6 @@ const AuthenticateUser: React.FC<Props> = (props): JSX.Element => {
 
   useEffect(() => {
     connectSocket();
-    getJourneyDetails(props.selectedStudentId);
   }, []);
 
   return (
