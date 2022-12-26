@@ -85,6 +85,7 @@ function App() {
 
     //use url -->
     //http://localhost:3000/lti/config?studentId=43&assignmentId=366&loginId=ncghosh@gmail.com&courseId=24&userId=1&courseId=24&invokeUrl=https://canvas.examd.online/courses/24/external_content/success/external_tool_redirect&accountId=4&toolConsumerGuid=Examd
+    
 
     if (!accId) {
       accId = "1";
@@ -144,7 +145,8 @@ function App() {
 
     if (response.status === 200) {
       let authData: { [key: string]: string } = { ...response.data };
-      authData["access_token"] = response.data.lmsAccessToken;
+      authData["access_token"] = response.data.lmsToken;
+      authData["lmsAccessToken"] = response.data.lmsToken;
       response.data = { ...authData };
       setTokenData(response.data);
     }
@@ -155,18 +157,18 @@ function App() {
     setUserId();
   }, [urlParamsData.invokeUrl]);
 
-  // useEffect(() => {
-  //   let env = process.env.REACT_APP_ENV;
-  //   if (env === "DEV") {
-  //     window.ExamdAutoProctorJS.update_url =
-  //       "https://examd.us/cdn/urls/xproctor/1";
-  //   }
+  useEffect(() => {
+    let env = process.env.REACT_APP_ENV;
+    if (env === "DEV") {
+      window.ExamdAutoProctorJS.update_url =
+        "https://examd.us/cdn/urls/xproctor/1";
+    }
   
-  //   if (env === "PROD") {
-  //     window.ExamdAutoProctorJS.update_url =
-  //       "https://examd.online/cdn/urls/xproctor/1";
-  //   }
-  // }, [])
+    if (env === "PROD") {
+      window.ExamdAutoProctorJS.update_url =
+        "https://examd.online/cdn/urls/xproctor/1";
+    }
+  }, [])
 
 
   if (

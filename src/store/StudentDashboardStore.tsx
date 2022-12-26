@@ -4,6 +4,7 @@ import create from "zustand";
 import { devtools } from "zustand/middleware";
 import { getLtiCanvasConfigByAssignment, getScheduling } from "../apiConfigs";
 import { useAppStore } from "./AppSotre";
+import { useStudentWorflowControllerStore } from "./StudentWorkflowControllerStore";
 
 type Assignment = {
   id: number;
@@ -53,13 +54,14 @@ type AssignmentConfiguration = {
   whitelistPages: boolean;
 };
 
-type StudentEnrollments = {
+export type StudentEnrollments = {
   course_id: string;
   enrollment_state: string;
   id: string;
   role: string;
   status: string;
   type: string;
+  idApprovalStatus?: boolean;
   user: { id: string; name: string; login_id: string };
   user_id: string;
 };
@@ -69,6 +71,7 @@ type CommonStudentDashboardStore = {
   loggedInUserEnrollmentType: string;
   setEnrollments: (data: StudentEnrollments) => void;
   setLoggedInUserEnrollmentType: (type: string) => void;
+  updateEnrollmentWithIdApprovalStatus: (data: StudentEnrollments) => void;
 };
 
 type Schedule = {
@@ -85,13 +88,15 @@ type Schedule = {
 type AssignmentStore = {
   assignments?: Assignment[];
   selectedAssignment?: Assignment;
+  showAuth: boolean;
+  disableAuth: boolean;
   selectedAssignmentConfigurations?: AssignmentConfiguration;
   selectedAssignmentSchedules: Schedule | null;
   schedulesAvailable: boolean;
   gotoQuiz: boolean;
-  scheduleExpired: boolean;
+  scheduleExpired?: boolean;
   assignmentSubmitted: boolean;
-  isProctoredAssignment: boolean;
+  isProctoredAssignment?: boolean;
   isNewTabOpen?: boolean;
   checkAssignmentSchedules: () => void;
   setAssignments: (assignments: Assignment[]) => void;
@@ -113,7 +118,7 @@ const getQuizConfigs = async (assignmentId: number, guid: string) => {
   return null;
 };
 
-const getAssignmentSchedule = async () => {
+const getAssignmentSchedule = async (isProctoredAssignment: boolean) => {
   let res: boolean = false;
 
   const assignmentId = useAssignmentStore.getState().selectedAssignment?.id;
@@ -152,28 +157,57 @@ const getAssignmentSchedule = async () => {
     );
 
     if (response.status === 200) {
-      const today: Moment = moment()
-      const timezoneOffset: string = `.${Math.abs(moment().utcOffset()).toString()}Z`
-      const scheduleDate: Moment = moment(response.data.scheduleDate + timezoneOffset);
+      const today: Moment = moment();
+      const timezoneOffset: string = `.${Math.abs(
+        moment().utcOffset()
+      ).toString()}Z`;
+      const scheduleDate: Moment = moment(
+        response.data.scheduleDate + timezoneOffset
+      );
       let scheduleExpired: boolean = false;
-      let gotoQuiz: boolean = false;
-      if (today.diff(scheduleDate, "minutes") > 0) {
-        scheduleExpired = true
-      }
-      if (today.isAfter(scheduleDate, "milliseconds")) {
-        gotoQuiz = true
+      if (
+        today.diff(scheduleDate, "minutes") > 0 ||
+        today.diff(scheduleDate, "days")
+      ) {
+        scheduleExpired = true;
       }
       useAssignmentStore.setState({
         selectedAssignmentSchedules: response.data,
         scheduleExpired: scheduleExpired,
-        gotoQuiz: gotoQuiz
       });
       if (Object.keys(data).length > 0) {
         res = true;
       }
+      if (!isProctoredAssignment && scheduleExpired) {
+        useAssignmentStore.setState({
+          gotoQuiz: true,
+        });
+      }
+      if (isProctoredAssignment && scheduleExpired) {
+        useAssignmentStore.setState({
+          gotoQuiz: true,
+        });
+      }
     }
-    useAssignmentStore.setState({ schedulesAvailable: true });
-  } catch (err) {}
+    useAssignmentStore.setState({ schedulesAvailable: res });
+  } catch (err) {
+    if (!isProctoredAssignment) {
+      useAssignmentStore.setState({
+        selectedAssignmentSchedules: null,
+        gotoQuiz: true,
+      });
+      useStudentWorflowControllerStore.setState({
+        showAuthButton: true,
+        enableAuth: true,
+      });
+    } else {
+      useAssignmentStore.setState({
+        schedulesAvailable: false,
+        scheduleExpired: true,
+        selectedAssignmentSchedules: null,
+      });
+    }
+  }
 };
 
 const checkIfProctored = async (assignmentConfig: AssignmentConfiguration) => {
@@ -185,18 +219,19 @@ const checkIfProctored = async (assignmentConfig: AssignmentConfiguration) => {
     assignmentConfig.examdProctored
   ) {
     resProctoring = true;
-    useAssignmentStore.setState({ isProctoredAssignment: resProctoring });
   }
-  await getAssignmentSchedule();
+  useAssignmentStore.setState({ isProctoredAssignment: resProctoring });
+  await getAssignmentSchedule(resProctoring);
 };
 
 export const useAssignmentStore = create<AssignmentStore>()(
   devtools(
     (set, get) => ({
-      isProctoredAssignment: false,
+      // isProctoredAssignment: false,
+      showAuth: false,
+      disableAuth: true,
       schedulesAvailable: false,
       assignmentSubmitted: false,
-      scheduleExpired: false,
       gotoQuiz: false,
       selectedAssignmentSchedules: null,
       isNewTabOpen: false,
@@ -228,8 +263,11 @@ export const useAssignmentStore = create<AssignmentStore>()(
             });
           }
         });
-        const {urlParamsData} = useAppStore.getState()
-        let res = await getQuizConfigs(assignment.id, urlParamsData.guid as string);
+        const { urlParamsData } = useAppStore.getState();
+        let res = await getQuizConfigs(
+          assignment.id,
+          urlParamsData.guid as string
+        );
 
         set({
           selectedAssignmentConfigurations: res,
@@ -260,12 +298,15 @@ export const useAssignmentStore = create<AssignmentStore>()(
         });
       },
       checkAssignmentSchedules: async () => {
-        await getAssignmentSchedule();
+        const isProctoredAssignment = get().isProctoredAssignment;
+        if (isProctoredAssignment) {
+          await getAssignmentSchedule(isProctoredAssignment);
+        }
       },
       setAssignmentSubmitted: (flag: boolean) => {
         set({
           assignmentSubmitted: flag,
-        })
+        });
       },
     }),
     { name: "Assignment Store" }
@@ -289,6 +330,11 @@ export const useCommonStudentDashboardStore =
           set({
             loggedInUserEnrollmentType: type,
           });
+        },
+        updateEnrollmentWithIdApprovalStatus: (data: StudentEnrollments) => {
+          set({
+            enrollments: data
+          })
         },
       }),
       { name: "Common Student_Dashboard_Store" }

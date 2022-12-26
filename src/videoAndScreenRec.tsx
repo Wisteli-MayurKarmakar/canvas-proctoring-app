@@ -22,9 +22,11 @@ import {
   saveLtiVideoRef,
   completeCanvasQuizSubmission as completeCanvasQuizSubmissionUrl,
   submitAssignment,
+  saveLtiConsumptions,
 } from "./apiConfigs";
 import { useAssignmentStore } from "./store/StudentDashboardStore";
 import { useStudentJourneyStore } from "./store/StudentProctorJourneyStore";
+import { ConsumptionDetails } from "./AppTypes";
 
 declare global {
   interface Window {
@@ -173,7 +175,7 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
         idExam: props.quizId,
         status: 1,
         courseId: props.courseId,
-        toolConsumerInstanceGuid: props.toolConsumerGuid,
+        guid: urlParamsData.guid,
         examDate: selectedAssignment?.due_at,
         examActualStartTime: startTime.toISOString(),
         examActualEndTime: endTime.toISOString(),
@@ -204,7 +206,6 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
     useAssignmentStore.setState({
       isNewTabOpen: true,
     });
-
 
     if (!props.assignment) {
       return;
@@ -270,9 +271,7 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
     if (response.status === 200) {
       setJourneyDetails("assignmentSubmitted");
       window.localStorage.setItem("assgnSubmit", "1");
-      message.success(
-        "Assignment submitted successfully. Please go to quiz page and continue. Thanks"
-      );
+      message.success("Assignment submitted successfully.");
       return;
     }
     window.localStorage.setItem("assgnSubmit", "0");
@@ -280,10 +279,30 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
     return;
   };
 
+  const saveConsumptionDetails = async () => {
+    let payload: ConsumptionDetails = {
+      guid: urlParamsData.guid as string,
+      emailId: urlParamsData.studentId as string,
+      userId: urlParamsData.studentId as string,
+      courseId: parseInt(urlParamsData.courseId as string),
+      quizId: parseInt(
+        assignmentStore.selectedAssignmentConfigurations?.quizId as string
+      ),
+      productType: "",
+      durationInMins: assignmentStore.selectedAssignment?.time_limit as number,
+      interactionDate: moment().toISOString(),
+      status: 0,
+    };
+    let response = await axios.post(`${saveLtiConsumptions}`, { ...payload });
+  };
+
   const startProctoring = async () => {
-    if ("time_limit" in props.assignment) {
+    if (
+      assignmentStore.selectedAssignmentConfigurations &&
+      "timeLimit" in assignmentStore.selectedAssignmentConfigurations
+    ) {
       let time = moment().add(
-        parseInt(props.assignment["time_limit"]) + 5,
+        assignmentStore.selectedAssignmentConfigurations["timeLimit"] as number + 5,
         "minutes"
       );
       let expTime: number = Math.round(
@@ -303,6 +322,7 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
       }
     }
     if (!props.isNewTab) {
+      saveConsumptionDetails();
       handleOpenQuizInNewTab();
       return;
     }
@@ -543,7 +563,6 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
     let url_string = window.location.href;
     let url = new URL(url_string);
     let onSeb = url.searchParams.get("onSEBApp");
-    localStorage.removeItem("tabClose");
     localStorage.removeItem("assgnSubmit");
 
     if (props.isNewTab) {
@@ -563,7 +582,6 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
       }, 10000);
       startProctoring();
     }
-
     return () => {
       clearInterval(checkSubmissionInterval);
     };

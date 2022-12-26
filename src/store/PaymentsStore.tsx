@@ -8,7 +8,7 @@ import { useAppStore } from "./AppSotre";
 const getUserDetails = async (): Promise<StudentDetails | null> => {
   const { urlParamsData } = useAppStore.getState();
   let response = await axios.post(
-    `${getLtiStudentProfileDetails}/${urlParamsData.guid}/${urlParamsData.studentId}`
+    `${getLtiStudentProfileDetails}${urlParamsData.guid}/${urlParamsData.studentId}`
   );
   if (response.status === 200) {
     return response.data;

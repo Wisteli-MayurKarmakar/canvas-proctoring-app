@@ -8,6 +8,7 @@ import {
 import { useAppStore } from "../../store/AppSotre";
 import AcccessibilityModal from "../../CommonUtilites/Modals/AccessibilityModal";
 import { useAccessiblityStore } from "../../store/globalStore";
+import UpdateProfile from "../../CommonUtilites/Modals/UpdateProfile";
 
 type Student = {
   id: string;
@@ -22,8 +23,11 @@ const Enrollments: React.FC = (): JSX.Element => {
   const [getStudentsError, setGetStudentsError] = useState<boolean>(false);
   const [fetchingStudents, setFetchingStudents] = useState<boolean>(true);
   const [selectedAction, setSelectedAction] = useState<string>("");
-  const {urlParamsData, tokenData} = useAppStore((state) => state);
+  const { urlParamsData, tokenData } = useAppStore((state) => state);
   const [studentId, setStudentId] = useState<any>(null);
+  const [selectedStudentId, setSelectedStudentId] = useState<any>(null);
+  const [showUpdateProfileModal, setShowUpdateProfileModal] =
+    useState<boolean>(false);
   const setAccessibilityConfigurations = useAccessiblityStore(
     (state) => state.setAccessibilityConfigurations
   );
@@ -48,6 +52,11 @@ const Enrollments: React.FC = (): JSX.Element => {
   const handleAction = (studentId: string) => {
     getStudentAccessibilityConfigurations(studentId);
     setStudentId(studentId);
+  };
+
+  const handleUpdateProfile = (id: string) => {
+    setSelectedStudentId(id);
+    setShowUpdateProfileModal(!showUpdateProfileModal);
   };
 
   const studentColumns = [
@@ -80,6 +89,14 @@ const Enrollments: React.FC = (): JSX.Element => {
     },
     {
       dataIndex: "",
+      key: "idApproval",
+      title: `ID Approval Status`,
+      render: (row: Student) => {
+        return <p className="text-semibold">N/A</p>;
+      },
+    },
+    {
+      dataIndex: "",
       key: "action",
       title: `Actions`,
       render: (row: Student) => {
@@ -90,6 +107,9 @@ const Enrollments: React.FC = (): JSX.Element => {
             </button>
             <button key="contact" onClick={() => handleAction(row.id)}>
               Contact Me
+            </button>
+            <button key="approveId" onClick={() => handleUpdateProfile(row.id)}>
+              Id Approval
             </button>
           </div>
         );
@@ -138,6 +158,19 @@ const Enrollments: React.FC = (): JSX.Element => {
                 studentId={studentId}
               />
             )}
+            {showUpdateProfileModal &&
+              tokenData.lmsAccessToken &&
+              urlParamsData.guid &&
+              selectedStudentId && (
+                <UpdateProfile
+                  show={showUpdateProfileModal}
+                  close={() => setShowUpdateProfileModal(false)}
+                  authToken={tokenData.lmsAccessToken}
+                  guid={urlParamsData.guid}
+                  userId={selectedStudentId}
+                  title={"idApproval"}
+                />
+              )}
           </div>
         );
       }
@@ -153,7 +186,7 @@ const Enrollments: React.FC = (): JSX.Element => {
   }
 
   return (
-    <p className="text-blue-500 text-center font-bold text-xl">
+    <p className="text-center font-semibold text-xl">
       Fetching Students. Please wait...
     </p>
   );

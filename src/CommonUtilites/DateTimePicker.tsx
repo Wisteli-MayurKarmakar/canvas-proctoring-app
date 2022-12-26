@@ -8,6 +8,7 @@ import { useCommonStudentDashboardStore } from "../store/StudentDashboardStore";
 import emailjs from "@emailjs/browser";
 import axios from "axios";
 import { saveScheduling } from "../apiConfigs";
+import { useStudentWorflowControllerStore } from "../store/StudentWorkflowControllerStore";
 
 type Props = {
   visible: boolean;
@@ -53,6 +54,7 @@ const App: React.FC<Props> = (props): JSX.Element => {
   const onDateChange = (value: Moment) => {
     setDate(value);
   };
+  const { initWorkflow } = useStudentWorflowControllerStore((state) => state);
 
   const sendMail = (date: Moment | null, time: Moment | null) => {
     let serviceId: string = "service_2su5kx4";
@@ -117,7 +119,6 @@ const App: React.FC<Props> = (props): JSX.Element => {
       message.error("Failed to save the schedule. Please try again");
       return;
     }
-
     checkAssignmentSchedules();
     sendMail(date, time);
     close();
@@ -155,26 +156,22 @@ const App: React.FC<Props> = (props): JSX.Element => {
             fullscreen={false}
             key="calendar"
             onChange={onDateChange}
-            disabledDate={(current) => {
-              let upperBound: number = 0;
-              upperBound = moment(selectedAssignment?.lock_at).diff(
-                moment(),
-                "days"
-              );
-              return (
-                moment().add(2, "days") >= current ||
-                moment().add(upperBound + 1, "days") <= current
-              );
-            }}
+            // disabledDate={(current) => {
+            //   let upperBound: number = 0;
+            //   upperBound = moment(selectedAssignment?.lock_at).diff(
+            //     moment(),
+            //     "days"
+            //   );
+            //   return (
+            //     moment().add(2, "days") >= current ||
+            //     moment().add(upperBound + 1, "days") <= current
+            //   );
+            // }}
           />
         </div>
         <div className="flex flex-col items-center justify-between h-full w-full gap-8">
           <p className="text-center text-lg font-semibold">Select Time</p>
-          <TimePicker
-            value={time}
-            onChange={onTimeChange}
-            format={"hh:mm A"}
-          />
+          <TimePicker value={time} onChange={onTimeChange} format={"hh:mm A"} />
           <div className="flex flex-col items-center pt-8 gap-2">
             <p className="text-center font-semibold text-md">
               Date - Time Selected

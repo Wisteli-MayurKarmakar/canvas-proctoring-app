@@ -34,6 +34,7 @@ import {
   saveLtiCanvasConfig,
   getLtiCanvasConfigByGuidCourseIdQuizId,
   fetchCanvasQuizzesByCourseId,
+  recoverQuiz,
 } from "./apiConfigs";
 import { message, Tooltip } from "antd";
 import CustomizationSummary from "./CommonUtilites/CustomizationSummary";
@@ -215,10 +216,10 @@ const settingOptions: settingStruct = {
       fullName: "Examd Live Launch",
       icon: <RocketOutlined style={{ fontSize: iconSize }} />,
     },
-    instructorProctored: {
-      fullName: "Instructor Proctored",
-      icon: <IdcardOutlined style={{ fontSize: iconSize }} />,
-    },
+    // instructorProctored: {
+    //   fullName: "Instructor Proctored",
+    //   icon: <IdcardOutlined style={{ fontSize: iconSize }} />,
+    // },
     examdProctored: {
       fullName: "Examd Proctored",
       icon: <img src={ExamdLogo} width={100} height={100} />,
@@ -244,9 +245,17 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
   const [showSummary, setShowSummary] = useState<boolean>(false);
   const [quicKConfigSelected, setQuicKConfigSelected] = useState<string>("");
   let [isReset, setIsReset] = useState<boolean>(false);
-  const { tokenData, courseDetails } = useAppStore((state) => state);
+  const { tokenData, courseDetails, urlParamsData } = useAppStore(
+    (state) => state
+  );
+  const [recoveringQuiz, setRecoveringQuiz] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const quizStoreState = useQuizStore((state) => state);
+  const quizRecoveryMsg: JSX.Element = (
+    <p className="text-center font-semibold text-lg">
+      Recovering Quiz. Please wait...
+    </p>
+  );
   const resetOptionSelection = (option: string) => {
     let selectables: optionCheckedProto = { ...(checked[option] as {}) };
     for (let key in selectables) {
@@ -452,7 +461,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
     allOptions["idLtiCanvasConfig"] = uuid();
     allOptions["idUser"] = props.id;
     allOptions["quizId"] = selectedQuiz.id;
-    allOptions["toolConsumerInstanceGuid"] = props.toolConsumerGuid;
+    allOptions["guid"] = props.toolConsumerGuid;
     allOptions["courseId"] = props.courseId;
     allOptions["assignmentId"] = 0;
 
@@ -739,6 +748,25 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
     }
   };
 
+  const handleRepairModule = async () => {
+    if (!selectedQuiz) {
+      message.error("Please select a quiz");
+      return;
+    }
+    setRecoveringQuiz(true);
+    let response = await axios.post(
+      `${recoverQuiz}/${tokenData.instituteId}/${urlParamsData.courseId}/${selectedQuiz.id}/${selectedQuiz.title}/${tokenData.lmsAccessToken}`
+    );
+
+    if (response.status === 200) {
+      message.success("Quiz recovered successfully");
+      setRecoveringQuiz(false);
+      return;
+    }
+    message.error("Failed to recover quiz");
+    return;
+  };
+
   return (
     <>
       {courseDetails.name && (
@@ -808,7 +836,9 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
                         className="form-check-input appearance-none h-4 w-4 border self-center border-gray-300 rounded-sm bg-white checked:bg-blue-600 checked:border-blue-600 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer"
                         type="checkbox"
                         value=""
-                        id="flexCheckDefault"
+                        id={`${setting.name}_${
+                          defaultSettingsOptionsChecked[setting.name]
+                        }`}
                         onChange={(e) =>
                           handleCheckboxChange(e, index, setting.name)
                         }
@@ -841,6 +871,14 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
               showConfigurations ? "Hide Customization" : "Edit Customization"
             }`}
           </p>
+          {!showConfigurations && (
+            <p
+              className="text-center text-blue-400 font-semibold cursor-pointer underline text-lg mt-4 mb-4"
+              onClick={handleRepairModule}
+            >
+              Repair Proctoring Module
+            </p>
+          )}
         </div>
         {showConfigurations && selectedQuiz && (
           <div className="container mx-auto mt-2">
@@ -917,6 +955,13 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
               </button>
             </div>
           </div>
+        )}
+        {recoverQuiz && (
+          <WaitingModal
+            visible={recoveringQuiz}
+            title="Quiz Recovery"
+            message={quizRecoveryMsg}
+          />
         )}
         {showSummary && (
           <CustomizationSummary

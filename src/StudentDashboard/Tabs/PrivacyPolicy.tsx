@@ -113,7 +113,7 @@ const PrivacyPolicy: React.FC<Props> = (props): JSX.Element => {
       <h5>Industry regulatory disclosure requirements</h5>
       {props.showAgree && (
         <div className="flex flex-row gap-6 items-center justify-center text-xl">
-          <input type="checkbox" onClick={handleClick} />{" "}
+          <input type="checkbox" onClick={handleClick} className="w-5 h-5" />{" "}
           <b>Agree privacy policy </b>
         </div>
       )}

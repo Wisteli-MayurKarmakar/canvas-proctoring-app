@@ -1,9 +1,12 @@
-import { Modal } from "antd";
+import { Modal, message as msg } from "antd";
 import axios from "axios";
-import React, { RefObject, useEffect, useRef } from "react";
-import { getLtiStudentProfileDetails } from "../../../apiConfigs";
+import React, { useEffect, useRef, useState } from "react";
+import { getLtiPayments, saveLtiPayments } from "../../../apiConfigs";
+import { PaymentDetails } from "../../../AppTypes";
 import { useAppStore } from "../../../store/AppSotre";
 import { usePaymentsStore } from "../../../store/PaymentsStore";
+import WaitingModal from "../../../CommonUtilites/WaitingModal";
+import { useCommonStudentDashboardStore } from "../../../store/StudentDashboardStore";
 
 type Props = {
   visible: boolean;
@@ -11,6 +14,9 @@ type Props = {
 };
 
 const Payments: React.FC<Props> = ({ visible, close }): JSX.Element => {
+  const [savingPaymentDetails, setSavingPaymentDetails] =
+    useState<boolean>(false);
+
   const {
     setUserDetails,
     selectedProvider,
@@ -25,10 +31,33 @@ const Payments: React.FC<Props> = ({ visible, close }): JSX.Element => {
     setMessage,
   } = usePaymentsStore((state) => state);
 
+  const { urlParamsData, tokenData } = useAppStore((state) => state);
+
+  const waitMsg: JSX.Element = (
+    <p className="text-center mx-auto text-lg font-semibold">
+      Saving payment details. Please wait...
+    </p>
+  );
+
   let paypal: any = useRef();
 
   const handleProvider = (value: string) => {
     setProvider(value);
+  };
+
+  const saveLtiPaymentDetails = async (payload: PaymentDetails) => {
+    setSavingPaymentDetails(true);
+    let response = await axios.post(`${saveLtiPayments}`, { ...payload });
+
+    if (response.status === 200) {
+      msg.success("Payment details saved successfully");
+    }
+    setSavingPaymentDetails(false);
+    close();
+  };
+
+  const getPaymentDetails = async () => {
+    // let response = await axios.post(`${getLtiPayments}`)
   };
 
   useEffect(() => {
@@ -58,6 +87,22 @@ const Payments: React.FC<Props> = ({ visible, close }): JSX.Element => {
           onApprove: async (data: any, actions: any) => {
             const order = await actions.order.capture();
             console.log(order);
+            let payload: PaymentDetails = {
+              guid: urlParamsData.guid as string,
+              provider: "Paypal",
+              paymentDate:
+                order.purchase_units[0].payments.captures[0].update_time,
+              paymentAmount: parseInt(
+                order.purchase_units[0].payments.captures[0].amount.value
+              ),
+              payerId: useCommonStudentDashboardStore.getState().enrollments?.user.id as string,
+              primaryEmail: order.payer.email_address,
+              billingEmail: billingEmail,
+              paymentReferenceNumber:
+                order.purchase_units[0].payments.captures[0].id,
+              status: 1,
+            };
+            saveLtiPaymentDetails(payload);
           },
           onError: (err: any) => {
             console.log(err);
@@ -69,6 +114,7 @@ const Payments: React.FC<Props> = ({ visible, close }): JSX.Element => {
 
   useEffect(() => {
     setUserDetails();
+    getPaymentDetails();
   }, []);
 
   return (
@@ -77,6 +123,7 @@ const Payments: React.FC<Props> = ({ visible, close }): JSX.Element => {
       onCancel={close}
       title="Payment Details"
       maskClosable={false}
+      destroyOnClose={true}
       width={"70pc"}
       footer={[
         <button
@@ -88,14 +135,14 @@ const Payments: React.FC<Props> = ({ visible, close }): JSX.Element => {
         >
           Cancel
         </button>,
-        <button
-          id="submit"
-          type="button"
-          key="submit"
-          className="inline-block px-6 py-2.5 bg-blue-600 ml-8 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
-        >
-          Submit
-        </button>,
+        // <button
+        //   id="submit"
+        //   type="button"
+        //   key="submit"
+        //   className="inline-block px-6 py-2.5 bg-blue-600 ml-8 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
+        // >
+        //   Submit
+        // </button>,
       ]}
     >
       <div className="flex flex-col w-full justify-center gap-4">
@@ -299,38 +346,15 @@ const Payments: React.FC<Props> = ({ visible, close }): JSX.Element => {
           )}
         </div>
       </div>
+      {savingPaymentDetails && (
+        <WaitingModal
+          visible={savingPaymentDetails}
+          title="Saving details"
+          message={waitMsg}
+        />
+      )}
     </Modal>
   );
-  //     <Modal
-  //       visible={visible}
-  //       onCancel={close}
-  //       title="Payment Details"
-  //       maskClosable={false}
-  //       width={"70pc"}
-  //       footer={[
-  //         <button
-  //           type="button"
-  //           id="cancel"
-  //           key="cancel"
-  //           className="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
-  //         >
-  //           Cancel
-  //         </button>,
-  //         <button
-  //           id="submit"
-  //           type="button"
-  //           key="submit"
-  //           className="inline-block px-6 py-2.5 bg-blue-600 ml-8 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
-  //         >
-  //           Submit
-  //         </button>,
-  //       ]}
-  //     >
-  //       <p className="text-center mx-auto text-lg font-semibold">
-  //         Fetching details. Please wait...
-  //       </p>
-  //     </Modal>
-  //   );
 };
 
 export default Payments;

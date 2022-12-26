@@ -31,9 +31,7 @@ const ProcotoringByQuiz: React.FC = (): JSX.Element => {
     React.useState<any>(null);
   const { urlParamsData, tokenData } = useAppStore((state) => state);
   const [socketRoom, setSocketRoom] = React.useState<any>(null);
-  const [socketUser, setSocketUser] = React.useState<any>(
-    "chat_" + urlParamsData.userId
-  );
+  const socketUser: string = "chat_" + urlParamsData.userId;
   const [quizzesStatus, setQuizzesStatus] = React.useState<QuizStatus>({});
   const socket = getWebSocketUrl();
   const { createConnection, messagesIncoming } = useSocketStore(
@@ -76,24 +74,18 @@ const ProcotoringByQuiz: React.FC = (): JSX.Element => {
       key: "action",
       title: "Action",
       render: (row: any) => {
-        if (Object.keys(quizzesStatus).length > 0 && selectedQuiz) {
-          return (
-            <Button
-              type="link"
-              disabled={
-                quizzesStatus[selectedQuiz.assignment_id as keyof QuizStatus]
-                  .ongoing
-                  ? false
-                  : true
-              }
-              onClick={() => showLiveStreamModal(row)}
-            >
-              Live Stream
-            </Button>
-          );
-        }
         return (
-          <Button type="link" disabled={true}>
+          <Button
+            type="link"
+            disabled={
+              // quizzesStatus[selectedQuiz.assignment_id as keyof QuizStatus]
+              //   .ongoing
+              //   ? false
+              //   : true
+              selectedQuiz ? false : true
+            }
+            onClick={() => showLiveStreamModal(row)}
+          >
             Live Stream
           </Button>
         );

@@ -8,43 +8,43 @@ type Props = {
   handleSave: () => void;
 };
 
-const abbrs: any = {
-  "Recording Options": {
-    recordWebcam: false,
-    recordScreen: false,
-    recordAudio: false,
-    chat: false,
-  },
-  "Verification Options": {
-    studentPicture: false,
-    studentIdDl: false,
-    roomScan: false,
-    otp: false,
-  },
-  "Student Resources": {
-    calculatorAllowed: false,
-    scratchPadAllowed: false,
-    liveHelp: false,
-    whitelistPages: false,
-  },
-  "Lock Down Options": {
-    disableCopyPaste: false,
-    disablePrinting: false,
-    lockdownBrowser: false,
-  },
-  "Violation Options": {
-    multiplePerson: false,
-    cellPhone: false,
-    noPersonInRoom: false,
-    speaking: false,
-  },
-  "Proctor Options": {
-    postExamReview: false,
-    examdLiveLaunch: false,
-    instructorProctored: false,
-    examdProctored: false,
-  },
-};
+// const abbrs: any = {
+//   "Recording Options": {
+//     recordWebcam: false,
+//     recordScreen: false,
+//     recordAudio: false,
+//     chat: false,
+//   },
+//   "Verification Options": {
+//     studentPicture: false,
+//     studentIdDl: false,
+//     roomScan: false,
+//     otp: false,
+//   },
+//   "Student Resources": {
+//     calculatorAllowed: false,
+//     scratchPadAllowed: false,
+//     liveHelp: false,
+//     whitelistPages: false,
+//   },
+//   "Lock Down Options": {
+//     disableCopyPaste: false,
+//     disablePrinting: false,
+//     lockdownBrowser: false,
+//   },
+//   "Violation Options": {
+//     multiplePerson: false,
+//     cellPhone: false,
+//     noPersonInRoom: false,
+//     speaking: false,
+//   },
+//   "Proctor Options": {
+//     postExamReview: false,
+//     examdLiveLaunch: false,
+//     instructorProctored: false,
+//     examdProctored: false,
+//   },
+// };
 
 const settingOptions: any = {
   "Recording Options": {
@@ -121,9 +121,9 @@ const settingOptions: any = {
     examdLiveLaunch: {
       fullName: "Examd Live Launch",
     },
-    instructorProctored: {
-      fullName: "Instructor Proctored",
-    },
+    // instructorProctored: {
+    //   fullName: "Instructor Proctored",
+    // },
     examdProctored: {
       fullName: "Examd Proctored",
     },
@@ -219,7 +219,7 @@ const CustomizationSummary: React.FC<Props> = (props): JSX.Element => {
           })}
         </div>
         {props.quickConfig !== "" && (
-          <div className="flex space-x-2 justify-start">
+          <div className="flex space-x-2 justify-start mb-1">
             <button
             onClick={props.handleSave}
               type="button"
@@ -234,8 +234,8 @@ const CustomizationSummary: React.FC<Props> = (props): JSX.Element => {
   }
 
   return (
-    <p className="text-center text-blue-400 text-xl">
-      No Customization Summary available...
+    <p className="text-center text-lg">
+      No Customization Summary available.
     </p>
   );
 };

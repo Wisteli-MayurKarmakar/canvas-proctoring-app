@@ -1,5 +1,5 @@
 import { Tooltip } from "antd";
-import moment, { Moment } from "moment";
+import moment from "moment";
 import React, { useEffect, useRef, useState } from "react";
 import { useAssignmentStore } from "../../../store/StudentDashboardStore";
 import { useAppStore } from "../../../store/AppSotre";
@@ -7,7 +7,8 @@ import AuthenticationModal from "../../Modals/AuthenticationModal";
 import { useCommonStudentDashboardStore } from "../../../store/StudentDashboardStore";
 import VideoAndScreenRec from "../../../videoAndScreenRec";
 import DateTimePicker from "../../../CommonUtilites/DateTimePicker";
-
+import { useStudentWorflowControllerStore } from "../../../store/StudentWorkflowControllerStore";
+import ConfirmModal from "../../../CommonUtilites/Modals/ConfirmModal";
 
 type Props = {
   isNewTab: boolean;
@@ -19,29 +20,34 @@ const AssignmentsContainer: React.FC<Props> = (props): JSX.Element => {
     assignments,
     setStudentAuthed,
     selectedAssignmentConfigurations,
+    scheduleExpired,
     selectedAssignmentSchedules,
-    isProctoredAssignment,
     schedulesAvailable,
     setSelectedAssignment,
     selectedAssignment,
-    assignmentSubmitted
+    assignmentSubmitted,
   } = useAssignmentStore((state) => state);
-  const {tokenData, urlParamsData,} = useAppStore((state) => state);
-  const assignmentId = useAppStore((state) => state.urlParamsData.assignmentId);
+  const { tokenData, urlParamsData } = useAppStore((state) => state);
   let [showDateTimePicker, setShowDateTimePicker] = useState<boolean>(false);
+  const [showApprovalWarning, setShowApprovalWarning] =
+    useState<boolean>(false);
   const inputRef = useRef<any>();
-  const enrollments = useCommonStudentDashboardStore(
-    (state) => state.enrollments
-  );
-  const [disableAuth, setDisableAuth] = useState<boolean>(true);
-  const [showAuth, setShowAuth] = useState<boolean>(false);
-  const [showProctoring, setShowProctoring] = useState<boolean>(false);
+  const { enrollments } = useCommonStudentDashboardStore((state) => state);
   let scheduleInterval: any = null;
-  let tenMinWindowInterval: any = null;
-
+  let expiryInterval: any = null;
   const handleSelectAssignment = (assignment: any): void => {
     setSelectedAssignment(assignment);
   };
+  const approvalWarningMsg: string =
+    "You have uploaded Photo or ID which is not yet approved by your Instructor. Please contact your instructor. Thanks.";
+
+  const {
+    initWorkflow,
+    showAuthButton,
+    enableAuth,
+    showProctoringButton,
+    handleAuthComplete,
+  } = useStudentWorflowControllerStore((state) => state);
 
   const handleDateTimePicker = () => {
     setShowDateTimePicker(!showDateTimePicker);
@@ -49,116 +55,20 @@ const AssignmentsContainer: React.FC<Props> = (props): JSX.Element => {
 
   const handleStudentAuthentication = () => {
     setStudentAuthed();
-    setShowProctoring(true);
-    setShowAuth(false);
+    handleAuthComplete();
   };
 
   const handleStartAuthentication = () => {
-    setShowAuthModal(true);
+    if (enrollments?.idApprovalStatus) {
+      setShowAuthModal(true);
+    } else {
+      setShowApprovalWarning(true);
+    }
   };
-  
-
-  // useEffect(() => {
-  //   if (assignmentId) {
-  //     if (selectedAssignment && selectedAssignmentConfigurations) {
-  //       if (!selectedAssignment?.studentAuthed) {
-  //         if (!isProctoredAssignment) {
-  //           console.log("here")
-  //           setShowAuth(true);
-  //           setDisableAuth(false);
-  //         }
-  //         if (isProctoredAssignment) {
-  //           if (schedulesAvailable) {
-  //             const currentTime: Moment = moment();
-  //             let timeZoneOffset: string = `.${Math.abs(
-  //               moment().utcOffset()
-  //             ).toString()}Z`;
-  //             const scheduleDate = moment(
-  //               `${selectedAssignmentSchedules?.scheduleDate + timeZoneOffset}`
-  //             );
-  //             if (currentTime.isSame(scheduleDate, "day")) {
-  //               let diffInMs: number = currentTime.diff(
-  //                 scheduleDate,
-  //                 "milliseconds"
-  //               );
-  //               if (0 > diffInMs) {
-  //                 setShowAuth(true);
-  //                 scheduleInterval = setInterval(() => {
-  //                   setShowAuth(false);
-  //                   clearInterval(scheduleInterval);
-  //                 }, Math.abs(diffInMs));
-  //                 tenMinWindowInterval = setInterval(() => {
-  //                   const diffInMin: number = currentTime.diff(
-  //                     scheduleDate,
-  //                     "minutes"
-  //                   );
-  //                   if (diffInMin >= -10 && diffInMin < 0) {
-  //                     setDisableAuth(false);
-  //                   }
-  //                   if (diffInMin === 0) {
-  //                     clearInterval(tenMinWindowInterval);
-  //                   }
-  //                 }, 1000);
-  //               }
-  //             } else {
-  //               setDisableAuth(true);
-  //               setShowAuth(false);
-  //             }
-  //           }
-  //         }
-  //       } else {
-  //         if (enrollments) {
-  //           setShowProctoring(true);
-  //         }
-  //       }
-  //     }
-  //   }
-  // }, [selectedAssignmentSchedules]);
 
   useEffect(() => {
-    if (isProctoredAssignment) {
-      if (schedulesAvailable) {
-        const currentTime: Moment = moment();
-        let timeZoneOffset: string = `.${Math.abs(
-          moment().utcOffset()
-        ).toString()}Z`;
-        const scheduleDate = moment(
-          `${selectedAssignmentSchedules?.scheduleDate + timeZoneOffset}`
-        );
-        if (currentTime.isSame(scheduleDate, "day")) {
-          let diffInMs: number = currentTime.diff(
-            scheduleDate,
-            "milliseconds"
-          );
-          if (0 > diffInMs) {
-            setShowAuth(true);
-            scheduleInterval = setInterval(() => {
-              setShowAuth(false);
-              clearInterval(scheduleInterval);
-            }, Math.abs(diffInMs));
-            tenMinWindowInterval = setInterval(() => {
-              const diffInMin: number = currentTime.diff(
-                scheduleDate,
-                "minutes"
-              );
-              if (diffInMin >= -10 && diffInMin < 0) {
-                setDisableAuth(false);
-              }
-              if (diffInMin === 0) {
-                clearInterval(tenMinWindowInterval);
-              }
-            }, 1000);
-          }
-        } else {
-          setDisableAuth(true);
-          setShowAuth(false);
-        }
-      }
-    } else {
-      setShowAuth(true);
-      setDisableAuth(false);
-    }
-  }, [isProctoredAssignment, schedulesAvailable])
+    initWorkflow();
+  }, [selectedAssignmentSchedules, scheduleExpired]);
 
   useEffect(() => {
     document.addEventListener("keydown", (e) => {
@@ -311,7 +221,6 @@ const AssignmentsContainer: React.FC<Props> = (props): JSX.Element => {
           {selectedAssignment &&
             !urlParamsData.newTab &&
             selectedAssignmentConfigurations &&
-            !isProctoredAssignment &&
             !schedulesAvailable &&
             !assignmentSubmitted && (
               <div className="flex items-center justify-center">
@@ -329,25 +238,6 @@ const AssignmentsContainer: React.FC<Props> = (props): JSX.Element => {
           {selectedAssignment &&
             !urlParamsData.newTab &&
             selectedAssignmentConfigurations &&
-            isProctoredAssignment &&
-            !schedulesAvailable &&
-            !assignmentSubmitted && (
-              <div className="flex items-center justify-center">
-                <button
-                  type="button"
-                  onClick={handleDateTimePicker}
-                  className={
-                    "px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
-                  }
-                >
-                  Schedule
-                </button>
-              </div>
-            )}
-          {selectedAssignment &&
-            !urlParamsData.newTab &&
-            selectedAssignmentConfigurations &&
-            !isProctoredAssignment &&
             schedulesAvailable &&
             !assignmentSubmitted && (
               <div className="flex items-center justify-center">
@@ -362,40 +252,25 @@ const AssignmentsContainer: React.FC<Props> = (props): JSX.Element => {
                 </button>
               </div>
             )}
-          {selectedAssignment &&
+          {showAuthButton &&
             !urlParamsData.newTab &&
-            selectedAssignmentConfigurations &&
-            isProctoredAssignment &&
-            schedulesAvailable && (
+            urlParamsData.assignmentId && (
               <div className="flex items-center justify-center">
                 <button
                   type="button"
-                  onClick={handleDateTimePicker}
-                  className={
-                    "px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
-                  }
+                  disabled={enableAuth ? false : true}
+                  onClick={handleStartAuthentication}
+                  className={`inline-block px-6 py-2.5 ${
+                    !enableAuth
+                      ? "bg-gray-200 cursor-not-allowed text-gray-400"
+                      : "bg-blue-600 text-white"
+                  } font-medium text-xs leading-tight rounded shadow-md hover:shadow-lg`}
                 >
-                  Reschedule
+                  Authentication for Proctoring
                 </button>
               </div>
             )}
-          {showAuth && (
-            <div className="flex items-center justify-center">
-              <button
-                type="button"
-                disabled={disableAuth}
-                onClick={() => handleStartAuthentication()}
-                className={`inline-block px-6 py-2.5 ${
-                  disableAuth
-                    ? "bg-gray-200 cursor-not-allowed text-gray-400"
-                    : "bg-blue-600 text-white"
-                } font-medium text-xs leading-tight rounded shadow-md hover:shadow-lg`}
-              >
-                Authentication for Proctoring
-              </button>
-            </div>
-          )}
-          {showProctoring &&
+          {showProctoringButton &&
             enrollments &&
             selectedAssignmentConfigurations && (
               <VideoAndScreenRec
@@ -423,6 +298,14 @@ const AssignmentsContainer: React.FC<Props> = (props): JSX.Element => {
             close={handleDateTimePicker}
             assignment={selectedAssignment}
             assignmentConfig={selectedAssignmentConfigurations}
+          />
+        )}
+        {showApprovalWarning && (
+          <ConfirmModal
+            visible={showApprovalWarning}
+            close={() => setShowApprovalWarning(false)}
+            title="Approval Info"
+            message={approvalWarningMsg}
           />
         )}
       </div>

@@ -3,7 +3,7 @@ import NeedHelp from "./NeedHelp";
 import SystemCheck from "../../Tabs/SystemCheck";
 import PrivacyPolicy from "../../Tabs/PrivacyPolicy";
 import ImageMatchAuthentication from "../../AuthenticationScreens/ImageMatchAuthentication";
-import UpdateProfile from "../../Menu/UpdateProfile";
+import UpdateProfile from "../../../CommonUtilites/Modals/UpdateProfile";
 import { useCommonStudentDashboardStore } from "../../../store/StudentDashboardStore";
 import { useWebCamStore } from "../../../store/globalStore";
 import { useAppStore } from "../../../store/AppSotre";
@@ -158,6 +158,7 @@ const SideMenu: React.FC = (): JSX.Element => {
           authToken={tokenData.lmsAccessToken as any}
           guid={urlParamsData.guid as any}
           userId={enrollment?.user_id as any}
+          title={"updateId"}
         />
       )}
       {showAccessibilityModal && urlParamsData.studentId && (

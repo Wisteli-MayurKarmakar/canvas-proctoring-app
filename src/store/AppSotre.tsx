@@ -38,11 +38,11 @@ type AppStore = {
   setUrlParamsData: (data: URLParamsData) => void;
 };
 
-const getCourseDetails = async (): Promise<CourseDetails | null> => {
+const getCourseDetails = async (token: string, instituteId: string): Promise<CourseDetails | null> => {
   const { courseId } = useAppStore.getState().urlParamsData;
-  const { lmsAccessToken, instituteId } = useAppStore.getState().tokenData;
+  // const { lmsAccessToken, instituteId } = useAppStore.getState().tokenData;
   let response = await axios.get(
-    `${fetchCanvasCourseDetailsByCourseId}/${courseId}/${lmsAccessToken}/${instituteId}`
+    `${fetchCanvasCourseDetailsByCourseId}/${courseId}/${token}/${instituteId}`
   );
   if (response.status === 200) {
     return response.data[0];
@@ -82,11 +82,11 @@ export const useAppStore = create<AppStore>()(
         lmsName: null,
         status: null,
       },
-      setTokenData: async (data) => {
+      setTokenData: async (data: AuthenticationData) => {
         set({
           tokenData: { ...data },
         });
-        let courseDetails: CourseDetails | null = await getCourseDetails();
+        let courseDetails: CourseDetails | null = await getCourseDetails(data.lmsAccessToken as string, data.instituteId as string);
         if (courseDetails) {
           set({
             courseDetails: courseDetails,

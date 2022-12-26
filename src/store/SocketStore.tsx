@@ -20,6 +20,7 @@ type DataToSend = {
 type AssignmentDetails = {
   assignmentName: string;
   active: boolean;
+  studentId?: string;
 };
 
 interface IncomingMessage {
@@ -91,7 +92,7 @@ export const useSocketStore = create<SocketStore>()(
           if (data.type === "chat") {
             let msg: {
               msgType: string;
-              msg: { assignmentId: string; assignmentName: string };
+              msg: { assignmentId: string; assignmentName: string, studentId: string};
             } = JSON.parse(data.message);
 
             let loggedInUserType =
@@ -106,6 +107,7 @@ export const useSocketStore = create<SocketStore>()(
                 incomingMsgs[msg.msg.assignmentId] = {
                   assignmentName: msg.msg.assignmentName,
                   active: true,
+                  studentId: msg.msg.studentId
                 };
                 set({
                   messagesIncoming: incomingMsgs,
@@ -158,6 +160,7 @@ export const useSocketStore = create<SocketStore>()(
               msg: {
                 assignmentId: assignmentId,
                 assignmentName: assignmentName,
+                studentId: useCommonStudentDashboardStore.getState().enrollments?.user.id
               },
             }),
           });

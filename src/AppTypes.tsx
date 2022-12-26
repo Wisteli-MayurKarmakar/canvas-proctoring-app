@@ -373,7 +373,7 @@ type StudentJourneyStore = {
   journeyDetails: StudentJourney;
   getJourneyDetails: () => void;
   setJourneyDetails: (stepName: string) => void;
-}
+};
 
 //Procotor Journey
 
@@ -396,26 +396,257 @@ type ProctorJourney = {
 type ProctorJourneyStore = {
   journeyDetails?: ProctorJourney | null;
   getJourneyDetails: (studentId: string) => void;
-  setJourneyDetails: (stepName: string, studentId: string, quizId: string) => void;
-}
+  setJourneyDetails: (
+    stepName: string,
+    studentId: string,
+    quizId: string
+  ) => void;
+};
 
 // Student Quiz Report
 
 type StudentQuizReport = {
   [key: string]: {
-    [key: string]: boolean | null;
-  }
-}
+    [key: string]: {
+      resultPass: boolean;
+      reportReviwed: boolean;
+    };
+  };
+};
+
+//Payment Details
+
+type PaymentDetails = {
+  idPayment?: string;
+  guid: string;
+  provider: string;
+  paymentDate: string;
+  paymentAmount: number;
+  payerId: string;
+  primaryEmail: string;
+  billingEmail: string;
+  paymentReferenceNumber: string;
+  status: number;
+};
+
+//Consumption Details
+
+type ConsumptionDetails = {
+  idConsumption?: string;
+  guid: string;
+  emailId: string;
+  userId: string;
+  courseId: number;
+  quizId: number;
+  productType: string;
+  durationInMins: number;
+  interactionDate: string;
+  status: number;
+};
+
+//Consumption table columns
+
+type ConsumptionTableColumns = {
+  dataIndex: string;
+  key: string;
+  title: string;
+};
+
+type ConsumptionRecord = {
+  idConsumption: string;
+  guid: string;
+  emailId: string;
+  userId: string;
+  courseId: number;
+  quizId: number;
+  productType: string;
+  durationInMins: number;
+  interactionDate: string;
+  status: number;
+  key?: number;
+};
+
+//Payments Table columns
+type PaymentsTableColumns = {
+  dataIndex: string;
+  key: string;
+  title: string;
+};
+
+type PaymentRecords = {
+  idPayment: string;
+  guid: string;
+  provider: string;
+  paymentDate: string;
+  paymentAmount: number;
+  payerId: string;
+  primaryEmail: string;
+  billingEmail: string;
+  paymentReferenceNumber: string;
+  status: number;
+  key?: number;
+};
+
+//Notification form field types
+
+type NotificationFormFieldType = {
+  value: string | boolean;
+  hasError: boolean;
+};
+
+// Notification Types
+
+type NotificationType = {
+  [key: string]: string;
+};
+
+//Notification type
+type NotificationStore = {
+  allSources: string[];
+  allTopics: NotificationType | null;
+  allStatus: string[];
+  allPreferences: string[];
+  defualtEmailTemplate: string;
+  selectedSource: NotificationFormFieldType;
+  selectedTopic: NotificationFormFieldType;
+  selectedStatus: NotificationFormFieldType;
+  selectedPreferences: NotificationFormFieldType;
+  testMessage: boolean;
+  message: string;
+  loadingTopic: boolean;
+  savingNotification: boolean;
+  getNotificationData: () => void;
+  updateNotificationData: (key: string, value: string | boolean) => void;
+  reset: () => void;
+  saveNotification: () => void;
+};
+
+// Institute Details
+type InstituteDetails = {
+  instituteId: number;
+  invokeUrl: string;
+  lmsName: string;
+  instituteName: string;
+  campusName?: string;
+  updatedBy?: string;
+  instituteType?: string;
+  instituteUrl: string;
+  lmsVersion?: string;
+  accountId?: string;
+  launchUrl: string;
+  developersKey?: string;
+  lmsToken: string;
+  configurationKey?: string;
+  sharedSecret?: string;
+  ltiClientid?: string;
+  ltiXml?: string;
+  ltiXmlurl?: string;
+  status: number;
+  firstName: string;
+  contactLastname: string;
+  contactPhone: string;
+  fax?: string;
+  address1: string;
+  address2?: string;
+  city: string;
+  state: string;
+  zip: string;
+  country: string;
+  lmsAccessurl: string;
+  createUser: string;
+  createDate: string;
+  modifyUser: string;
+  modifyDate: string;
+};
+
+// Save LTI Institute
+
+type SaveLtiInsituteDataType = {
+  instituteId: number;
+  lmsName: string;
+  launchUrl: string;
+  lmsToken: string;
+  status: number;
+  invokeUrl: string;
+  lmsAccessurl: string;
+  instituteName: string;
+  campusName: string;
+  updatedBy: string;
+  instituteType: string;
+  instituteUrl: string;
+  lmsVersion: string;
+  accountId: string;
+  developersKey: string;
+  configurationKey: string;
+  sharedSecret: string;
+  ltiClientid: string;
+  ltiXml: string;
+  ltiXmlurl: string;
+  firstName: string;
+  contactLastname: string;
+  contactPhone: string;
+  fax: string;
+  address1: string;
+  address2: string;
+  city: string;
+  state: string;
+  zip: string;
+  country: string;
+  createUser: string;
+  createDate: string;
+  modifyUser: string;
+  modifyDate: string;
+};
+
+// Access Tab - Admin table column types --------->
+
+//Admin Table Column Types
+
+type AdminTableDataTypes = {
+  userId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  status: string;
+  createDate: string;
+};
+
+type InstructorTableDataTypes = {
+  userId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  status: string;
+  ai: JSX.Element;
+  aiWRep: JSX.Element;
+  launch: JSX.Element;
+  proctoring: JSX.Element;
+  lockdown: JSX.Element;
+};
 
 export type {
   AllDates,
   Quiz,
   AppStore,
   QuizConfig,
+  ConsumptionTableColumns,
+  NotificationType,
+  PaymentsTableColumns,
+  PaymentRecords,
   StudentDetails,
   StudentJourneyStore,
+  SaveLtiInsituteDataType,
+  AdminTableDataTypes,
+  InstructorTableDataTypes,
+  NotificationFormFieldType,
   ProctorJourneyStore,
+  NotificationStore,
+  InstituteDetails,
   AssignmentConfiguration,
+  ConsumptionRecord,
+  PaymentDetails,
+  ConsumptionDetails,
   StudentQuizReport,
   ProctorJourney,
   StudentJourney,

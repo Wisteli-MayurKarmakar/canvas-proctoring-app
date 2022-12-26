@@ -499,7 +499,9 @@ export const useBillingStore = create<BillingStore>()(
             ).toString()}Z`;
             serviceAndBillingDetails.productType.value = details.productType;
             contactDetails.email.value = details.billingEmail;
-            serviceAndBillingDetails.studentPay.value = details.studentPay;
+            serviceAndBillingDetails.studentPay.value = details.studentPay
+              ? "Yes"
+              : "No";
             serviceAndBillingDetails.paymentType.value = details.paymentType;
             serviceAndBillingDetails.billRate.value =
               details.billingRate.toString();

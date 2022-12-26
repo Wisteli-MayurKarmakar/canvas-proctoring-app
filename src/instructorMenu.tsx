@@ -5,6 +5,7 @@ import "antd/dist/antd.css";
 import Reports from "./InstructorDashboard/Tabs/Reports/reports";
 import Authentication from "./InstructorDashboard/Authentication";
 import LiveProctoring from "./InstructorDashboard/Menus/LiveProctoring";
+import Student from "./InstructorDashboard/Tabs/Student/Students";
 import Admin from "./InstructorDashboard/Tabs/Admin";
 import { useAppStore } from "./store/AppSotre";
 import DummyPage from "./dummyPage";
@@ -44,7 +45,7 @@ const InstructorMenu: React.FunctionComponent<Props> = (props): JSX.Element => {
           centered={true}
           tabBarGutter={40}
         >
-          <TabPane tab="Quiz configuration" key="1">
+          <TabPane tab="Configuration" key="1">
             <Configuration
               auth={props.auth.lmsAccessToken}
               id={urlParamsData.userId}
@@ -59,11 +60,13 @@ const InstructorMenu: React.FunctionComponent<Props> = (props): JSX.Element => {
           <TabPane tab="Proctoring" key="3">
             <LiveProctoring />
           </TabPane>
-          <TabPane tab="Quiz reports" key="4">
-            {/* <QuizReports /> */}
+          <TabPane tab="Reports" key="4">
             <Reports />
           </TabPane>
-          <TabPane tab="Admin" key="5">
+          <TabPane tab="Students" key="5">
+            <Student />
+          </TabPane>
+          <TabPane tab="Admin" key="6">
             <Admin />
           </TabPane>
         </Tabs>

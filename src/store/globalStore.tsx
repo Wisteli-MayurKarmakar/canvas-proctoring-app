@@ -70,7 +70,7 @@ type AccessibilityStore = {
   schoolCustom: boolean;
   humanAssistant: boolean;
   standardOptions: StandardAccessiblityOptions;
-  approveStandard?: boolean;
+  approveStandard: boolean;
   approveCustom?: boolean;
   customOptions: CustomAccessiblityOptions;
   standardOptionSelected?: string;
@@ -114,6 +114,7 @@ export const useAccessiblityStore = create<AccessibilityStore>()(
       schoolCustom: false,
       schoolStandard: false,
       humanAssistant: false,
+      approveStandard: false,
       messageStudent: "",
       messageInstructor: "",
       startDate: moment().toISOString(),

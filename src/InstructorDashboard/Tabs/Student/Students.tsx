@@ -1,14 +1,13 @@
 import React, { useState } from "react";
-import Institutions from "../Components/Institutions";
-import Billing from "../Components/Billing";
-import Payments from "../Components/Payments";
-import Access from "../Components/Access";
+import { useAppStore } from "../../../store/AppSotre";
+import Enrollments from "../../Components/Enrollments";
+import Notifications from "../../Components/Notifications";
 
-const Admin: React.FC = (): JSX.Element => {
+const Student: React.FC = (): JSX.Element => {
   const [subOptionSelected, setSubOptionSelected] =
-    useState<string>("Payments");
-
-  const subMenus: string[] = ["Institute", "Billing", "Payments", "Access"];
+    useState<string>("Enrollments");
+  const { courseDetails } = useAppStore((state) => state);
+  const subMenus: string[] = ["Notifications", "Enrollments"];
 
   const handleSubOptionSelection = (option: string) => {
     setSubOptionSelected(option);
@@ -16,6 +15,9 @@ const Admin: React.FC = (): JSX.Element => {
 
   return (
     <div className="flex flex-col h-full w-full items-center justify-center gap-4 mt-2">
+      <h2 className="text-center text-2xl underline">
+        Course Name - {courseDetails.name}
+      </h2>
       <div className="flex flex-row h-full items-center gap-8">
         {subMenus.map((item: string, index: number) => {
           return (
@@ -34,12 +36,10 @@ const Admin: React.FC = (): JSX.Element => {
           );
         })}
       </div>
-      {subOptionSelected === "Institute" && <Institutions />}
-      {subOptionSelected === "Billing" && <Billing />}
-      {subOptionSelected === "Payments" && <Payments />}
-      {subOptionSelected === "Access" && <Access />}
+      {subOptionSelected === "Enrollments" && <Enrollments />}
+      {subOptionSelected === "Notifications" && <Notifications />}
     </div>
   );
 };
 
-export default Admin;
+export default Student;

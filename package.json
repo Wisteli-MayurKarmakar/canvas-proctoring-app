@@ -8,6 +8,7 @@
     "@emailjs/browser": "^3.7.0",
     "@emotion/react": "^11.10.5",
     "@emotion/styled": "^11.10.5",
+    "@mantine/rte": "^5.9.4",
     "@mui/icons-material": "^5.10.9",
     "@mui/material": "^5.10.12",
     "@sendgrid/mail": "^7.7.0",
@@ -21,6 +22,7 @@
     "antd": "^4.21.7",
     "axios": "^0.27.2",
     "calendar-link": "^2.2.0",
+    "dompurify": "^2.4.1",
     "env-cmd": "^10.1.0",
     "immer": "^9.0.15",
     "jquery": "^3.6.0",
@@ -66,6 +68,7 @@
   },
   "devDependencies": {
     "@types/crypto-js": "^4.1.1",
+    "@types/dompurify": "^2.4.0",
     "@types/jquery": "^3.5.14",
     "@types/jsonwebtoken": "^8.5.8",
     "autoprefixer": "^10.4.7",

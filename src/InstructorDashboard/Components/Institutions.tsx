@@ -1,28 +1,30 @@
-import React, { SyntheticEvent } from "react";
+import React, { SyntheticEvent, useEffect } from "react";
 import { useAddInstituteStore } from "../../store/AddInstituteStore";
 import {
   InstituteAndAccessDetailsFieldTypes,
   AddInsitutePropertyTypes,
   ContactDetailsFieldTypes,
 } from "../../AppTypes";
+import WaitingModal from "../../CommonUtilites/WaitingModal";
 
 const Institutions: React.FC = (): JSX.Element => {
   const instituteStore = useAddInstituteStore((state) => state);
-  const handleInstituteDetailsUpdate = useAddInstituteStore(
-    (state) => state.handleInstituteDetailsUpdate
-  );
-  const handleContactDetailsUpdate = useAddInstituteStore(
-    (state) => state.handleContactDetailsUpdate
-  );
-  const instituteAndAccessDetails: InstituteAndAccessDetailsFieldTypes = {
-    ...useAddInstituteStore((state) => state.instituteAndAccessDetails),
-  };
+  const {
+    handleInstituteDetailsUpdate,
+    handleContactDetailsUpdate,
+    instituteAndAccessDetails,
+    contactDetails,
+    saveLtiInsitute,
+    handleResetValues,
+    getInstituteDetails,
+    savingDetails,
+  } = useAddInstituteStore((state) => state);
 
-  const contactDetails: ContactDetailsFieldTypes = {
-    ...useAddInstituteStore((state) => state.conactDetails),
-  };
-
-  const handleResetValues = useAddInstituteStore((state) => state.handleResetValues)
+  const waitMessage: JSX.Element = (
+    <p className="text-center text-lg font-semibold">
+      Saving Institution data. Please wait...
+    </p>
+  );
 
   const validateForm = (): boolean => {
     let { instituteType, lmsType, status } =
@@ -79,8 +81,14 @@ const Institutions: React.FC = (): JSX.Element => {
 
     if (!res) {
       console.log("Form has no error");
+      saveLtiInsitute();
+      return;
     }
   };
+
+  useEffect(() => {
+    getInstituteDetails();
+  }, []);
 
   return (
     <form
@@ -268,14 +276,7 @@ const Institutions: React.FC = (): JSX.Element => {
                       }
                     </label>
                     <input
-                      type={
-                        key === "invokeUrl" ||
-                        key === "launchUrl" ||
-                        key === "apiAccessUrl" ||
-                        key === "instituteUrl"
-                          ? "email"
-                          : "text"
-                      }
+                      type={"text"}
                       id={key}
                       className={`form-control block w-full px-2 py-1 text-sm font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-blue-400 focus:outline-none ${
                         key === "token" || key === "config" || key === "secret"
@@ -393,6 +394,13 @@ const Institutions: React.FC = (): JSX.Element => {
           Submit
         </button>
       </div>
+      {savingDetails && (
+        <WaitingModal
+          visible={savingDetails}
+          title="Saving data"
+          message={waitMessage}
+        />
+      )}
     </form>
   );
 };

@@ -136,20 +136,40 @@ const Billing: React.FC = (): JSX.Element => {
       endDate,
       billCurrency,
     } = billingStore.serviceAndBillingDetails;
-    const { email } = billingStore.contactDetails;
-    let data: BillingData = {
+    const {
+      email,
+      firstName,
+      lastName,
+      phone,
+      firstAddress,
+      secondAddress,
+      city,
+      state,
+      zip,
+      country,
+    } = billingStore.contactDetails;
+    let data = {
       guid: urlParamsData.guid as string,
       instituteId: parseInt(tokenData?.instituteId as string),
       billingTier: "",
       minNumber: parseInt(minQuiz.value),
       productType: productType.value,
       billingEmail: email.value,
-      studentPay: studentPay.value,
+      studentPay: studentPay.value === "Yes" ? true : false,
       paymentType: paymentType.value,
       billingRate: billRate.value === "" ? 0 : parseInt(billRate.value),
       billingCurrency: billCurrency.value,
       startDate: startDate.value,
       endDate: endDate.value,
+      firstName: firstName.value,
+      lastName: lastName.value,
+      billingPhone: phone.value,
+      address1: firstAddress.value,
+      address2: secondAddress.value,
+      city: city.value,
+      state: state.value,
+      zip: zip.value,
+      country: country.value,
     };
 
     let response = await axios.post(`${saveLtiBillingRate}`, { ...data });
@@ -624,21 +644,21 @@ const Billing: React.FC = (): JSX.Element => {
                     type="text"
                     id={key}
                     className="
-            form-control
-            block
-            w-full
-            px-2
-            py-1
-            text-sm
-            font-normal
-            text-gray-700
-            bg-white bg-clip-padding
-            border border-solid border-gray-300
-            rounded
-            transition
-            ease-in-out
-            m-0
-            focus:text-gray-700 focus:bg-white focus:border-blue-400 focus:outline-none"
+                    form-control
+                    block
+                    w-full
+                    px-2
+                    py-1
+                    text-sm
+                    font-normal
+                    text-gray-700
+                    bg-white bg-clip-padding
+                    border border-solid border-gray-300
+                    rounded
+                    transition
+                    ease-in-out
+                    m-0
+                    focus:text-gray-700 focus:bg-white focus:border-blue-400 focus:outline-none"
                     placeholder={
                       billingStore.serviceAndBillingDetails[
                         key as keyof ServicesAndBillingFieldTypes
@@ -680,7 +700,7 @@ const Billing: React.FC = (): JSX.Element => {
                       ].value
                     )}
                     onChange={(date: Moment | null, dateString: string) => {
-                      handleServiceAndBillingDetailsUpdate(key, dateString);
+                      handleServiceAndBillingDetailsUpdate(key, date?.toISOString() as string);
                     }}
                   />
                 </div>

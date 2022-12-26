@@ -2,7 +2,11 @@ import axios from "axios";
 import React, { useEffect } from "react";
 import $ from "jquery";
 import { useStudentStore } from "./store/globalStore";
-import { useAssignmentStore } from "./store/StudentDashboardStore";
+import {
+  useAssignmentStore,
+  useCommonStudentDashboardStore,
+  StudentEnrollments,
+} from "./store/StudentDashboardStore";
 import { useAppStore } from "./store/AppSotre";
 import Layout from "./StudentDashboard/Dashboard/Layout/Layout";
 
@@ -11,6 +15,7 @@ import {
   saveLtiStudentProfile,
   getLtiCanvasConfigByAssignment,
   getCanvasAssignmentDetails,
+  getLtiStudentProfileDetails,
 } from "./apiConfigs";
 
 interface Props {
@@ -33,23 +38,13 @@ const Quzzies: React.FC<Props> = (props) => {
   let [quizConfig, setQuizConfig] = React.useState<any>(null);
   let [selectedAssignment, setSelectedAssignment] = React.useState<any>(null);
   let [quizObj, setQuizObj] = React.useState<Object | any>({});
-  let [modalComponent, setModalComponent] = React.useState<any>(null);
-  let [showOptionModal, setOptionModal] = React.useState<boolean>(false);
-  let [modalTitle, setModalTitle] = React.useState<any>(null);
-  let [showScheduler, setShowScheduler] = React.useState<boolean>(false);
   let [studentAuthed, setStudentAuthed] = React.useState<boolean>(false);
-  let [showAuthModal, setShowAuthModal] = React.useState<boolean>(false);
   let [sebDownloadLink, setDownloadLink] = React.useState<string>(
     "https://storage.googleapis.com/exsebstore/SEB_3.3.2.413_SetupBundle.exe"
   );
-  let [closeStream, setCloseStream] = React.useState<boolean>(false);
   let [disableDeSelect, setDisableDeSelect] = React.useState<boolean>(false);
   let [showLDBDwnldOption, setShowLDBDwnldOption] =
     React.useState<boolean>(false);
-  let [showHelpModal, setShowHelpModal] = React.useState<boolean>(false);
-  let [showUpdateProfileModal, setShowUpdateProfileModal] =
-    React.useState<boolean>(false);
-  let setQuizAuthObj = useStudentStore((state) => state.setQuizAuthObj);
   let studentQuizAuthObject = useStudentStore(
     (state) => state.studentQuizAuthObject
   );
@@ -65,10 +60,35 @@ const Quzzies: React.FC<Props> = (props) => {
   const setAssignmentsConfigurtion = useAssignmentStore(
     (state) => state.setAssignmentConfiguration
   );
+  const { enrollments, updateEnrollmentWithIdApprovalStatus } =
+    useCommonStudentDashboardStore((state) => state);
   let [isAssignmentProctored, setIsAssignmentProctored] =
     React.useState<boolean>(false);
 
+  const getUserDetails = async (): Promise<boolean> => {
+    try {
+      const response = await axios.post(
+        `${getLtiStudentProfileDetails}/${urlParamsData.guid}/${enrollments?.user.id}`
+      );
+
+      if (response.status === 200) {
+        let enrollment = { ...enrollments };
+        enrollment["idApprovalStatus"] =
+          response.data.idApprovalStatus === 0 ? false : true;
+        updateEnrollmentWithIdApprovalStatus(enrollment as StudentEnrollments);
+        return true;
+      }
+    } catch (err) {
+      return false;
+    }
+    return false;
+  };
+
   const updateUsersDetails = async () => {
+    let isProfileDetailsAvailable: boolean = await getUserDetails();
+    if (isProfileDetailsAvailable) {
+      return;
+    }
     let students: Object[] = [];
     let response: any = await axios.get(
       `${fetchCanvasEnrollmentsByCourseId}${urlParamsData.courseId}/${urlParamsData.studentId}/${tokenData.lmsAccessToken}/${tokenData.instituteId}`
@@ -93,10 +113,12 @@ const Quzzies: React.FC<Props> = (props) => {
       userObj["firstName"] = name[0];
       userObj["lastName"] = name.length === 2 ? name[1] : "";
       userObj["createUser"] = item.user.name;
+      userObj["userType"] = enrollments?.role;
+      userObj["instituteId"] = tokenData.instituteId;
       students.push(userObj);
     });
 
-    let stuSaveResponse = await axios.post(saveLtiStudentProfile, students, {
+    let stuSaveResponse = await axios.post(`${saveLtiStudentProfile}/${tokenData.instituteId}`, students, {
       headers: {
         Authorization: `Bearer ${props.authToken}`,
       },

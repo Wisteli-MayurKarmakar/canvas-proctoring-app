@@ -607,7 +607,7 @@ const AssibilityModal: React.FC<Props> = (props): JSX.Element => {
               </label>
               <TextArea
                 rows={4}
-                value={messageInstructor}
+                value={messageInstructor === "string" ? "": messageInstructor}
                 disabled={
                   loggedInUserEnrollmentType === "StudentEnrollment"
                     ? true
@@ -625,8 +625,9 @@ const AssibilityModal: React.FC<Props> = (props): JSX.Element => {
                   } border-gray-300 rounded-sm bg-white checked:bg-blue-600 checked:border-blue-600
                    focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer`}
                   type="checkbox"
+                  checked={!approveStandard? true: false}
                   id="flexCheckDefault"
-                  onChange={(e) => setApproveCustom(e.target.checked)}
+                  onChange={(e) => setApproveStandard(!e.target.checked)}
                   disabled={
                     loggedInUserEnrollmentType === "StudentEnrollment"
                       ? true
@@ -649,6 +650,7 @@ const AssibilityModal: React.FC<Props> = (props): JSX.Element => {
                    focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer`}
                   type="checkbox"
                   id="flexCheckDefault"
+                  checked={approveStandard? true: false}
                   onChange={(e) => setApproveStandard(e.target.checked)}
                   disabled={
                     loggedInUserEnrollmentType === "StudentEnrollment"

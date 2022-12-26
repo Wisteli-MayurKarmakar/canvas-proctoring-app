@@ -1,6 +1,5 @@
-import { CheckSquareOutlined, CloseCircleOutlined } from "@ant-design/icons";
-import { Col, Row } from "antd";
-import React, { useEffect } from "react";
+import { CheckSquareOutlined } from "@ant-design/icons";
+import React from "react";
 import { AssignmentConfiguration } from "../../AppTypes";
 import { useAssignmentStore } from "../../store/StudentDashboardStore";
 
@@ -16,47 +15,26 @@ interface configAbbrPrototype {
 let configAbbrs: configAbbrPrototype = {
   recordWebcam: "Record Webcam",
   recordScreen: "Record Screen",
-
   recordAudio: "Record Audio",
-
   chat: "Chat",
-
   studentPicture: "Student Picture",
-
   studentIdDl: "Student ID or DL",
-
   roomScan: "Room Scan",
-
   otp: "One Time Password",
-
   calculatorAllowed: "Calculator",
-
   scratchPadAllowed: "Scratch Pad",
-
   liveHelp: "Live Help",
-
   whitelistPages: "Whitelist Pages",
-
   disableCopyPaste: "Disable Copy/ Paste",
-
   disablePrinting: "Disable Printing",
-
   lockdownBrowser: "Lock Down Browser",
-
   multiplePerson: "Multiple Person",
-
   cellPhone: "Cell Phone",
-
   noPersonInRoom: "No Person In Room",
-
   speaking: "Speaking",
-
   postExamReview: "Post Exam Review",
-
   examdLiveLaunch: "Examd Live Launch",
-
   instructorProctored: "Instructor Proctored",
-
   examdProctored: "Examd Proctored",
 };
 
@@ -65,52 +43,36 @@ const QuizRules: React.FC<Props> = (props) => {
   const { selectedAssignmentConfigurations } = useAssignmentStore(
     (state) => state
   );
-  // const getQuizConfigs = (): JSX.Element[] => {
-  //   let items: JSX.Element[] = [];
-  //   let cols: JSX.Element[] = [];
+  let allowedRules: { [key: string]: boolean } = {};
 
-  //   let config = { ...props.quizConfig };
-  //   delete config.idLtiCanvasConfig;
-  //   delete config.idUser;
-  //   delete config.toolConsumerInstanceGuid;
-  //   delete config.courseId;
-  //   delete config.quizId;
-  //   delete config.assignmentId;
-  //   delete config.whitelistPages;
-  //   delete config.moduleId;
-  //   delete config.timeLimit;
-
-  //   Object.entries(config).forEach((item: any, index: number) => {
-  //     let obj = configAbbrs[item[0]];
-  //     cols.push(
-  //       <Col span={4} key={index}>
-  //         <Row gutter={24} className="mt-4 mb-4" key={index.toString() + "a"}>
-  //           <Col
-  //             span={18}
-  //             key={index.toString() + "b"}
-  //             className="!self-center"
-  //           >
-  //             <p className="font-bold">{obj && obj.fullName}</p>
-  //           </Col>
-  //           <Col span={4} key={index.toString() + "c"}>
-  //             <p>
-  //               {item[1] ? (
-  //                 <CheckSquareOutlined
-  //                   style={{ background: "lightgreen", fontSize: 20 }}
-  //                 />
-  //               ) : (
-  //                 <CloseCircleOutlined style={{ color: "red", fontSize: 20 }} />
-  //               )}
-  //             </p>
-  //           </Col>
-  //         </Row>
-  //       </Col>
-  //     );
-  //   });
-  //   items.push(<Row gutter={24}>{cols}</Row>);
-
-  //   return items;
-  // };
+  if (selectedAssignmentConfigurations) {
+    Object.keys(selectedAssignmentConfigurations).forEach((key: string) => {
+      if (
+        key !== "idLtiCanvasConfig" &&
+        key !== "idUser" &&
+        key !== "toolConsumerInstanceGuid" &&
+        key !== "courseId" &&
+        key !== "quizId" &&
+        key !== "assignmentId" &&
+        key !== "whitelistPages" &&
+        key !== "moduleId" &&
+        key !== "timeLimit" &&
+        key !== "createDate" &&
+        key !== "createUser" &&
+        key !== "guid" &&
+        key !== "modifyDate" &&
+        key !== "modifyUser"
+      ) {
+        if (
+          selectedAssignmentConfigurations[key as keyof AssignmentConfiguration]
+        ) {
+          allowedRules[key] = selectedAssignmentConfigurations[
+            key as keyof AssignmentConfiguration
+          ] as boolean;
+        }
+      }
+    });
+  }
 
   const handleClick = (e: any) => {
     if (e.target.checked) {
@@ -180,9 +142,10 @@ const QuizRules: React.FC<Props> = (props) => {
       </div>
       <div className="flex flex-col w-full justify-center gap-4">
         <p className="text-xl font-bold mb-2">QUIZ CONFIGURATIONS</p>
-        <div className="grid grid-cols-6 w-full justify-between gap-4">
-          {selectedAssignmentConfigurations &&
-            Object.keys(selectedAssignmentConfigurations).map((key: string, index: number) => {
+        {/* <div className="grid grid-cols-1 w-full justify-between gap-4"> */}
+        <div className="flex flex-row flex-wrap h-full items-center justify-start gap-4">
+          {allowedRules &&
+            Object.keys(allowedRules).map((key: string, index: number) => {
               if (
                 key !== "idLtiCanvasConfig" &&
                 key !== "idUser" &&
@@ -194,31 +157,31 @@ const QuizRules: React.FC<Props> = (props) => {
                 key !== "moduleId" &&
                 key !== "timeLimit"
               ) {
-                return (
-                  <div className="flex flex-row h-full w-full items-center justify-between gap-2 col-span-1 pr-5" key={index}>
-                    <p className="text-bold font-lg text-[18px] font-semibold">
-                      {configAbbrs[key as keyof configAbbrPrototype]}
-                    </p>
-                    <p>
-                      {selectedAssignmentConfigurations[
-                        key as keyof AssignmentConfiguration
-                      ] ? (
-                        <CheckSquareOutlined
-                          style={{ background: "lightgreen", fontSize: 20 }}
-                        />
-                      ) : (
-                        <CloseCircleOutlined
-                          style={{ color: "red", fontSize: 20 }}
-                        />
-                      )}
-                    </p>
-                  </div>
-                );
+                if (allowedRules[key as keyof AssignmentConfiguration]) {
+                  return (
+                    <div
+                      className="flex flex-row h-full items-center gap-2 pr-5"
+                      key={index}
+                    >
+                      <p className="text-bold font-lg text-[18px] font-semibold">
+                        {configAbbrs[key as keyof configAbbrPrototype]}
+                      </p>
+                      <p>
+                        {allowedRules[key as keyof AssignmentConfiguration] && (
+                          <CheckSquareOutlined
+                            style={{ background: "lightgreen", fontSize: 20 }}
+                          />
+                        )}
+                      </p>
+                    </div>
+                  );
+                }
               }
             })}
         </div>
-        <div className="flex flex-row gap-6 items-center pt-2 justify-center text-xl">
-          <input type="checkbox" onClick={handleClick} />{" "}
+        {/* </div> */}
+        <div className="flex flex-row gap-6 items-center mt-12 justify-center text-xl">
+          <input type="checkbox" onClick={handleClick} className="w-5 h-5" />{" "}
           <b>Agree Quiz Rules </b>
         </div>
       </div>
