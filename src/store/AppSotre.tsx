@@ -1,8 +1,11 @@
 import axios from "axios";
 import create from "zustand";
 import { devtools } from "zustand/middleware";
-import { fetchCanvasCourseDetailsByCourseId } from "../apiConfigs";
-import { CourseDetails } from "../AppTypes";
+import {
+  fetchCanvasCourseDetailsByCourseId,
+  getLtiAccessByGuid,
+} from "../apiConfigs";
+import { AccessDetails, CourseDetails } from "../AppTypes";
 const getUuid = require("uuid-by-string");
 
 type AuthenticationData = {
@@ -34,11 +37,18 @@ type AppStore = {
   urlParamsData: URLParamsData;
   tokenData: AuthenticationData;
   courseDetails: CourseDetails;
+  userAccessDetails?: AccessDetails;
+  isNotAllowed: boolean;
+  isAdmin: boolean;
+  accessRecords?: AccessDetails[];
   setTokenData: (data: AuthenticationData) => void;
   setUrlParamsData: (data: URLParamsData) => void;
 };
 
-const getCourseDetails = async (token: string, instituteId: string): Promise<CourseDetails | null> => {
+const getCourseDetails = async (
+  token: string,
+  instituteId: string
+): Promise<CourseDetails | null> => {
   const { courseId } = useAppStore.getState().urlParamsData;
   // const { lmsAccessToken, instituteId } = useAppStore.getState().tokenData;
   let response = await axios.get(
@@ -48,6 +58,22 @@ const getCourseDetails = async (token: string, instituteId: string): Promise<Cou
     return response.data[0];
   }
   return null;
+};
+
+const getAccessRecordsByGuid = async (
+  guid: string,
+  id: string
+): Promise<AccessDetails[]> => {
+  try {
+    let response = await axios.get(`${getLtiAccessByGuid}/${guid}`);
+
+    if (response.status === 200) {
+      return response.data;
+    }
+  } catch (err) {
+    return [];
+  }
+  return [];
 };
 
 export const useAppStore = create<AppStore>()(
@@ -73,6 +99,8 @@ export const useAppStore = create<AppStore>()(
         start_at: "",
         uuid: "",
       },
+      isAdmin: false,
+      isNotAllowed: false,
       tokenData: {
         instituteId: null,
         invokeUrl: null,
@@ -86,14 +114,17 @@ export const useAppStore = create<AppStore>()(
         set({
           tokenData: { ...data },
         });
-        let courseDetails: CourseDetails | null = await getCourseDetails(data.lmsAccessToken as string, data.instituteId as string);
+        let courseDetails: CourseDetails | null = await getCourseDetails(
+          data.lmsAccessToken as string,
+          data.instituteId as string
+        );
         if (courseDetails) {
           set({
             courseDetails: courseDetails,
           });
         }
       },
-      setUrlParamsData: (data: any) => {
+      setUrlParamsData: async (data: any) => {
         if (data.userId) {
           let useUUID: string = getUuid(data.userId);
           data.userId = useUUID;
@@ -111,6 +142,26 @@ export const useAppStore = create<AppStore>()(
               newTab: data.newTab,
               loginId: data.loginId,
             },
+          });
+          let response = await getAccessRecordsByGuid(
+            data.guid,
+            data.studentId
+          );
+          set({
+            accessRecords: response
+          })
+          response.forEach((item: AccessDetails) => {
+            if (item.accessType === "ADMIN" && item.userId === data.studentId) {
+              let notAllowed: boolean = false;
+              if (!item.aiQuiz && !item.aiWithReport && !item.lockdownBrowser && !item.liveProctor && !item.liveLaunch) {
+                notAllowed = true;
+              }
+              set({
+                isAdmin: true,
+                userAccessDetails: item,
+                isNotAllowed: true
+              });
+            }
           });
         }
       },

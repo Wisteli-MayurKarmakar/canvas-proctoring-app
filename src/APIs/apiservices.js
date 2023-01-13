@@ -1,11 +1,7 @@
 import axios from "axios";
 import { io } from "socket.io-client";
 
-let env = process.env.NODE_ENV;
-export let webSocketUrl =
-  env === "development"
-    ? "wss://examd.us:4921/"
-    : "wss://examd.online:4921/";
+export const webSocketUrl = process.env.REACT_APP_SOCKET_URL;
 
 export const getWebSocketUrl = () => {
   const socket = io(webSocketUrl, {

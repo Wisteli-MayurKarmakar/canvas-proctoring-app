@@ -24,6 +24,7 @@ const ConfirmModal: React.FC<Props> = ({
       footer={[
         <button
           type="button"
+          key="close"
           data-mdb-ripple="true"
           data-mdb-ripple-color="light"
           onClick={close}

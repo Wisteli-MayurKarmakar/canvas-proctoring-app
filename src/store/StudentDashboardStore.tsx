@@ -3,6 +3,7 @@ import moment, { Moment } from "moment";
 import create from "zustand";
 import { devtools } from "zustand/middleware";
 import { getLtiCanvasConfigByAssignment, getScheduling } from "../apiConfigs";
+import { QuizConfiguration } from "../AppTypes";
 import { useAppStore } from "./AppSotre";
 import { useStudentWorflowControllerStore } from "./StudentWorkflowControllerStore";
 
@@ -90,7 +91,7 @@ type AssignmentStore = {
   selectedAssignment?: Assignment;
   showAuth: boolean;
   disableAuth: boolean;
-  selectedAssignmentConfigurations?: AssignmentConfiguration;
+  selectedAssignmentConfigurations?: QuizConfiguration;
   selectedAssignmentSchedules: Schedule | null;
   schedulesAvailable: boolean;
   gotoQuiz: boolean;
@@ -101,7 +102,7 @@ type AssignmentStore = {
   checkAssignmentSchedules: () => void;
   setAssignments: (assignments: Assignment[]) => void;
   setSelectedAssignment: (assignment: Assignment) => void;
-  setAssignmentConfiguration: (configuration: AssignmentConfiguration) => void;
+  setAssignmentConfiguration: (configuration: QuizConfiguration) => void;
   setStudentAuthed: () => void;
   setAssignmentSubmitted: (flag: boolean) => void;
 };
@@ -274,7 +275,7 @@ export const useAssignmentStore = create<AssignmentStore>()(
         });
         await checkIfProctored(res);
       },
-      setAssignmentConfiguration: (configuration: AssignmentConfiguration) => {
+      setAssignmentConfiguration: (configuration: QuizConfiguration) => {
         set({
           selectedAssignmentConfigurations: configuration,
         });

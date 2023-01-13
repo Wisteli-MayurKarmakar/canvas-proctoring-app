@@ -253,8 +253,8 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
       true,
       props.quizConfig.recordScreen || screen,
       false,
-      (msg: any) => {},
-      (msg: any) => {}
+      (msg: any) => { },
+      (msg: any) => { }
     );
 
     if (res.status === 1) {
@@ -302,7 +302,9 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
       "timeLimit" in assignmentStore.selectedAssignmentConfigurations
     ) {
       let time = moment().add(
-        assignmentStore.selectedAssignmentConfigurations["timeLimit"] as number + 5,
+        (assignmentStore.selectedAssignmentConfigurations[
+          "timeLimit"
+        ] as number) + 5,
         "minutes"
       );
       let expTime: number = Math.round(
@@ -316,11 +318,10 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
     }
 
     if (props.quizConfig.lockdownBrowser) {
-      if (stuAuthenticated) {
-        openSEB();
-        return;
-      }
+      openSEB();
+      return;
     }
+
     if (!props.isNewTab) {
       saveConsumptionDetails();
       handleOpenQuizInNewTab();
@@ -339,13 +340,12 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
       .then((resp: any) => {
         setAssignedId(resp.assignedId);
       })
-      .catch((error: any) => {});
+      .catch((error: any) => { });
 
     window.ExamdAutoProctorJS.setCredentials(props.username, props.pass);
 
     await window.ExamdAutoProctorJS.getDefaultAudioVideoSync()
-      .then((resp: any) => {})
-      .catch((error: any) => {});
+
 
     let video = assignmentStore.selectedAssignmentConfigurations?.recordWebcam;
     let screen = assignmentStore.selectedAssignmentConfigurations?.recordScreen;
@@ -397,7 +397,7 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
         stream = vidEle.get(0).captureStream();
       }
       if (vidEle) {
-        stream.getTracks().forEach((track: any) => {});
+        stream.getTracks().forEach((track: any) => { });
       }
     }
     saveLTIPrctoringRef(
@@ -617,17 +617,19 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
   };
 
   const openSEB = () => {
-    if (stuAuthenticated || props.isAuthed) {
-      let url = window.location.href.split("//")[1];
-      let urlSubStrings = url.split("/");
-      let sebConfig: any = SebConfigDev;
-      if (urlSubStrings[0] === "localhost:3000") {
-        sebConfig = SebConfigLocal;
-      }
-
-      let sebURL: string = `seb://${urlSubStrings[0]}${sebConfig}???userId=${props.id}&courseId=${urlParamsData.courseId}&toolConsumerGuid=${urlParamsData.guid}&assignmentId=${props.assignment.id}&newTab=true&auth=1&studentId=${props.studentId}`;
-      window.location.href = sebURL;
+    let url = window.location.href.split("//")[1];
+    let urlSubStrings = url.split("/");
+    let sebConfig: any = SebConfigDev;
+    if (urlSubStrings[0] === "localhost:3000") {
+      sebConfig = SebConfigLocal;
     }
+
+    let sebURL: string = `seb://${urlSubStrings[0]}${sebConfig}???studentId=${urlParamsData.studentId}&assignmentId=${urlParamsData.assignmentId}&loginId=${urlParamsData.loginId}&courseId=${urlParamsData.courseId}&userId=${urlParamsData.userId}&invokeUrl=${urlParamsData.invokeUrl}&accountId=${urlParamsData.accountId}&toolConsumerGuid=${urlParamsData.guid}&newTab=true&auth=1`;
+    // console.log("sebUrl", sebURL);
+    // return
+    window.location.href = sebURL;
+    // if (stuAuthenticated || props.isAuthed) {
+    // }
   };
 
   const closeTab = () => {
@@ -686,11 +688,10 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
           <>
             <button
               disabled={assignmentStore.gotoQuiz ? false : true}
-              className={`inline-block px-6 py-2.5 ${
-                assignmentStore.gotoQuiz
+              className={`inline-block px-6 py-2.5 ${assignmentStore.gotoQuiz
                   ? "bg-blue-600 text-white"
                   : "bg-gray-400 text-black cursor-not-allowed"
-              } font-medium text-xs leading-tight rounded shadow-md transition duration-150 ease-in-out`}
+                } font-medium text-xs leading-tight rounded shadow-md transition duration-150 ease-in-out`}
               onClick={handleGoToQuiz}
             >
               Go to Quiz

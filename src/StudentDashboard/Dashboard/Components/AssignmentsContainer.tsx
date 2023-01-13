@@ -1,7 +1,10 @@
 import { Tooltip } from "antd";
 import moment from "moment";
 import React, { useEffect, useRef, useState } from "react";
-import { useAssignmentStore } from "../../../store/StudentDashboardStore";
+import {
+  StudentEnrollments,
+  useAssignmentStore,
+} from "../../../store/StudentDashboardStore";
 import { useAppStore } from "../../../store/AppSotre";
 import AuthenticationModal from "../../Modals/AuthenticationModal";
 import { useCommonStudentDashboardStore } from "../../../store/StudentDashboardStore";
@@ -9,6 +12,8 @@ import VideoAndScreenRec from "../../../videoAndScreenRec";
 import DateTimePicker from "../../../CommonUtilites/DateTimePicker";
 import { useStudentWorflowControllerStore } from "../../../store/StudentWorkflowControllerStore";
 import ConfirmModal from "../../../CommonUtilites/Modals/ConfirmModal";
+import axios from "axios";
+import { getLtiStudentProfileDetails } from "../../../apiConfigs";
 
 type Props = {
   isNewTab: boolean;
@@ -32,7 +37,8 @@ const AssignmentsContainer: React.FC<Props> = (props): JSX.Element => {
   const [showApprovalWarning, setShowApprovalWarning] =
     useState<boolean>(false);
   const inputRef = useRef<any>();
-  const { enrollments } = useCommonStudentDashboardStore((state) => state);
+  const { enrollments, updateEnrollmentWithIdApprovalStatus } =
+    useCommonStudentDashboardStore((state) => state);
   let scheduleInterval: any = null;
   let expiryInterval: any = null;
   const handleSelectAssignment = (assignment: any): void => {
@@ -58,8 +64,28 @@ const AssignmentsContainer: React.FC<Props> = (props): JSX.Element => {
     handleAuthComplete();
   };
 
-  const handleStartAuthentication = () => {
-    if (enrollments?.idApprovalStatus) {
+  const getIdApprovalStatus = async (): Promise<boolean> => {
+    try {
+      const response = await axios.post(
+        `${getLtiStudentProfileDetails}/${urlParamsData.guid}/${enrollments?.user.id}`
+      );
+
+      if (response.status === 200) {
+        let enrollment = { ...enrollments };
+        enrollment["idApprovalStatus"] =
+          response.data.idApprovalStatus === 0 ? false : true;
+        updateEnrollmentWithIdApprovalStatus(enrollment as StudentEnrollments);
+        return response.data.idApprovalStatus === 0 ? false : true;
+      }
+    } catch (err) {
+      return false;
+    }
+    return false;
+  };
+
+  const handleStartAuthentication = async () => {
+    const isIdApproved = await getIdApprovalStatus();
+    if (isIdApproved) {
       setShowAuthModal(true);
     } else {
       setShowApprovalWarning(true);

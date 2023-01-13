@@ -1,10 +1,92 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import type { ColumnsType } from "antd/es/table";
-import { AdminTableDataTypes, InstructorTableDataTypes } from "../../AppTypes";
+import { AccessDetails } from "../../AppTypes";
 import { Table } from "antd";
+import axios from "axios";
+import { updateLtiAccessRecord } from "../../apiConfigs";
+import { useAppStore } from "../../store/AppSotre";
+import moment from "moment";
+import WaitingModal from "../../CommonUtilites/WaitingModal";
+import ConfirmModal from "../../CommonUtilites/Modals/ConfirmModal";
 
 const Access: React.FC = (): JSX.Element => {
-  const adminColumns: ColumnsType<AdminTableDataTypes> = [
+  const [admins, setAdmins] = useState<AccessDetails[]>([]);
+  const [instructors, setInstructors] = useState<AccessDetails[]>([]);
+  const { urlParamsData, accessRecords } = useAppStore((state) => state);
+  const [isUpdating, setIsUpdating] = useState<boolean>(false);
+  const [showUpdateInfo, setShowUpdateInfo] = useState<boolean>(false);
+
+  const waitMsg: JSX.Element = (
+    <p className="text-center font-xl font-semibold">
+      Updating access details. Please wait...
+    </p>
+  );
+
+  const accessUpdateInfo: string =
+    "This change will be effective from next month. Thanks";
+
+  const updateLtiAccessRecordDetails = (record: AccessDetails) => {
+    setIsUpdating(true);
+    let payload = {
+      guid: urlParamsData.guid,
+      userId: record.userId,
+      instructorId: record.instructorId,
+      instituteId: record.instituteId,
+      accessType: record.accessType,
+      status: record.status === "Active" ? "1" : "N",
+      aiQuiz: record.aiQuiz,
+      aiWithReport: record.aiWithReport,
+      liveLaunch: record.liveLaunch,
+      liveProctor: record.liveProctor,
+      lockdownBrowser: record.lockdownBrowser,
+    };
+
+    axios
+      .post(`${updateLtiAccessRecord}`, {
+        ...payload,
+      })
+      .then(() => {
+        setIsUpdating(false);
+        setShowUpdateInfo(true);
+      })
+      .catch((error) => {
+        setIsUpdating(false);
+      });
+  };
+
+  const handleOptionClick = (id: string, option: string) => {
+    if (instructors) {
+      let records: AccessDetails[] = [...instructors];
+      records.forEach((item: AccessDetails, index: number) => {
+        if (item.idAccess === id) {
+          if (option === "aiQuiz") {
+            item.aiQuiz = item.aiQuiz === "Y" ? "N" : "Y";
+          }
+          if (option === "liveLaunch") {
+            item.liveLaunch = item.liveLaunch === "Y" ? "N" : "Y";
+          }
+          if (option === "liveProctor") {
+            item.liveProctor = item.liveProctor === "Y" ? "N" : "Y";
+          }
+          if (option === "aiWithReport") {
+            item.aiWithReport = item.aiWithReport === "Y" ? "N" : "Y";
+          }
+          if (option === "lockdownBrowser") {
+            item.lockdownBrowser = item.lockdownBrowser === "Y" ? "N" : "Y";
+          }
+        }
+      });
+      setInstructors(records);
+      let record: AccessDetails | undefined = records.find(
+        (record) => record.idAccess === id
+      );
+      if (record) {
+        updateLtiAccessRecordDetails(record);
+      }
+    }
+  };
+
+  const adminColumns: ColumnsType<AccessDetails> = [
     {
       title: "User Id",
       key: "userId",
@@ -42,7 +124,7 @@ const Access: React.FC = (): JSX.Element => {
     },
   ];
 
-  const instructorColumns: ColumnsType<InstructorTableDataTypes> = [
+  const instructorColumns: ColumnsType<AccessDetails> = [
     {
       title: "User Id",
       key: "userId",
@@ -72,28 +154,123 @@ const Access: React.FC = (): JSX.Element => {
       title: "AI",
       key: "ai",
       dataIndex: "",
+      render: (row: AccessDetails) => {
+        return (
+          <input
+            className="form-check-input appearance-none h-4 w-4 border border-gray-300 rounded-sm bg-white checked:bg-blue-600 checked:border-blue-600 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer"
+            type="checkbox"
+            id={`${row.idAccess}_ai`}
+            defaultChecked={row.aiQuiz === "Y" ? true : false}
+            onChange={() => handleOptionClick(row.idAccess, "aiQuiz")}
+          ></input>
+        );
+      },
     },
     {
       title: "AI with Report",
       key: "aiWRep",
       dataIndex: "",
+      render: (row: AccessDetails) => {
+        return (
+          <input
+            className="form-check-input appearance-none h-4 w-4 border border-gray-300 rounded-sm bg-white checked:bg-blue-600 checked:border-blue-600 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer"
+            type="checkbox"
+            id={`${row.idAccess}_aiWithReport`}
+            defaultChecked={row.aiWithReport === "Y" ? true : false}
+            onChange={() => handleOptionClick(row.idAccess, "aiWithReport")}
+          ></input>
+        );
+      },
     },
     {
       title: "Live Launch",
       key: "launch",
       dataIndex: "",
+      render: (row: AccessDetails) => {
+        return (
+          <input
+            className="form-check-input appearance-none h-4 w-4 border border-gray-300 rounded-sm bg-white checked:bg-blue-600 checked:border-blue-600 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer"
+            type="checkbox"
+            id={`${row.idAccess}liveLaunch`}
+            defaultChecked={row.liveLaunch === "Y" ? true : false}
+            onChange={() => handleOptionClick(row.idAccess, "liveLaunch")}
+          ></input>
+        );
+      },
     },
     {
       title: "Full Proctoring",
       key: "proctoring",
       dataIndex: "",
+      render: (row: AccessDetails) => {
+        return (
+          <input
+            className="form-check-input appearance-none h-4 w-4 border border-gray-300 rounded-sm bg-white checked:bg-blue-600 checked:border-blue-600 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer"
+            type="checkbox"
+            id={`${row.idAccess}_ai`}
+            defaultChecked={row.liveProctor === "Y" ? true : false}
+            onChange={() => handleOptionClick(row.idAccess, "liveProctor")}
+          ></input>
+        );
+      },
     },
     {
       title: "Lockdown Browser",
       key: "lockdown",
       dataIndex: "",
+      render: (row: AccessDetails) => {
+        return (
+          <input
+            className="form-check-input appearance-none h-4 w-4 border border-gray-300 rounded-sm bg-white checked:bg-blue-600 checked:border-blue-600 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer"
+            type="checkbox"
+            id={`${row.idAccess}_ai`}
+            defaultChecked={row.lockdownBrowser === "Y" ? true : false}
+            onChange={() => handleOptionClick(row.idAccess, "lockdownBrowser")}
+          ></input>
+        );
+      },
     },
   ];
+
+  const processAccessRecords = () => {
+    if (accessRecords) {
+      let instructors: AccessDetails[] = [];
+      let admins: AccessDetails[] = [];
+
+      accessRecords.map((item: AccessDetails) => {
+        if (item.status === "1") {
+          item.status = "Active";
+        } else if (item.status === "N") {
+          item.status = "N/ A";
+        } else {
+          item.status = "Not Active";
+        }
+
+        if (item.accessType === "INSTR") {
+          let timezoneOffset: string = `.${Math.abs(moment().utcOffset())}Z`;
+          item.createDate = moment(item.createDate + timezoneOffset).format(
+            "MM-DD-YYYY hh:mm a"
+          );
+          item.key = item.idAccess;
+          instructors.push(item);
+        }
+        if (item.accessType === "ADMIN") {
+          let timezoneOffset: string = `.${Math.abs(moment().utcOffset())}Z`;
+          item.createDate = moment(item.createDate + timezoneOffset).format(
+            "MM-DD-YYYY hh:mm a"
+          );
+          item.key = item.idAccess;
+          admins.push(item);
+        }
+      });
+      setAdmins(admins);
+      setInstructors(instructors);
+    }
+  };
+
+  useEffect(() => {
+    processAccessRecords();
+  }, []);
 
   return (
     <div className="flex flex-col w-full justify-center">
@@ -101,7 +278,7 @@ const Access: React.FC = (): JSX.Element => {
         Access Control
       </p>
       <p className="text-center text-lg font-semibold underline mt-8">Admin</p>
-      <Table columns={adminColumns} className="mt-2" />
+      <Table columns={adminColumns} className="mt-2" dataSource={admins} />
       <p className="text-center text-lg font-semibold underline mt-8">
         Instructor
       </p>
@@ -151,7 +328,26 @@ const Access: React.FC = (): JSX.Element => {
           </svg>
         </span>
       </div>
-      <Table columns={instructorColumns} className="mt-2" />
+      <Table
+        columns={instructorColumns}
+        className="mt-2"
+        dataSource={instructors}
+      />
+      {isUpdating && (
+        <WaitingModal
+          visible={isUpdating}
+          title="Please wait"
+          message={waitMsg}
+        />
+      )}
+      {showUpdateInfo && (
+        <ConfirmModal
+          visible={showUpdateInfo}
+          title={"Update Info"}
+          close={() => setShowUpdateInfo(false)}
+          message={accessUpdateInfo}
+        />
+      )}
     </div>
   );
 };

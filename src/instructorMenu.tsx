@@ -1,7 +1,7 @@
 import { Tabs } from "antd";
 import React from "react";
 import Configuration from "./configuration";
-import "antd/dist/antd.css";
+import "antd/dist/antd.min.css";
 import Reports from "./InstructorDashboard/Tabs/Reports/reports";
 import Authentication from "./InstructorDashboard/Authentication";
 import LiveProctoring from "./InstructorDashboard/Menus/LiveProctoring";
@@ -9,6 +9,7 @@ import Student from "./InstructorDashboard/Tabs/Student/Students";
 import Admin from "./InstructorDashboard/Tabs/Admin";
 import { useAppStore } from "./store/AppSotre";
 import DummyPage from "./dummyPage";
+import HelpAndSupport from "./InstructorDashboard/Components/HelpAndSupport";
 
 interface Props {
   auth: any;
@@ -24,7 +25,7 @@ interface Props {
 const InstructorMenu: React.FunctionComponent<Props> = (props): JSX.Element => {
   let { TabPane } = Tabs;
   const onChange = (key: string) => {};
-  const { urlParamsData, tokenData } = useAppStore((state) => state);
+  const { urlParamsData, tokenData, isAdmin } = useAppStore((state) => state);
 
   if (
     urlParamsData.courseId &&
@@ -66,8 +67,11 @@ const InstructorMenu: React.FunctionComponent<Props> = (props): JSX.Element => {
           <TabPane tab="Students" key="5">
             <Student />
           </TabPane>
-          <TabPane tab="Admin" key="6">
+          {isAdmin && <TabPane tab="Admin" key="6">
             <Admin />
+          </TabPane>}
+          <TabPane tab="Help & Support" key="7">
+            <HelpAndSupport />
           </TabPane>
         </Tabs>
       </div>

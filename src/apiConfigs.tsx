@@ -1,7 +1,6 @@
 let baseUrl: string | undefined = process.env.REACT_APP_BASE_URL;
 
-const gcpUrl: string = baseUrl + "student/api/v1";
-const vpsUrl: string = baseUrl + "canvaslms/api/v1";
+const baseApiUrl: string = baseUrl + "canvaslms/api/v1";
 
 const getEndPoints: string = `${baseUrl}cdn/urls/xproctor/1`;
 
@@ -15,71 +14,81 @@ const getExceptions: string = `${baseUrl}ai/db/excp/list/ex/`;
 
 const getMedia: string = `${baseUrl}media`;
 
-const canvasEnrollmentsByCourseId: string = `${vpsUrl}/fetchCanvasEnrollmentsByCourseId/`;
-const autoCompleteSetup: string = `${vpsUrl}/autoCompleteSetup/`;
-const saveLtiCanvasConfig: string = `${vpsUrl}/saveLtiCanvasConfig`;
-const getLtiCanvasConfigByGuidCourseIdQuizId: string = `${vpsUrl}/getLtiCanvasConfigByGuidCourseIdQuizId`;
-const fetchCanvasQuizzesByCourseId: string = `${vpsUrl}/fetchCanvasQuizzesByCourseId/`;
-const viewCanvasProfile: string = `${vpsUrl}/downloadUserProfileImage/`;
-const downloadDL: string = `${vpsUrl}/downloadUserDL/`;
-const saveLtiVideoRef: string = `${vpsUrl}/saveLtiVideoRef`;
-const getQuizSubmissionsStateFromCanvas: string = `${vpsUrl}/getQuizSubmissionsStateFromCanvas/`;
-const completeCanvasQuizSubmission: string = `${vpsUrl}/completeCanvasQuizSubmission/1/`;
-const fetchCanvasEnrollmentsByCourseId: string = `${vpsUrl}/fetchCanvasEnrollmentsByCourseId/`;
-const generateOtpForCanvasQuiz: string = `${vpsUrl}/generateOtpForCanvasQuiz/`;
-const validateOtpForCanvasQuiz: string = `${vpsUrl}/validateOtpForCanvasQuiz/`;
-const getLtiStudentProfileDetails: string = `${vpsUrl}/getLtiStudentProfileDetails/`;
-const uploadCanvasProfile: string = `${vpsUrl}/uploadUserProfileImage/`;
-const uploadCanvasDL: string = `${vpsUrl}/uploadUserDL/`;
-const fetchCanvasCourseDetailsByCourseId: string = `${vpsUrl}/fetchCanvasCourseDetailsByCourseId`;
-const getLtiCVideoRef: string = `${vpsUrl}/getLtiCanvasVideoRef`;
-const saveLtiStudentProfile: string = `${vpsUrl}/saveLtiStudentProfile`;
-const getCanvasTokenUrl: string = `${vpsUrl}/getCanvasToken`;
-const fetchAccountsByIdAndEnrollemntType: string = `${vpsUrl}/fetchAccountsByIdAndEnrollemntType`;
-const submitAssignment: string = `${vpsUrl}/submitAssignment`;
-const fetchCanvasAssignmentsByCourseId: string = `${vpsUrl}/fetchCanvasAssignmentsByCourseId`;
-const getLtiCanvasConfigByAssignment: string = `${vpsUrl}/getLtiCanvasConfigByAssignment`;
-const saveScheduling: string = `${vpsUrl}/saveLtiSchedule`;
-const getScheduling: string = `${vpsUrl}/getLtiSchedule`;
-const getCanvasAssignmentDetails: string = `${vpsUrl}/getCanvasAssignmentDetails`;
-const fetchAccountsByCourseAndEnrollemntType: string = `${vpsUrl}/fetchAccountsByCourseAndEnrollemntType`;
-const fetchCanvasEnrollmentsByInstituteForThreeHours: string = `${vpsUrl}/fetchCanvasEnrollmentsByInstituteForThreeHours`;
-const fetchCanvasEnrollmentsByInstituteForTwentyFourHours: string = `${vpsUrl}/fetchCanvasEnrollmentsByInstituteForTwentyFourHours`;
-const fetchCanvasEnrollmentsByInstituteForSevenDays: string = `${vpsUrl}/fetchCanvasEnrollmentsByInstituteForSevenDays`;
-const getGetCanvasQuizDetails: string = `${vpsUrl}/getGetCanvasQuizDetails`;
-const saveLtiAccessibility: string = `${vpsUrl}/saveLtiAccessibility`;
-const getLtiAccessibility: string = `${vpsUrl}/getLtiAccessibility`;
-const saveLtiAccessibilityApproval: string = `${vpsUrl}/saveLtiAccessibilityApproval`;
-const getLtiAccessibilityApproval: string = `${vpsUrl}/getLtiAccessibilityApproval`;
-const getLtiScheduleByQuizId: string = `${vpsUrl}/getLtiScheduleByQuizId`;
-const saveLtiBillingRate: string = `${vpsUrl}/saveLtiBillingRate`;
-const getLtiBillingRate: string = `${vpsUrl}/getLtiBillingRate`;
-const saveLtiProctorJourney: string = `${vpsUrl}/saveLtiProctorJourney`;
-const getLtiProctorJourney: string = `${vpsUrl}/getLtiProctorJourney`;
-const saveLtiStudentJourney: string = `${vpsUrl}/saveLtiStudentJourney`;
-const getLtiStudentJourney: string = `${vpsUrl}/getLtiStudentJourney`;
-const getLtiInstitute: string = `${vpsUrl}/getLtiInstitute`
-const saveLtiInstitute: string = `${vpsUrl}/saveLtiInstitute`;
-const saveLtiPayments: string = `${vpsUrl}/saveLtiPayments`;
-const getLtiPayments: string = `${vpsUrl}/getLtiPayments`;
-const saveLtiConsumptions: string = `${vpsUrl}/saveLtiConsumptions`;
-const getLtiConsumptions: string = `${vpsUrl}/getLtiConsumptions`;
-const recoverQuiz: string = `${vpsUrl}/recoverQuiz`;
-const ltiEmailNotificationTypes: string =
-  "http://canvaslmsdev.eba-9ambmmcn.us-east-1.elasticbeanstalk.com/canvaslms/api/v1/lti-email-notification-types";
-const ltiDefaultEmailTemplate: string =
-  "http://canvaslmsdev.eba-9ambmmcn.us-east-1.elasticbeanstalk.com/canvaslms/api/v1/lti-default-email-template";
-const ltiTestEmail: string =
-  "http://canvaslmsdev.eba-9ambmmcn.us-east-1.elasticbeanstalk.com/canvaslms/api/v1/lti-test-email";
-const createLtiEmailTopic: string = "http://canvaslmsdev.eba-9ambmmcn.us-east-1.elasticbeanstalk.com/canvaslms/api/v1/lti-email-topic"
+const canvasEnrollmentsByCourseId: string = `${baseApiUrl}/fetchCanvasEnrollmentsByCourseId/`;
+const autoCompleteSetup: string = `${baseApiUrl}/autoCompleteSetup/`;
+const saveLtiCanvasConfig: string = `${baseApiUrl}/saveLtiCanvasConfig`;
+const getLtiCanvasConfigByGuidCourseIdQuizId: string = `${baseApiUrl}/getLtiCanvasConfigByGuidCourseIdQuizId`;
+const fetchCanvasQuizzesByCourseId: string = `${baseApiUrl}/fetchCanvasQuizzesByCourseId/`;
+const viewCanvasProfile: string = `${baseApiUrl}/downloadUserProfileImage/`;
+const downloadDL: string = `${baseApiUrl}/downloadUserDL/`;
+const saveLtiVideoRef: string = `${baseApiUrl}/saveLtiVideoRef`;
+const getQuizSubmissionsStateFromCanvas: string = `${baseApiUrl}/getQuizSubmissionsStateFromCanvas/`;
+const completeCanvasQuizSubmission: string = `${baseApiUrl}/completeCanvasQuizSubmission/1/`;
+const fetchCanvasEnrollmentsByCourseId: string = `${baseApiUrl}/fetchCanvasEnrollmentsByCourseId/`;
+const generateOtpForCanvasQuiz: string = `${baseApiUrl}/generateOtpForCanvasQuiz/`;
+const validateOtpForCanvasQuiz: string = `${baseApiUrl}/validateOtpForCanvasQuiz/`;
+const getLtiStudentProfileDetails: string = `${baseApiUrl}/getLtiStudentProfileDetails/`;
+const uploadCanvasProfile: string = `${baseApiUrl}/uploadUserProfileImage/`;
+const uploadCanvasDL: string = `${baseApiUrl}/uploadUserDL/`;
+const fetchCanvasCourseDetailsByCourseId: string = `${baseApiUrl}/fetchCanvasCourseDetailsByCourseId`;
+const getLtiCVideoRef: string = `${baseApiUrl}/getLtiCanvasVideoRef`;
+const saveLtiStudentProfile: string = `${baseApiUrl}/saveLtiStudentProfile`;
+const getCanvasTokenUrl: string = `${baseApiUrl}/getCanvasToken`;
+const fetchAccountsByIdAndEnrollemntType: string = `${baseApiUrl}/fetchAccountsByIdAndEnrollemntType`;
+const submitAssignment: string = `${baseApiUrl}/submitAssignment`;
+const fetchCanvasAssignmentsByCourseId: string = `${baseApiUrl}/fetchCanvasAssignmentsByCourseId`;
+const getLtiCanvasConfigByAssignment: string = `${baseApiUrl}/getLtiCanvasConfigByAssignment`;
+const saveScheduling: string = `${baseApiUrl}/saveLtiSchedule`;
+const getScheduling: string = `${baseApiUrl}/getLtiSchedule`;
+const getCanvasAssignmentDetails: string = `${baseApiUrl}/getCanvasAssignmentDetails`;
+const fetchAccountsByCourseAndEnrollemntType: string = `${baseApiUrl}/fetchAccountsByCourseAndEnrollemntType`;
+const fetchCanvasEnrollmentsByInstituteForThreeHours: string = `${baseApiUrl}/fetchCanvasEnrollmentsByInstituteForThreeHours`;
+const fetchCanvasEnrollmentsByInstituteForTwentyFourHours: string = `${baseApiUrl}/fetchCanvasEnrollmentsByInstituteForTwentyFourHours`;
+const fetchCanvasEnrollmentsByInstituteForSevenDays: string = `${baseApiUrl}/fetchCanvasEnrollmentsByInstituteForSevenDays`;
+const getGetCanvasQuizDetails: string = `${baseApiUrl}/getGetCanvasQuizDetails`;
+const saveLtiAccessibility: string = `${baseApiUrl}/saveLtiAccessibility`;
+const getLtiAccessibility: string = `${baseApiUrl}/getLtiAccessibility`;
+const saveLtiAccessibilityApproval: string = `${baseApiUrl}/saveLtiAccessibilityApproval`;
+const getLtiAccessibilityApproval: string = `${baseApiUrl}/getLtiAccessibilityApproval`;
+const getLtiScheduleByQuizId: string = `${baseApiUrl}/getLtiScheduleByQuizId`;
+const saveLtiBillingRate: string = `${baseApiUrl}/saveLtiBillingRate`;
+const getLtiBillingRate: string = `${baseApiUrl}/getLtiBillingRate`;
+const saveLtiProctorJourney: string = `${baseApiUrl}/saveLtiProctorJourney`;
+const getLtiProctorJourney: string = `${baseApiUrl}/getLtiProctorJourney`;
+const saveLtiStudentJourney: string = `${baseApiUrl}/saveLtiStudentJourney`;
+const getLtiStudentJourney: string = `${baseApiUrl}/getLtiStudentJourney`;
+const getLtiInstitute: string = `${baseApiUrl}/getLtiInstitute`;
+const saveLtiInstitute: string = `${baseApiUrl}/saveLtiInstitute`;
+const saveLtiPayments: string = `${baseApiUrl}/saveLtiPayments`;
+const getLtiPayments: string = `${baseApiUrl}/getLtiPayments`;
+const saveLtiConsumptions: string = `${baseApiUrl}/saveLtiConsumptions`;
+const getLtiConsumptions: string = `${baseApiUrl}/getLtiConsumptions`;
+const recoverQuiz: string = `${baseApiUrl}/recoverQuiz`;
+const updateLtiAccessRecord: string = `${baseApiUrl}/lti-access`;
+// const getLtiAccessByGuid: string = `http://canvaslmsdev.eba-9ambmmcn.us-east-1.elasticbeanstalk.com/canvaslms/api/v1/lti-access-guid`
+// const ltiEmailNotificationTypes: string =
+//   "http://canvaslmsdev.eba-9ambmmcn.us-east-1.elasticbeanstalk.com/canvaslms/api/v1/lti-email-notification-types";
+// const ltiDefaultEmailTemplate: string =
+//   "http://canvaslmsdev.eba-9ambmmcn.us-east-1.elasticbeanstalk.com/canvaslms/api/v1/lti-default-email-template";
+// const ltiTestEmail: string =
+//   "http://canvaslmsdev.eba-9ambmmcn.us-east-1.elasticbeanstalk.com/canvaslms/api/v1/lti-test-email";
+// const createLtiEmailTopic: string = "http://canvaslmsdev.eba-9ambmmcn.us-east-1.elasticbeanstalk.com/canvaslms/api/v1/lti-email-topic"
+const getLtiCanvasConfigByGuidCourseId: string = `${baseApiUrl}/getLtiCanvasConfigByGuidCourseId`
+const getLtiAccessByGuid: string = `${baseApiUrl}/lti-access-guid`;
+const ltiEmailNotificationTypes: string = `${baseApiUrl}/lti-email-notification-types`;
+const ltiDefaultEmailTemplate: string = `${baseApiUrl}/lti-default-email-template`;
+const ltiTestEmail: string = `${baseApiUrl}/lti-test-email`;
+const createLtiEmailTopic: string = `${baseApiUrl}/lti-email-topic`;
 
 export {
   getEndPoints,
   fetchAccountsByCourseAndEnrollemntType,
   saveScheduling,
+  updateLtiAccessRecord,
   getCanvasAssignmentDetails,
   getLtiProctorJourney,
   saveLtiPayments,
+  getLtiAccessByGuid,
   saveLtiInstitute,
   getLtiPayments,
   getLtiStudentJourney,
@@ -94,6 +103,7 @@ export {
   createLtiEmailTopic,
   getGetCanvasQuizDetails,
   saveLtiAccessibility,
+  getLtiCanvasConfigByGuidCourseId,
   ltiTestEmail,
   saveLtiAccessibilityApproval,
   saveLtiBillingRate,

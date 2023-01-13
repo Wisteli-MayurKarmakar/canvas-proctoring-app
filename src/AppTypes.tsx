@@ -67,24 +67,62 @@ type URLParamsData = {
   loginId?: string;
 };
 
-type AssignmentConfiguration = {
+type AssignmentConfiguration = QuizConfiguration;
+
+type defualtProctingSettings = {
+  name: string;
+  configName: string;
+  infoMsg: string;
+  settings: QuizConfigurationWithOnlyProcOpt;
+};
+
+// type QuizConfig = {
+//   recordWebcam: boolean;
+//   recordScreen: boolean;
+//   recordAudio: boolean;
+//   chat: boolean;
+//   studentPicture: boolean;
+//   studentIdDl: boolean;
+//   roomScan: boolean;
+//   otp: boolean;
+//   calculatorAllowed: boolean;
+//   scratchPadAllowed: boolean;
+//   liveHelp: boolean;
+//   whitelistPages: boolean;
+//   disableCopyPaste: boolean;
+//   disablePrinting: boolean;
+//   multiplePerson: boolean;
+//   cellPhone: boolean;
+//   noPersonInRoom: boolean;
+//   speaking: boolean;
+//   postExamReview: boolean;
+//   examdLiveLaunch: boolean;
+//   instructorProctored: boolean;
+//   examdProctored: boolean;
+//   lockdownBrowser: boolean;
+// };
+
+type QuizConfiguration = {
+  idInstructor?: string;
   assignmentId: number;
-  availableFrom: string;
-  availableUntil: string;
   calculatorAllowed: boolean;
   cellPhone: boolean;
   chat: boolean;
   courseId: string;
+  createDate: string;
+  createUser: string;
   disableCopyPaste: boolean;
   disablePrinting: boolean;
-  dueDate: string;
   examdLiveLaunch: boolean;
   examdProctored: boolean;
+  guid: string;
   idLtiCanvasConfig: string;
   idUser: string;
-  instructorProctored: false;
+  instructorProctored: boolean;
   liveHelp: boolean;
   lockdownBrowser: boolean;
+  modifyDate: string;
+  modifyUser: string;
   moduleId: number;
   multiplePerson: boolean;
   noPersonInRoom: boolean;
@@ -99,40 +137,34 @@ type AssignmentConfiguration = {
   speaking: boolean;
   studentIdDl: boolean;
   studentPicture: boolean;
-  toolConsumerInstanceGuid: string;
+  timeLimit: number;
   whitelistPages: boolean;
 };
 
-type defualtProctingSettings = {
-  name: string;
-  infoMsg: string;
-  settings: QuizConfig;
-};
-
-type QuizConfig = {
-  recordWebcam: boolean;
-  recordScreen: boolean;
-  recordAudio: boolean;
-  chat: boolean;
-  studentPicture: boolean;
-  studentIdDl: boolean;
-  roomScan: boolean;
-  otp: boolean;
+type QuizConfigurationWithOnlyProcOpt = {
   calculatorAllowed: boolean;
-  scratchPadAllowed: boolean;
-  liveHelp: boolean;
-  whitelistPages: boolean;
+  cellPhone: boolean;
+  chat: boolean;
   disableCopyPaste: boolean;
   disablePrinting: boolean;
-  multiplePerson: boolean;
-  cellPhone: boolean;
-  noPersonInRoom: boolean;
-  speaking: boolean;
-  postExamReview: boolean;
   examdLiveLaunch: boolean;
-  instructorProctored: boolean;
   examdProctored: boolean;
+  instructorProctored: boolean;
+  liveHelp: boolean;
   lockdownBrowser: boolean;
+  multiplePerson: boolean;
+  noPersonInRoom: boolean;
+  otp: boolean;
+  postExamReview: boolean;
+  recordAudio: boolean;
+  recordScreen: boolean;
+  recordWebcam: boolean;
+  roomScan: boolean;
+  scratchPadAllowed: boolean;
+  speaking: boolean;
+  studentIdDl: boolean;
+  studentPicture: boolean;
+  whitelistPages: boolean;
 };
 
 type AppStore = {
@@ -625,16 +657,92 @@ type InstructorTableDataTypes = {
   lockdown: JSX.Element;
 };
 
+//Access record type
+
+type AccessDetails = {
+  createUser: string;
+  createDate: string;
+  modifyUser: string;
+  modifyDate: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+  key?: string;
+  idAccess: string;
+  guid: string;
+  userId: string;
+  instructorId: number;
+  instituteId: number;
+  accessType: string;
+  status: string;
+  aiQuiz: string;
+  aiWithReport: string;
+  liveLaunch: string;
+  liveProctor: string;
+  lockdownBrowser: string;
+};
+
+// Quiz Store
+
+type QuizStore = {
+  allQuizzes: any;
+  selectedQuiz: Quiz | null;
+  selectedQuizConfig: QuizConfiguration;
+  defaultConfiguration: QuizConfigurationWithOnlyProcOpt;
+  customizableQuizConfig: QuizConfigurationWithOnlyProcOpt;
+  defaultOptionSelected: string | null;
+  isRecOptions: boolean;
+  isVerification: boolean;
+  reportReview: boolean;
+  liveLaunch: boolean;
+  liveProctoring: boolean;
+  lockdownBrowser: boolean;
+  showConfigSummary: boolean;
+  configAvailable: boolean;
+  isStudResource: boolean;
+  isLockdown: boolean;
+  isViolation: boolean;
+  isProcExamd: boolean;
+  handleConfigCatSelectChange: (category: string) => void;
+  handleConfigOptionChange: (category: string, option: string) => void;
+  setAllQuizzes: (quizzes: Quiz[]) => void;
+  setSelectedQuiz: (quiz: Quiz) => void;
+  setDefaultOptionSelection: (optionName: string, flag: boolean) => void;
+  updateQuizConfig: (configName: string, selected: boolean) => void;
+  handleQuizConfigSelect: (configName: string) => void;
+};
+
+type FullNameMap = {
+  [key: string]: string;
+}
+
+type ConfigurationWithStatus = {
+  [key: string]: boolean | string | JSX.Element;
+};
+
+type IconMap = {
+  [key: string]: JSX.Element;
+}
+
+type ConfigurationOptionsWithStatus = ConfigurationWithStatus[]
+
 export type {
   AllDates,
   Quiz,
   AppStore,
-  QuizConfig,
+  ConfigurationWithStatus,
+  ConfigurationOptionsWithStatus,
   ConsumptionTableColumns,
   NotificationType,
   PaymentsTableColumns,
+  AccessDetails,
+  IconMap,
+  FullNameMap,
   PaymentRecords,
   StudentDetails,
+  QuizConfiguration,
+  QuizConfigurationWithOnlyProcOpt,
   StudentJourneyStore,
   SaveLtiInsituteDataType,
   AdminTableDataTypes,
@@ -643,6 +751,7 @@ export type {
   ProctorJourneyStore,
   NotificationStore,
   InstituteDetails,
+  QuizStore,
   AssignmentConfiguration,
   ConsumptionRecord,
   PaymentDetails,

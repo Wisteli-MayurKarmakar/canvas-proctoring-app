@@ -63,7 +63,7 @@ export const useSocketStore = create<SocketStore>()(
         dataToSend: DataToSend
       ) => {
         let conn: Socket<ClientToServerEvents, ServerToClientEvents> = io(
-          webSocketUrl,
+          webSocketUrl as string,
           {
             autoConnect: false,
           }

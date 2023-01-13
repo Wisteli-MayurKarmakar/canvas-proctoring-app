@@ -1,4 +1,4 @@
-import { Button, message, Modal } from "antd";
+import { Button, Modal } from "antd";
 import React, { useEffect } from "react";
 import PrivacyPolicy from "../../StudentDashboard/Tabs/PrivacyPolicy";
 import QuizRules from "../../StudentDashboard/Tabs/QuizRules";
@@ -57,7 +57,7 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
     }
   };
 
-  const isAgree = (flag: boolean) => {
+  const isAgree = (flag: boolean): void => {
     if (flag) {
       setButtonDisabled(false);
     } else {

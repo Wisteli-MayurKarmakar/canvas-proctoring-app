@@ -1,8 +1,9 @@
-import { defualtProctingSettings } from "../AppTypes";
+import { defualtProctingSettings, QuizConfigurationWithOnlyProcOpt } from "../AppTypes";
 
 export const defaultProcSettings: defualtProctingSettings[] = [
   {
-    name: "AI Proctoring",
+    name: "Report Review",
+    configName: "reportReview",
     infoMsg:
       "AI-based proctoring is a process that assesses a test-taking individual’s behavior, environment and movement, similar to a human proctor. In AI-based proctoring, the AI algorithm is trained by experts to predict, flag and register even the minutest of discrepancies and suspicion.",
     settings: {
@@ -33,6 +34,7 @@ export const defaultProcSettings: defualtProctingSettings[] = [
   },
   {
     name: "Live Launch",
+    configName: "liveLaunch",
     infoMsg:
       "Live Proctoring is an identity verification at the beginning of the exam or quiz. Here a human from our side will let the student start the quiz after verifying his/her identity.",
     settings: {
@@ -54,7 +56,7 @@ export const defaultProcSettings: defualtProctingSettings[] = [
       cellPhone: true,
       noPersonInRoom: true,
       speaking: true,
-      postExamReview: true,
+      postExamReview: false,
       examdLiveLaunch: true,
       instructorProctored: false,
       examdProctored: false,
@@ -63,6 +65,7 @@ export const defaultProcSettings: defualtProctingSettings[] = [
   },
   {
     name: "Live Proctoring",
+    configName: "liveProctoring",
     infoMsg:
       "Live Proctoring is an identity verification and automated digital remote proctoring solution, helping Institutions of higher education ensure the integrity of their high-stakes online assessments. Here a human either from Institution or from our side will monitor the full exam.",
     settings: {
@@ -70,8 +73,8 @@ export const defaultProcSettings: defualtProctingSettings[] = [
       recordScreen: true,
       recordAudio: false,
       chat: false,
-      studentPicture: true,
-      studentIdDl: true,
+      studentPicture: false,
+      studentIdDl: false,
       roomScan: false,
       otp: false,
       calculatorAllowed: false,
@@ -84,15 +87,16 @@ export const defaultProcSettings: defualtProctingSettings[] = [
       cellPhone: true,
       noPersonInRoom: true,
       speaking: true,
-      postExamReview: true,
+      postExamReview: false,
       examdLiveLaunch: false,
-      instructorProctored: true,
-      examdProctored: false,
+      instructorProctored: false,
+      examdProctored: true,
       lockdownBrowser: false,
     },
   },
   {
     name: "Lockdown Browser",
+    configName: "lockdownBrowser",
     infoMsg:
       "Lockdown browser is an advanced technology that locks down test-takers' testing environment and restricts on-screen cheating during an online exam. It does not do video recording like the other options.",
     settings: {
@@ -122,3 +126,29 @@ export const defaultProcSettings: defualtProctingSettings[] = [
     },
   },
 ];
+
+export const disabledConfigOptions:QuizConfigurationWithOnlyProcOpt = {
+  calculatorAllowed: false,
+  cellPhone: false,
+  chat: false,
+  disableCopyPaste: false,
+  disablePrinting: false,
+  examdLiveLaunch: false,
+  examdProctored: false,
+  instructorProctored: false,
+  liveHelp: false,
+  lockdownBrowser: false,
+  multiplePerson: false,
+  noPersonInRoom: false,
+  otp: false,
+  postExamReview: false,
+  recordAudio: false,
+  recordScreen: false,
+  recordWebcam: false,
+  roomScan: false,
+  scratchPadAllowed: false,
+  speaking: false,
+  studentIdDl: false,
+  studentPicture: false,
+  whitelistPages: false
+}

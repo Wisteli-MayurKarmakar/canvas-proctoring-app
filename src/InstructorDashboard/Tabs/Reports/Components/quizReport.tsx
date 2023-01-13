@@ -1,4 +1,4 @@
-import "antd/dist/antd.css";
+import "antd/dist/antd.min.css";
 import { message, Table } from "antd";
 import React, { FunctionComponent, useEffect, useState } from "react";
 import axios from "axios";
@@ -17,7 +17,7 @@ import {
 import { useAppStore } from "../../../../store/AppSotre";
 import moment from "moment";
 import { useProcotorJourneyStore } from "../../../../store/ProctorJourneyStore";
-import { ProctorJourney, StudentQuizReport } from "../../../../AppTypes";
+import { StudentQuizReport } from "../../../../AppTypes";
 import {
   useAssignmentStore,
   useCommonStudentDashboardStore,
@@ -38,14 +38,11 @@ const QuizReports: FunctionComponent = (): JSX.Element => {
   const [schedules, setSchedules] = useState<any>(null);
   const [showRepModal, setShowRepModal] = useState<boolean>(false);
   const [studList, setStudList] = useState<any>(null);
-  const [allProctorJourneyDetails, setAllProctorJourneyDetails] =
-    useState<any>(null);
   const [quizData, setQuizData] = useState<any[]>([]);
   const [isFetchingReport, setIsFetchingReport] = useState<boolean>(false);
   let [selectedQuiz, setSelectedQuiz] = useState<any>(null);
   const { urlParamsData, tokenData } = useAppStore((state) => state);
-  const { setJourneyDetails, journeyDetails, getJourneyDetails } =
-    useProcotorJourneyStore((state) => state);
+  const { getJourneyDetails } = useProcotorJourneyStore((state) => state);
   const { setAssignmentConfiguration } = useAssignmentStore((state) => state);
 
   const getCourseQuizesById = () => {
@@ -54,11 +51,12 @@ const QuizReports: FunctionComponent = (): JSX.Element => {
         `${getCanvasAssignmentDetails}/${tokenData.instituteId}/${urlParamsData.guid}/${urlParamsData.courseId}/${tokenData.lmsAccessToken}/`
       )
       .then((res: any) => {
-        let quizzes: any = res.data.filter((item: any) => {
+        let quizzes: any = [];
+        res.data.forEach((item: any) => {
           if (item.id > 0) {
             item.key = item.quizId;
             item.id = item.quizId;
-            return item;
+            quizzes.push(item);
           }
         });
         setQuizData(quizzes);
@@ -281,6 +279,28 @@ const QuizReports: FunctionComponent = (): JSX.Element => {
     },
     {
       dataIndex: "",
+      key: "result",
+      title: "Result",
+      render: (row: any) => {
+        if (!studentResultsByQuiz) {
+          return "Not available";
+        }
+        if (selectedQuiz.quizId in studentResultsByQuiz) {
+          if (row.id.toString() in studentResultsByQuiz[selectedQuiz.quizId]) {
+            return studentResultsByQuiz[selectedQuiz.quizId][row.id.toString()]
+              .resultPass ? (
+              <p className="font-semibold text-green-600 text-lg">Pass</p>
+            ) : (
+              <p className="font-semibold text-red-500 text-lg">Fail</p>
+            );
+          }
+          return "Not available";
+        }
+        return "Not available";
+      },
+    },
+    {
+      dataIndex: "",
       key: "action",
       title: `Action`,
       render: (row: any) => {
@@ -316,28 +336,6 @@ const QuizReports: FunctionComponent = (): JSX.Element => {
             <p className="font-semibold">View Report</p>
           </button>
         );
-      },
-    },
-    {
-      dataIndex: "",
-      key: "result",
-      title: "Result",
-      render: (row: any) => {
-        if (!studentResultsByQuiz) {
-          return "Not available";
-        }
-        if (selectedQuiz.quizId in studentResultsByQuiz) {
-          if (row.id.toString() in studentResultsByQuiz[selectedQuiz.quizId]) {
-            return studentResultsByQuiz[selectedQuiz.quizId][row.id.toString()]
-              .resultPass ? (
-              <p className="font-semibold text-green-600 text-lg">Pass</p>
-            ) : (
-              <p className="font-semibold text-red-500 text-lg">Fail</p>
-            );
-          }
-          return "Not available";
-        }
-        return "Not available";
       },
     },
   ];
@@ -416,7 +414,7 @@ const QuizReports: FunctionComponent = (): JSX.Element => {
         </div>
       )}
       <div className="mt-4">
-        {quizData.length !== 0 ? (
+        {quizData.length > 0 ? (
           <Table
             columns={columns as Object[]}
             bordered={true}

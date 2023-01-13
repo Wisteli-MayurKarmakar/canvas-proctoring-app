@@ -1,6 +1,6 @@
 import { CheckSquareOutlined } from "@ant-design/icons";
 import React from "react";
-import { AssignmentConfiguration } from "../../AppTypes";
+import { AssignmentConfiguration, QuizConfiguration } from "../../AppTypes";
 import { useAssignmentStore } from "../../store/StudentDashboardStore";
 
 interface Props {
@@ -64,7 +64,7 @@ const QuizRules: React.FC<Props> = (props) => {
         key !== "modifyUser"
       ) {
         if (
-          selectedAssignmentConfigurations[key as keyof AssignmentConfiguration]
+          selectedAssignmentConfigurations[key as keyof QuizConfiguration]
         ) {
           allowedRules[key] = selectedAssignmentConfigurations[
             key as keyof AssignmentConfiguration

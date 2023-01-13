@@ -105,11 +105,11 @@ const Enrollments: React.FC = (): JSX.Element => {
             <button key="accessiblity" onClick={() => handleAction(row.id)}>
               Accessibility
             </button>
-            <button key="contact" onClick={() => handleAction(row.id)}>
-              Contact Me
-            </button>
             <button key="approveId" onClick={() => handleUpdateProfile(row.id)}>
               Id Approval
+            </button>
+            <button key="contact" className="cursor-not-allowed text-gray-300" onClick={() => handleAction(row.id)} disabled>
+              Contact
             </button>
           </div>
         );

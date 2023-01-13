@@ -38,7 +38,7 @@ const UpdateProfile: React.FC<Props> = (props): JSX.Element => {
   const [approved, setApproved] = React.useState<boolean | null>(null);
   let canvasRef: any = React.useRef<any>();
   let videoRef: any = React.useRef<any>();
-  const {tokenData} = useAppStore((state) => state)
+  const { tokenData } = useAppStore((state) => state);
 
   const updatingProfileMsg: JSX.Element = (
     <p className="text-center text-lg font-semibold">
@@ -209,56 +209,63 @@ const UpdateProfile: React.FC<Props> = (props): JSX.Element => {
 
   const getStudentProofs = async () => {
     setFetchingProofs(true);
-    let picFlag: boolean = false;
-    let idFlag: boolean = false;
-    let picProof = await axios.get(
-      `${viewCanvasProfile}${props.guid}/${props.userId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${props.authToken}`,
-        },
-        responseType: "arraybuffer",
-      }
-    );
-    if (
-      picProof.headers["content-type"] === "image/jpeg" ||
-      picProof.headers["content-type"] === "image/png" ||
-      picProof.headers["content-type"] === "image/svg" ||
-      picProof.headers["content-type"] === "image/webp" ||
-      picProof.headers["content-type"] === "image/jpg"
-    ) {
-      picFlag = true;
-      let blob = new Blob([picProof.data], {
-        type: picProof.headers["content-type"],
-      });
-      setPhotoBlob(blob);
-      setStudentPhotos(URL.createObjectURL(blob));
-    }
-    let idProof = await axios.get(
-      `${downloadDL}${props.guid}/${props.userId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${props.authToken}`,
-        },
-        responseType: "arraybuffer",
-      }
-    );
+    try {
+      let picFlag: boolean = false;
+      let idFlag: boolean = false;
 
-    if (
-      idProof.headers["content-type"] === "image/jpeg" ||
-      idProof.headers["content-type"] === "image/png" ||
-      idProof.headers["content-type"] === "image/svg" ||
-      idProof.headers["content-type"] === "image/webp" ||
-      idProof.headers["content-type"] === "image/jpg"
-    ) {
-      idFlag = true;
-      let blob = new Blob([idProof.data], {
-        type: idProof.headers["content-type"],
-      });
-      setIdBlob(blob);
-      setStudentId(URL.createObjectURL(blob));
+      let picResponse = await axios.get(
+        `${viewCanvasProfile}${props.guid}/${props.userId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${props.authToken}`,
+          },
+          responseType: "arraybuffer",
+        }
+      );
+
+      if (
+        picResponse.headers["content-type"] === "image/jpeg" ||
+        picResponse.headers["content-type"] === "image/png" ||
+        picResponse.headers["content-type"] === "image/svg" ||
+        picResponse.headers["content-type"] === "image/webp" ||
+        picResponse.headers["content-type"] === "image/jpg"
+      ) {
+        picFlag = true;
+        let blob = new Blob([picResponse.data], {
+          type: picResponse.headers["content-type"],
+        });
+        setPhotoBlob(blob);
+        setStudentPhotos(URL.createObjectURL(blob));
+      }
+
+      let dlResponse = await axios.get(
+        `${downloadDL}${props.guid}/${props.userId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${props.authToken}`,
+          },
+          responseType: "arraybuffer",
+        }
+      );
+
+      if (
+        dlResponse.headers["content-type"] === "image/jpeg" ||
+        dlResponse.headers["content-type"] === "image/png" ||
+        dlResponse.headers["content-type"] === "image/svg" ||
+        dlResponse.headers["content-type"] === "image/webp" ||
+        dlResponse.headers["content-type"] === "image/jpg"
+      ) {
+        idFlag = true;
+        let blob = new Blob([dlResponse.data], {
+          type: dlResponse.headers["content-type"],
+        });
+        setIdBlob(blob);
+        setStudentId(URL.createObjectURL(blob));
+      }
+      setFetchingProofs(false);
+    } catch (err) {
+      setFetchingProofs(false);
     }
-    setFetchingProofs(false);
   };
 
   useEffect(() => {
@@ -281,12 +288,14 @@ const UpdateProfile: React.FC<Props> = (props): JSX.Element => {
 
   const handleIdApproval = (flag: boolean) => {
     let profileDetails = { ...userDetails };
-    profileDetails.idApprovalStatus = flag ? 1: 0;
+    profileDetails.idApprovalStatus = flag ? 1 : 0;
     // profileDetails.instituteId = tokenData.instituteId
     setApproved(flag);
     setUpdatingProfile(true);
     axios
-      .post(`${saveLtiStudentProfile}/${tokenData.instituteId}`, [{ ...profileDetails }])
+      .post(`${saveLtiStudentProfile}/${tokenData.instituteId}`, [
+        { ...profileDetails },
+      ])
       .then((resp: any) => {
         message.success("Profile updated successfully");
         setUpdatingProfile(false);
@@ -313,9 +322,6 @@ const UpdateProfile: React.FC<Props> = (props): JSX.Element => {
         >
           Close
         </Button>,
-        // <Button key="save" onClick={handleSave}>
-        //   Save
-        // </Button>,
       ]}
     >
       <canvas ref={canvasRef} className="hidden"></canvas>

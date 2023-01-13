@@ -5,7 +5,7 @@
     <key>originatorVersion</key>
     <string>SEB_Win_2.1.1</string>
     <key>startURL</key>
-    <string>http://localhost:3000/lti/config?onSEBApp=true#/</string>
+    <string>http://localhost:3000/lti/config?</string>
     <key>startResource</key>
     <string />
     <key>sebServerURL</key>
@@ -55,7 +55,7 @@
     <key>showMenuBar</key>
     <true />
     <key>showTaskBar</key>
-    <false />
+    <true />
     <key>showSideMenu</key>
     <true />
     <key>taskBarHeight</key>
@@ -191,7 +191,7 @@
     <key>useTemporaryDownUploadDirectory</key>
     <false />
     <key>examKeySalt</key>
-    <data>AdxvJN9NZbH4WwpYItwHUQ3BLh8uTXLwqVWbSZb7Sgs=</data>
+    <data>j2DfojBVmlr2aAvoFPQP9O8t4DNyGS4YTZWiiNYHZXU=</data>
     <key>examSessionClearCookiesOnEnd</key>
     <true />
     <key>examSessionClearCookiesOnStart</key>
@@ -205,7 +205,7 @@
     <key>quitURL</key>
     <string>https://www.google.com</string>
     <key>quitURLConfirm</key>
-    <false />
+    <true />
     <key>restartExamURL</key>
     <string />
     <key>restartExamUseStartURL</key>
@@ -1234,7 +1234,7 @@
     <key>insideSebEnableChangeAPassword</key>
     <false />
     <key>insideSebEnableStartTaskManager</key>
-    <false />
+    <true />
     <key>insideSebEnableLogOff</key>
     <false />
     <key>insideSebEnableShutDown</key>
@@ -1254,11 +1254,11 @@
     <key>enableCtrlEsc</key>
     <false />
     <key>enableAltEsc</key>
-    <false />
+    <true />
     <key>enableAltTab</key>
     <true />
     <key>enableAltF4</key>
-    <false />
+    <true />
     <key>enableStartMenu</key>
     <false />
     <key>enableMiddleMouse</key>

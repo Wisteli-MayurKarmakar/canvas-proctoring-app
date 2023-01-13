@@ -11,6 +11,7 @@ import {
   InfoCircleFilled,
   InteractionOutlined,
   KeyOutlined,
+  MonitorOutlined,
   PhoneOutlined,
   PrinterOutlined,
   ProjectOutlined,
@@ -26,13 +27,14 @@ import {
 
 import ExamdLogo from "./ExamdLogo.png";
 import axios from "axios";
-import InfoModal from "./infoModal";
-import { defaultProcSettings } from "./CommonUtilites/ProctorSettingDefaults";
+import {
+  defaultProcSettings,
+  disabledConfigOptions,
+} from "./CommonUtilites/ProctorSettingDefaults";
 import "./configuration.css";
 import {
   autoCompleteSetup,
   saveLtiCanvasConfig,
-  getLtiCanvasConfigByGuidCourseIdQuizId,
   fetchCanvasQuizzesByCourseId,
   recoverQuiz,
 } from "./apiConfigs";
@@ -41,6 +43,15 @@ import CustomizationSummary from "./CommonUtilites/CustomizationSummary";
 import { useQuizStore } from "./store/QuizStore";
 import WaitingModal from "./CommonUtilites/WaitingModal";
 import { useAppStore } from "./store/AppSotre";
+import {
+  ConfigurationOptionsWithStatus,
+  ConfigurationWithStatus,
+  defualtProctingSettings,
+  FullNameMap,
+  IconMap,
+  Quiz,
+  QuizConfiguration,
+} from "./AppTypes";
 
 interface Props {
   auth: Object | any;
@@ -50,204 +61,153 @@ interface Props {
   toolConsumerGuid: any;
 }
 
-interface settingStruct {
-  [key: string]: {
-    [key: string]: {
-      fullName: string;
-      icon: React.ReactElement;
-    };
-  };
-}
-
-interface checkTypes {
-  [key: string]: {
-    [key: string]: boolean;
-  };
-}
-
-interface optionCheckedProto {
-  [key: string]: boolean;
-}
-
-interface subOptionsProto {
-  [key: string]: boolean;
-}
-interface objProto {
-  [key: string]: subOptionsProto;
-}
-
-interface settingOptionsStatus {
-  [key: string]: any;
-}
-
-const abbrs = {
-  "Recording Options": {
-    recordWebcam: false,
-    recordScreen: false,
-    recordAudio: false,
-    chat: false,
-  },
-  "Verification Options": {
-    studentPicture: false,
-    studentIdDl: false,
-    roomScan: false,
-    otp: false,
-  },
-  "Student Resources": {
-    calculatorAllowed: false,
-    scratchPadAllowed: false,
-    liveHelp: false,
-    whitelistPages: false,
-  },
-  "Lock Down Options": {
-    disableCopyPaste: false,
-    disablePrinting: false,
-    lockdownBrowser: false,
-  },
-  "Violation Options": {
-    multiplePerson: false,
-    cellPhone: false,
-    noPersonInRoom: false,
-    speaking: false,
-  },
-  "Proctor Options": {
-    postExamReview: false,
-    examdLiveLaunch: false,
-    instructorProctored: false,
-    examdProctored: false,
-  },
-};
-
 const iconSize = "";
 
-const settingOptions: settingStruct = {
-  "Recording Options": {
-    recordWebcam: {
-      fullName: "Record Webcam",
-      icon: <VideoCameraOutlined style={{ fontSize: iconSize }} />,
-    },
-    recordScreen: {
-      fullName: "Record Screen",
-      icon: <DesktopOutlined style={{ fontSize: iconSize }} />,
-    },
-    recordAudio: {
-      fullName: "Record Audio",
-      icon: <AudioOutlined style={{ fontSize: iconSize }} />,
-    },
-    chat: {
-      fullName: "Chat",
-      icon: <CommentOutlined style={{ fontSize: iconSize }} />,
-    },
-  },
-  "Verification Options": {
-    studentPicture: {
-      fullName: "Student Picture",
-      icon: <UserOutlined style={{ fontSize: iconSize }} />,
-    },
-    studentIdDl: {
-      fullName: "Student ID or DL",
-      icon: <IdcardOutlined style={{ fontSize: iconSize }} />,
-    },
-    roomScan: {
-      fullName: "Room Scan",
-      icon: <ScanOutlined style={{ fontSize: iconSize }} />,
-    },
-    otp: {
-      fullName: "One Time Password",
-      icon: <KeyOutlined style={{ fontSize: iconSize }} />,
-    },
-  },
-  "Student Resources": {
-    calculatorAllowed: {
-      fullName: "Calculator",
-      icon: <CalculatorOutlined style={{ fontSize: iconSize }} />,
-    },
-    scratchPadAllowed: {
-      fullName: "Scratch Pad",
-      icon: <SnippetsOutlined style={{ fontSize: iconSize }} />,
-    },
-    liveHelp: {
-      fullName: "Live Help",
-      icon: <RobotOutlined style={{ fontSize: iconSize }} />,
-    },
-    whitelistPages: {
-      fullName: "Whitelist Pages",
-      icon: <IeOutlined style={{ fontSize: iconSize }} />,
-    },
-  },
-  "Lock Down Options": {
-    disableCopyPaste: {
-      fullName: "Disable Copy/ Paste",
-      icon: <CopyOutlined style={{ fontSize: iconSize }} />,
-    },
-    disablePrinting: {
-      fullName: "Disable Printing",
-      icon: <PrinterOutlined style={{ fontSize: iconSize }} />,
-    },
-    lockdownBrowser: {
-      fullName: "Lock Down Browser",
-      icon: <ChromeOutlined style={{ fontSize: iconSize }} />,
-    },
-  },
-  "Violation Options": {
-    multiplePerson: {
-      fullName: "Multiple Person",
-      icon: <TeamOutlined style={{ fontSize: iconSize }} />,
-    },
-    cellPhone: {
-      fullName: "Cell Phone",
-      icon: <PhoneOutlined style={{ fontSize: iconSize }} />,
-    },
-    noPersonInRoom: {
-      fullName: "No Person In Room",
-      icon: <InteractionOutlined style={{ fontSize: iconSize }} />,
-    },
-    speaking: {
-      fullName: "Speaking",
-      icon: <SoundOutlined style={{ fontSize: iconSize }} />,
-    },
-  },
-  "Proctor Options": {
-    postExamReview: {
-      fullName: "Post Exam Review",
-      icon: <ProjectOutlined style={{ fontSize: iconSize }} />,
-    },
-    examdLiveLaunch: {
-      fullName: "Examd Live Launch",
-      icon: <RocketOutlined style={{ fontSize: iconSize }} />,
-    },
-    // instructorProctored: {
-    //   fullName: "Instructor Proctored",
-    //   icon: <IdcardOutlined style={{ fontSize: iconSize }} />,
-    // },
-    examdProctored: {
-      fullName: "Examd Proctored",
-      icon: <img src={ExamdLogo} width={100} height={100} />,
-    },
-  },
-};
-
 const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
-  let [optionsStatus, setOptionsStatus] = useState<optionCheckedProto>({});
   let [quizzesStat, setQuizzesStat] = useState<any>();
-  let [checked, setChecked] = useState<checkTypes>(abbrs);
-  let [userSettings, setUserSettings] = useState<any>({});
-  let [applySettings, setApplySettings] = useState<boolean>(false);
   const [quizzes, setQuizzes] = useState<any>(null);
   const [selectedQuiz, setSelectedQuiz] = useState<any>(null);
-  let [quizSettings, setQuizSettings] = useState<any>(null);
   const [showWaitingModal, setShowWaitingModal] = useState<boolean>(false);
   const [showConfigurations, setShowConfigurations] = useState<boolean>(false);
-  let [quizConfig, setQuizConfig] = useState<any>(null);
   let [configSaveStatus, setConfigSaveStatus] = useState<boolean>(false);
   let [defaultSettingsOptionsChecked, setDefaultSettingsOptionsChecked] =
     useState<any>(null);
-  const [showSummary, setShowSummary] = useState<boolean>(false);
-  const [quicKConfigSelected, setQuicKConfigSelected] = useState<string>("");
   let [isReset, setIsReset] = useState<boolean>(false);
-  const { tokenData, courseDetails, urlParamsData } = useAppStore(
-    (state) => state
-  );
+  const {
+    tokenData,
+    courseDetails,
+    urlParamsData,
+    userAccessDetails,
+    isNotAllowed,
+  } = useAppStore((state) => state);
+  const {
+    customizableQuizConfig,
+    isLockdown,
+    isProcExamd,
+    isRecOptions,
+    isStudResource,
+    isVerification,
+    isViolation,
+    reportReview,
+    liveLaunch,
+    liveProctoring,
+    lockdownBrowser,
+    handleConfigCatSelectChange,
+    handleConfigOptionChange,
+    handleQuizConfigSelect,
+    showConfigSummary,
+    selectedQuizConfig,
+    configAvailable,
+    setAllQuizzes,
+  } = useQuizStore((state) => state);
+
+  const fullNameMap: FullNameMap = {
+    recOptions: "Recording Options",
+    recordWebcam: "Record Webcam",
+    recordScreen: "Record Screen",
+    recordAudio: "Record Audio",
+    chat: "Chat",
+    verificationOptions: "Verification Options",
+    studentPicture: "Student Picture",
+    studentIdDl: "Student ID or Dl",
+    roomScan: "Room Scan",
+    otp: "One Time Password",
+    studentRes: "Student Resources",
+    calculatorAllowed: "Calculator Allowed",
+    scratchPadAllowed: "Scratch Pad Allowed",
+    liveHelp: "Live Help",
+    whitelistPages: "Whitelist Pages",
+    lockdownOptions: "Lockdown Options",
+    disableCopyPaste: "Disable Copy Paste",
+    disablePrinting: "Disable Printing",
+    lockdownBrowser: "Lockdown Browser",
+    violationOptions: "Violation Options",
+    multiplePerson: "Multiple Person",
+    cellPhone: "Cell Phone",
+    noPersonInRoom: "No Person In Room",
+    speaking: "Speaking",
+    proctorOptions: "Proctor Options by Examd",
+    postExamReview: "Post Exam Review",
+    examdLiveLaunch: "Live Launch",
+    examdProctored: "Proctoring",
+    instructorProctored: "Live Verification",
+  };
+
+  const iconMap: IconMap = {
+    recordWebcam: <VideoCameraOutlined style={{ fontSize: iconSize }} />,
+    recordScreen: <DesktopOutlined style={{ fontSize: iconSize }} />,
+    recordAudio: <AudioOutlined style={{ fontSize: iconSize }} />,
+    chat: <CommentOutlined style={{ fontSize: iconSize }} />,
+    studentPicture: <UserOutlined style={{ fontSize: iconSize }} />,
+    studentIdDl: <IdcardOutlined style={{ fontSize: iconSize }} />,
+    roomScan: <ScanOutlined style={{ fontSize: iconSize }} />,
+    otp: <KeyOutlined style={{ fontSize: iconSize }} />,
+    calculatorAllowed: <CalculatorOutlined style={{ fontSize: iconSize }} />,
+    scratchPadAllowed: <SnippetsOutlined style={{ fontSize: iconSize }} />,
+    liveHelp: <RobotOutlined style={{ fontSize: iconSize }} />,
+    whitelistPages: <IeOutlined style={{ fontSize: iconSize }} />,
+    disableCopyPaste: <CopyOutlined style={{ fontSize: iconSize }} />,
+    disablePrinting: <PrinterOutlined style={{ fontSize: iconSize }} />,
+    lockdownBrowser: <ChromeOutlined style={{ fontSize: iconSize }} />,
+    multiplePerson: <TeamOutlined style={{ fontSize: iconSize }} />,
+    cellPhone: <PhoneOutlined style={{ fontSize: iconSize }} />,
+    noPersonInRoom: <InteractionOutlined style={{ fontSize: iconSize }} />,
+    speaking: <SoundOutlined style={{ fontSize: iconSize }} />,
+    postExamReview: <ProjectOutlined style={{ fontSize: iconSize }} />,
+    examdLiveLaunch: <RocketOutlined style={{ fontSize: iconSize }} />,
+    examdProctored: <img src={ExamdLogo} width={100} height={100} />,
+    instructorProctored: <MonitorOutlined style={{ fontSize: iconSize }} />,
+  };
+
+  let configuration: ConfigurationOptionsWithStatus = [];
+
+  if (customizableQuizConfig) {
+    configuration = [
+      {
+        fullName: "Recording Options",
+        recordWebcam: customizableQuizConfig?.recordWebcam as boolean,
+        recordScreen: customizableQuizConfig?.recordScreen as boolean,
+        recordAudio: customizableQuizConfig?.recordAudio as boolean,
+        chat: customizableQuizConfig?.chat as boolean,
+      },
+      {
+        fullName: "Verification Options",
+        studentPicture: customizableQuizConfig.studentPicture as boolean,
+        studentIdDl: customizableQuizConfig.studentIdDl as boolean,
+        roomScan: customizableQuizConfig.roomScan as boolean,
+        otp: customizableQuizConfig.otp as boolean,
+        instructorProctored:
+          customizableQuizConfig.instructorProctored as boolean,
+      },
+      {
+        fullName: "Student Resources",
+        calculatorAllowed: customizableQuizConfig.calculatorAllowed as boolean,
+        scratchPadAllowed: customizableQuizConfig.scratchPadAllowed as boolean,
+        liveHelp: customizableQuizConfig.liveHelp as boolean,
+        whitelistPages: customizableQuizConfig.whitelistPages as boolean,
+      },
+      {
+        fullName: "Lockdown Options",
+        disableCopyPaste: customizableQuizConfig.disableCopyPaste as boolean,
+        disablePrinting: customizableQuizConfig.disablePrinting as boolean,
+        lockdownBrowser: customizableQuizConfig.lockdownBrowser as boolean,
+      },
+      {
+        fullName: "Violation Options",
+        multiplePerson: customizableQuizConfig.multiplePerson as boolean,
+        cellPhone: customizableQuizConfig.cellPhone as boolean,
+        noPersonInRoom: customizableQuizConfig.noPersonInRoom as boolean,
+        speaking: customizableQuizConfig.speaking as boolean,
+      },
+      {
+        fullName: "Proctoring Options by Examd",
+        postExamReview: customizableQuizConfig.postExamReview as boolean,
+        examdLiveLaunch: customizableQuizConfig.examdLiveLaunch as boolean,
+        examdProctored: customizableQuizConfig.examdProctored as boolean,
+      },
+    ];
+  }
+
   const [recoveringQuiz, setRecoveringQuiz] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const quizStoreState = useQuizStore((state) => state);
@@ -256,13 +216,6 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
       Recovering Quiz. Please wait...
     </p>
   );
-  const resetOptionSelection = (option: string) => {
-    let selectables: optionCheckedProto = { ...(checked[option] as {}) };
-    for (let key in selectables) {
-      selectables[key] = false;
-    }
-    setChecked({ ...checked, [option]: selectables });
-  };
   const waitingModalMessage: JSX.Element = (
     <div className="flex flex-row h-full w-full items-center justify-center gap-2">
       <p className="mx-atuo text-xl text-center font-bold">
@@ -289,108 +242,20 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
     </div>
   );
 
-  const handleChange = (option: string, e: any | null) => {
-    let options: optionCheckedProto = { ...(optionsStatus as {}) };
-    options[option] = e.target.checked;
-
-    if (e.target.checked === false) {
-      resetOptionSelection(option);
-      setOptionsStatus(options);
-      return;
-    }
-    setOptionsStatus(options);
-  };
-
-  const setDefaultCheckedStatus = () => {
-    let checks: checkTypes = {};
-    for (let key in settingOptions) {
-      let subOptions: subOptionsProto = {};
-      for (let subKey in settingOptions[key]) {
-        subOptions[subKey] = false;
-      }
-      let obj: objProto = {
-        [key]: subOptions,
-      };
-      Object.assign(checks, obj);
-    }
-    setChecked(checks);
-  };
-
-  const handleOptionClick = (option: string, subOption: string) => {
-    if (optionsStatus[option] === false) {
-      alert(`Please enable ${option} first`);
-      return;
-    }
-
-    if (defaultSettingsOptionsChecked["AI Proctoring"]) {
-      if (subOption === "examdLiveLaunch") {
-        message.error(
-          "Cannot select Examd Live Launch option with Default Proctoring"
-        );
-        return;
-      }
-    }
-
-    if (defaultSettingsOptionsChecked["Live Launch"]) {
-      if (subOption === "studentIdDl" || subOption === "studentPicture") {
-        message.error(
-          "Cannot select any AI authentication option with Live Launch Proctoring"
-        );
-        return;
-      }
-    }
-
-    if (
-      defaultSettingsOptionsChecked["Live Proctoring"] ||
-      defaultSettingsOptionsChecked["Lockdown Browser"]
-    ) {
-      if (subOption === "examdLiveLaunch") {
-        let res =
-          checked["Verification Options"]["studentPicture"] ||
-          checked["Verification Options"]["studentIdDl"];
-
-        if (res) {
-          message.error(
-            "Please de-select AI authentication options before selecting Live Launch"
-          );
-          return;
-        }
-      }
-
-      if (subOption === "studentPicture" || subOption === "studentIdDl") {
-        let res = checked["Proctor Options"]["examdLiveLaunch"];
-
-        if (res) {
-          message.error(
-            "Please de-select Live Launch options before selecting any AI authentication option"
-          );
-          return;
-        }
-      }
-    }
-
-    let options: optionCheckedProto = { ...(checked[option] as {}) };
-    let flag = true;
-
-    for (let key in options) {
-      if (key === subOption && options[key]) {
-        flag = false;
-        options[key] = false;
-      }
-    }
-    if (flag) {
-      options[subOption] = true;
-    }
-    setChecked({ ...(checked as {}), [option]: options });
-  };
-
-  const setOptionsEnableSwitchStatus = () => {
-    let status: settingOptionsStatus = {};
-    Object.keys(settingOptions).forEach((option: string) => {
-      status[option] = false;
-    });
-    setOptionsStatus(status);
-  };
+  // const setDefaultCheckedStatus = () => {
+  //   let checks: checkTypes = {};
+  //   for (let key in settingOptions) {
+  //     let subOptions: subOptionsProto = {};
+  //     for (let subKey in settingOptions[key]) {
+  //       subOptions[subKey] = false;
+  //     }
+  //     let obj: objProto = {
+  //       [key]: subOptions,
+  //     };
+  //     Object.assign(checks, obj);
+  //   }
+  //   setChecked(checks);
+  // };
 
   function uuid() {
     return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
@@ -420,65 +285,136 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
       alert("Please select a quiz");
       return;
     }
-    let flag = true;
-    let optionsEnabled: string[] = [];
-    Object.keys(optionsStatus).forEach((option: string) => {
-      if (optionsStatus[option] === true) {
-        optionsEnabled.push(option);
-      }
-    });
 
-    let optionsChoosen: string[] = [];
-    Object.keys(checked).map((option: string) => {
-      let optionEnabled: boolean = optionsEnabled.includes(option);
-      let anyOptionSelected: boolean = false;
-      Object.keys(checked[option]).forEach((subOption: string) => {
-        if (checked[option][subOption] === true) {
-          if (optionEnabled) {
-            anyOptionSelected = true;
-          }
-          optionsChoosen.push(subOption);
-        }
-      });
-      if (optionEnabled && !anyOptionSelected) {
-        flag = false;
-      }
-    });
-
-    if (!flag) {
-      alert(`Please select any one option to submit.`);
-      return;
-    }
-
-    let checkedOptions: checkTypes = { ...(checked as {}) };
-    let allOptions: settingOptionsStatus = {};
-    for (let key in checkedOptions) {
-      for (let subKey in checkedOptions[key]) {
-        allOptions[subKey] = checkedOptions[key][subKey];
+    if (reportReview) {
+      if (
+        !customizableQuizConfig.recordAudio &&
+        !customizableQuizConfig.recordWebcam &&
+        !customizableQuizConfig.recordScreen &&
+        !customizableQuizConfig.chat
+      ) {
+        message.error(
+          "Please select an option for recording option or un-check recording option"
+        );
+        return;
       }
     }
-    allOptions["idInstructor"] = "";
-    allOptions["idLtiCanvasConfig"] = uuid();
-    allOptions["idUser"] = props.id;
-    allOptions["quizId"] = selectedQuiz.id;
-    allOptions["guid"] = props.toolConsumerGuid;
-    allOptions["courseId"] = props.courseId;
-    allOptions["assignmentId"] = 0;
 
-    if (quizConfig) {
-      allOptions["assignmentId"] = quizConfig.assignmentId;
+    if (isVerification) {
+      if (
+        !customizableQuizConfig.studentIdDl &&
+        !customizableQuizConfig.studentPicture &&
+        !customizableQuizConfig.roomScan &&
+        !customizableQuizConfig.otp &&
+        !customizableQuizConfig.instructorProctored
+      ) {
+        message.error(
+          "Please select an option for verification option or un-check verification option"
+        );
+        return;
+      }
+    }
+
+    if (isStudResource) {
+      if (
+        !customizableQuizConfig.calculatorAllowed &&
+        !customizableQuizConfig.scratchPadAllowed &&
+        !customizableQuizConfig.liveHelp &&
+        !customizableQuizConfig.whitelistPages
+      ) {
+        message.error(
+          "Please select an option for student resource option or un-check student resource option"
+        );
+        return;
+      }
+    }
+
+    if (isLockdown) {
+      if (
+        !customizableQuizConfig.disableCopyPaste &&
+        !customizableQuizConfig.disablePrinting &&
+        !customizableQuizConfig.lockdownBrowser
+      ) {
+        message.error(
+          "Please select an option for lockdown option or un-check lockdown option"
+        );
+        return;
+      }
+    }
+
+    if (isViolation) {
+      if (
+        !customizableQuizConfig.multiplePerson &&
+        !customizableQuizConfig.cellPhone &&
+        !customizableQuizConfig.noPersonInRoom &&
+        !customizableQuizConfig.speaking
+      ) {
+        message.error(
+          "Please select an option for violation option or un-check violation option"
+        );
+        return;
+      }
+    }
+
+    if (isProcExamd) {
+      if (
+        !customizableQuizConfig.postExamReview &&
+        !customizableQuizConfig.examdLiveLaunch &&
+        !customizableQuizConfig.examdProctored
+      ) {
+        message.error(
+          "Please select an option for examd proctoring option or un-check examd proctoring option"
+        );
+        return;
+      }
+    }
+
+    let config: QuizConfiguration = { ...selectedQuizConfig };
+    config.idInstructor = "";
+    config.idLtiCanvasConfig = uuid();
+    config.idUser = props.id;
+    config.quizId = selectedQuiz.id;
+    config.guid = props.toolConsumerGuid;
+    config.courseId = props.courseId;
+    config.assignmentId = 0;
+    config.calculatorAllowed = customizableQuizConfig.calculatorAllowed;
+    config.cellPhone = customizableQuizConfig.cellPhone;
+    config.chat = customizableQuizConfig.chat;
+    config.disableCopyPaste = customizableQuizConfig.disableCopyPaste;
+    config.disablePrinting = customizableQuizConfig.disablePrinting;
+    config.examdLiveLaunch = customizableQuizConfig.examdLiveLaunch;
+    config.examdProctored = customizableQuizConfig.examdProctored;
+    config.liveHelp = customizableQuizConfig.liveHelp;
+    config.lockdownBrowser = customizableQuizConfig.lockdownBrowser;
+    config.multiplePerson = customizableQuizConfig.multiplePerson;
+    config.noPersonInRoom = customizableQuizConfig.noPersonInRoom;
+    config.otp = customizableQuizConfig.otp;
+    config.postExamReview = customizableQuizConfig.postExamReview;
+    config.recordAudio = customizableQuizConfig.recordAudio;
+    config.recordScreen = customizableQuizConfig.recordScreen;
+    config.recordWebcam = customizableQuizConfig.recordWebcam;
+    config.roomScan = customizableQuizConfig.roomScan;
+    config.scratchPadAllowed = customizableQuizConfig.scratchPadAllowed;
+    config.speaking = customizableQuizConfig.speaking;
+    config.studentIdDl = customizableQuizConfig.studentIdDl;
+    config.studentPicture = customizableQuizConfig.studentPicture;
+    config.whitelistPages = customizableQuizConfig.whitelistPages;
+    config.instructorProctored = customizableQuizConfig.instructorProctored;
+
+    if (configAvailable) {
+      config.assignmentId = selectedQuizConfig.assignmentId;
     }
     setIsSaving(!isSaving);
     axios
-      .post(saveLtiCanvasConfig, allOptions, {
+      .post(saveLtiCanvasConfig, config, {
         headers: { Authorization: `Bearer ${tokenData.lmsAccessToken}` },
       })
       .then((res) => {
-        if (allOptions["assignmentId"] === 0) {
+        if (config["assignmentId"] === 0) {
           setShowWaitingModal(true);
           handleAutoCompleteSetup();
         }
-        setQuizConfig(allOptions);
+        // setQuizConfig(config);
         message.success("Configurations saved successfully");
         setConfigSaveStatus(true);
         if (isSaving) {
@@ -495,95 +431,18 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
   };
 
   const handleResetAll = () => {
-    let checkOptions: checkTypes = { ...checked };
-    let switchOptions: optionCheckedProto = { ...optionsStatus };
-    for (let key in checkOptions) {
-      let subOptions: optionCheckedProto = { ...checkOptions[key] };
-      switchOptions[key] = false;
-      for (let subKey in subOptions) {
-        subOptions[subKey] = false;
-      }
-      checkOptions[key] = subOptions;
-    }
-
-    for (let key in switchOptions) {
-      switchOptions[key] = false;
-    }
-    setChecked(checkOptions);
-    setOptionsStatus(switchOptions);
-    let defaultOptions: {
-      [key: string]: boolean;
-    } = { ...defaultSettingsOptionsChecked };
-    for (let key in defaultOptions) {
-      defaultOptions[key] = false;
-    }
-    setDefaultSettingsOptionsChecked(defaultOptions);
-    setIsReset(true);
-  };
-
-  const applyUserSettings = (settings: any) => {
-    let enabledOptions: string[] = Object.keys(settings as Object).filter(
-      (key: string) => settings[key] && key
-    );
-    let checkOptions: checkTypes = { ...checked };
-
-    for (let key in checkOptions) {
-      let subOptions: optionCheckedProto = { ...checkOptions[key] };
-      for (let subKey in subOptions) {
-        subOptions[subKey] = false;
-      }
-      checkOptions[key] = subOptions;
-    }
-
-    let optSwitches: optionCheckedProto = { ...optionsStatus };
-
-    for (let key in optSwitches) {
-      optSwitches[key] = false;
-    }
-
-    enabledOptions.forEach((option) => {
-      Object.keys(checkOptions).forEach((key) => {
-        if (option in checkOptions[key]) {
-          checkOptions[key][option] = true;
-          if (!optSwitches[key]) {
-            optSwitches[key] = true;
-          }
-        }
-      });
+    useQuizStore.setState({
+      customizableQuizConfig: disabledConfigOptions,
+      isRecOptions: false,
+      isVerification: false,
+      isLockdown: false,
+      isProcExamd: false,
+      isStudResource: false,
+      isViolation: false,
     });
-    setChecked(checkOptions);
-    setOptionsStatus(optSwitches);
-    setApplySettings(false);
   };
 
-  const getUserSettings = (quizId: string | ""): void => {
-    axios
-      .get(
-        `${getLtiCanvasConfigByGuidCourseIdQuizId}?guid=${[
-          props.toolConsumerGuid,
-        ]}&courseId=${props.courseId}&quizId=${quizId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${tokenData.lmsAccessToken}`,
-          },
-        }
-      )
-      .then((res) => {
-        setUserSettings(res.data);
-        setQuizSettings(res.data);
-        applyUserSettings(res.data);
-        setApplySettings(false);
-        setQuizConfig(res.data);
-        setShowSummary(true);
-      })
-      .catch((err) => {
-        setQuizConfig(null);
-        setShowSummary(false);
-        setOptionsEnableSwitchStatus();
-        setDefaultCheckedStatus();
-      });
-  };
-  const getQuizzesByCourseId = (id: string): void => {
+  const getQuizzesByCourseId = (id: string) => {
     axios
       .get(
         `${fetchCanvasQuizzesByCourseId}${id}/${tokenData.lmsAccessToken}/${tokenData.instituteId}`
@@ -596,7 +455,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
         });
         setQuizzes(res.data);
         setQuizzesStat(quizzesStatus);
-        quizStoreState.setAllQuizzes(res.data);
+        setAllQuizzes(res.data as Quiz[]);
       })
       .catch((err) => {
         console.log(err);
@@ -614,14 +473,12 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
 
   useEffect(() => {
     getQuizzesByCourseId(props.courseId);
-    setOptionsEnableSwitchStatus();
-    setDefaultCheckedStatus();
     prepareDefaultSettingsOptionsChecked();
   }, []);
 
   const handleSelectQuiz = (quiz: any) => {
-    setSelectedQuiz(quiz);
     quizStoreState.setSelectedQuiz(quiz);
+    setSelectedQuiz(quiz);
     setShowConfigurations(false);
     let quizStat: any = { ...quizzesStat };
 
@@ -631,116 +488,21 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
 
     quizStat[quiz.title] = true;
     setQuizzesStat(quizStat);
-    getUserSettings(quiz.id);
     setIsReset(false);
-  };
-
-  const resetOtherDefaultCheckedOptions = (optionName: string) => {
-    let optionsChecked: any = { ...defaultSettingsOptionsChecked };
-    optionsChecked[optionName] = true;
-    Object.keys(optionsChecked).forEach((key: string) => {
-      if (key !== optionName) {
-        optionsChecked[key] = false;
-      }
-    });
-    setDefaultSettingsOptionsChecked(optionsChecked);
-  };
-
-  const checkExamLiveLaunchSelected = (): boolean => {
-    return checked["Proctor Options"]["examdLiveLaunch"];
-  };
-
-  const checkPhotoIdSelected = (): boolean => {
-    let res1 = checked["Verification Options"]["studentIdDl"];
-    let res2 = checked["Verification Options"]["studentPicture"];
-    return res1 || res2;
-  };
-
-  const checkPhotoIdAndLiveLaunchSelected = (): boolean => {
-    let res1 =
-      checked["Verification Options"]["studentIdDl"] ||
-      checked["Verification Options"]["studentPicture"];
-    let res2 = checked["Proctor Options"]["examdLiveLaunch"];
-
-    return res1 && res2;
-  };
-
-  const handleCheckboxChange = (e: any, idx: number, optionName: string) => {
-    if (!selectedQuiz) {
-      alert("Please select a quiz");
-      return;
-    }
-
-    if (optionName === "AI Proctoring") {
-      let res: boolean = checkExamLiveLaunchSelected();
-      if (res) {
-        let checkedOptions = { ...checked };
-        checkedOptions["Proctor Options"]["examdLiveLaunch"] = false;
-        setChecked(checkedOptions);
-      }
-    }
-
-    if (optionName === "Live Launch") {
-      let res: boolean = checkPhotoIdSelected();
-
-      if (res) {
-        let checkedOptions = { ...checked };
-        checkedOptions["Verification Options"]["studentIdDl"] = false;
-        checkedOptions["Verification Options"]["studentPicture"] = false;
-        setChecked(checkedOptions);
-      }
-    }
-
-    if (optionName === "Live Proctoring") {
-      let res: boolean = checkPhotoIdAndLiveLaunchSelected();
-
-      if (res) {
-        let checkedOptions = { ...checked };
-        checkedOptions["Proctor Options"]["examdLiveLaunch"] = false;
-        setChecked(checkedOptions);
-      }
-    }
-
-    if (optionName === "Lockdown Browser") {
-      let res: boolean = checkPhotoIdAndLiveLaunchSelected();
-      if (res) {
-        let checkedOptions = { ...checked };
-        checkedOptions["Proctor Options"]["examdLiveLaunch"] = false;
-        setChecked(checkedOptions);
-      }
-    }
-
-    if (e.target.checked) {
-      let settings: any = { ...defaultProcSettings[idx].settings };
-      resetOtherDefaultCheckedOptions(optionName);
-      applyUserSettings(settings);
-      setQuicKConfigSelected(optionName);
-      if (!showConfigurations) {
-        setShowSummary(true);
-      }
-    } else {
-      setDefaultSettingsOptionsChecked({
-        ...defaultSettingsOptionsChecked,
-        [optionName]: false,
-      });
-      if (!quizStoreState.selectedQuizConfig) {
-        handleResetAll();
-      }
-      setQuicKConfigSelected("");
-      if (!showConfigurations) {
-        setShowSummary(false);
-      }
-    }
   };
 
   const handleShowConfig = () => {
     if (selectedQuiz) {
       if (showConfigurations) {
         setShowConfigurations(false);
-        setShowSummary(true);
+        useQuizStore.setState({
+          showConfigSummary: true,
+        });
       } else {
         setShowConfigurations(true);
-        setShowSummary(false);
+        useQuizStore.setState({
+          showConfigSummary: false,
+        });
       }
     } else {
       message.error("Please select a quiz");
@@ -825,135 +587,212 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
         <div className="flex border box-border shadow-md rounded flex-row gap-4 h-16 w-full items-center mt-4">
           <div className="flex flex-col md:flex-row w-full h-full gap-2 items-center justify-center p-2">
             {defaultSettingsOptionsChecked &&
-              defaultProcSettings.map((setting: any, index: number) => {
-                return (
-                  <div
-                    className="flex flex-col w-full justify-center gap-1"
-                    key={index}
-                  >
-                    <div className="flex flex-row h-full w-full items-center justify-center gap-1">
-                      <input
-                        className="form-check-input appearance-none h-4 w-4 border self-center border-gray-300 rounded-sm bg-white checked:bg-blue-600 checked:border-blue-600 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer"
-                        type="checkbox"
-                        value=""
-                        id={`${setting.name}_${
-                          defaultSettingsOptionsChecked[setting.name]
-                        }`}
-                        onChange={(e) =>
-                          handleCheckboxChange(e, index, setting.name)
-                        }
-                        checked={defaultSettingsOptionsChecked[setting.name]}
-                      />
-                      <Tooltip
-                        placement="top"
-                        title={setting.infoMsg}
-                        className="pt-1"
-                      >
-                        <InfoCircleFilled
-                          style={{ color: "rgb(96 165 250)" }}
+              defaultProcSettings.map(
+                (setting: defualtProctingSettings, index: number) => {
+                  let checked: boolean = false;
+
+                  if (setting.configName === "reportReview") {
+                    checked = reportReview;
+                  } else if (setting.configName === "liveLaunch") {
+                    checked = liveLaunch;
+                  } else if (setting.configName === "liveProctoring") {
+                    checked = liveProctoring;
+                  } else if (setting.configName === "lockdownBrowser") {
+                    checked = lockdownBrowser;
+                  }
+
+                  return (
+                    <div
+                      className="flex flex-col w-full justify-center gap-1"
+                      key={index}
+                    >
+                      <div className="flex flex-row h-full w-full items-center justify-center gap-1">
+                        <input
+                          className="form-check-input appearance-none h-4 w-4 border self-center border-gray-300 rounded-sm bg-white checked:bg-blue-600 checked:border-blue-600 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer"
+                          type="checkbox"
+                          disabled={isNotAllowed}
+                          value=""
+                          id={`${setting.name}_${
+                            defaultSettingsOptionsChecked[setting.name]
+                          }`}
+                          onChange={(e) =>
+                            handleQuizConfigSelect(setting.configName)
+                          }
+                          checked={checked}
                         />
-                      </Tooltip>
+                        <Tooltip
+                          placement="top"
+                          title={setting.infoMsg}
+                          className="pt-1"
+                        >
+                          <InfoCircleFilled
+                            style={{ color: "rgb(96 165 250)" }}
+                          />
+                        </Tooltip>
+                      </div>
+                      <div className="mr-5 text-gray-700 font-semibold truncate">
+                        {setting.name}
+                      </div>
                     </div>
-                    <div className="mr-5 text-gray-700 font-semibold truncate">
-                      {setting.name}
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                }
+              )}
           </div>
         </div>
-        <div className="flex flex-row h-full items-center gap-8">
-          <p
-            className="text-center text-blue-400 font-semibold cursor-pointer underline text-lg mt-4 mb-4"
-            onClick={handleShowConfig}
-          >
-            {`${
-              showConfigurations ? "Hide Customization" : "Edit Customization"
-            }`}
-          </p>
-          {!showConfigurations && (
+        {selectedQuiz && !isNotAllowed ? (
+          <div className="flex flex-row h-full items-center gap-8">
             <p
               className="text-center text-blue-400 font-semibold cursor-pointer underline text-lg mt-4 mb-4"
-              onClick={handleRepairModule}
+              onClick={handleShowConfig}
             >
-              Repair Proctoring Module
+              {`${
+                showConfigurations ? "Hide Customization" : "Edit Customization"
+              }`}
             </p>
-          )}
-        </div>
+            {!showConfigurations && (
+              <p
+                className="text-center text-blue-400 font-semibold cursor-pointer underline text-lg mt-4 mb-4"
+                onClick={handleRepairModule}
+              >
+                Repair Proctoring Module
+              </p>
+            )}
+          </div>
+        ) : (
+          <p className="text-lg font-semibold text-center mt-8">
+            Please select a quiz.
+          </p>
+        )}
         {showConfigurations && selectedQuiz && (
           <div className="container mx-auto mt-2">
             <p className="font-bold font-serif text-xl underline">
               {selectedQuiz && selectedQuiz.title + ":    "}Configuration
             </p>
-            <div
-              className="mt-4 container overflow-y-scroll"
-              style={{ height: "76vh" }}
-            >
-              {Object.keys(settingOptions).map((key: string) => (
-                <div key={key} className="row-span-full">
-                  <div className="flex flex-row h-full items-center gap-2 mb-2 mt-4">
-                    <b className="font-semibold">{key}</b>
-                    <input
-                      className="flex items-center justify-center"
-                      type="checkbox"
-                      role="switch"
-                      id="flexSwitchCheckDefault"
-                      checked={
-                        Object.keys(optionsStatus).length > 0 &&
-                        optionsStatus[key]
-                      }
-                      onChange={(e) => handleChange(key, e)}
-                    />
-                  </div>
-                  <div className="flex flex-row gap-6">
-                    {Object.keys(settingOptions[key]).map(
-                      (subKey: string, idx: number) => (
-                        <div key={idx}>
+            {!isNotAllowed ? (
+              <div
+                className="mt-4 container overflow-y-scroll"
+                style={{ height: "76vh" }}
+              >
+                {configuration.length > 0 && (
+                  <div className="flex flex-col h-full w-full items-center justify-start gap-8">
+                    {configuration.map(
+                      (item: ConfigurationWithStatus, index: number) => {
+                        let checked: boolean = false;
+                        let category: string = "";
+                        if (item.fullName === "Recording Options") {
+                          checked = isRecOptions;
+                          category = "isRecOptions";
+                        } else if (item.fullName === "Verification Options") {
+                          checked = isVerification;
+                          category = "isVerification";
+                        } else if (item.fullName === "Student Resources") {
+                          checked = isStudResource;
+                          category = "isStudResource";
+                        } else if (item.fullName === "Lockdown Options") {
+                          checked = isLockdown;
+                          category = "isLockdown";
+                        } else if (item.fullName === "Violation Options") {
+                          checked = isViolation;
+                          category = "isViolation";
+                        } else if (
+                          item.fullName === "Proctoring Options by Examd"
+                        ) {
+                          checked = isProcExamd;
+                          category = "isProcExamd";
+                        }
+
+                        return (
                           <div
-                            className={`flex border box-border items-center justify-center h-32 w-32 bg-white shadow-lg rounded hover:bg-blue-400 hover:text-white 
-                        cursor-pointer ${
-                          Object.keys(checked).length > 0 &&
-                          checked[key][subKey]
-                            ? "bg-blue-400 text-white"
-                            : "bg-white"
-                        }`}
-                            onClick={() => handleOptionClick(key, subKey)}
+                            className="flex flex-col h-full w-full items-center justify-start gap-2"
+                            key={index}
                           >
-                            <div className="text-7xl flex items-start justify-center align-middle">
-                              {settingOptions[key][subKey].icon}
+                            <div className="flex flex-row h-full w-full items-center justify-start gap-2">
+                              <b className="font-semibold">{item.fullName}</b>
+                              <input
+                                className="flex items-center justify-center"
+                                type="checkbox"
+                                role="switch"
+                                id="flexSwitchCheckDefault"
+                                checked={checked}
+                                onChange={() =>
+                                  handleConfigCatSelectChange(category)
+                                }
+                              />
                             </div>
+                            {
+                              <div className="flex flex-row h-full w-full items-center justify-start gap-8">
+                                {Object.keys(item).map(
+                                  (key: string, index: number) => {
+                                    if (key !== "fullName")
+                                      return (
+                                        <div className="h-full" key={index}>
+                                          <div
+                                            className={`flex border box-border items-center justify-center h-32 w-32 bg-white shadow-lg rounded hover:bg-blue-400 hover:text-white 
+                                          cursor-pointer ${
+                                            item[key]
+                                              ? "bg-blue-400 text-white"
+                                              : "bg-white"
+                                          }`}
+                                            onClick={() =>
+                                              handleConfigOptionChange(
+                                                category,
+                                                key
+                                              )
+                                            }
+                                          >
+                                            <div className="text-7xl flex items-start justify-center align-middle">
+                                              {iconMap[key]}
+                                            </div>
+                                          </div>
+                                          <p className="text-center truncate w-32 text-base font-semibold">
+                                            {fullNameMap[key]}
+                                          </p>
+                                        </div>
+                                      );
+                                  }
+                                )}
+                              </div>
+                            }
                           </div>
-                          <p className="text-center truncate w-32">
-                            {settingOptions[key][subKey].fullName}
-                          </p>
-                        </div>
-                      )
+                        );
+                      }
                     )}
                   </div>
-                </div>
-              ))}
-              {applySettings && (
+                )}
+                {/* {applySettings && (
                 <InfoModal
                   title="User settings"
                   message="Fetching user settings. Please wait."
                 />
-              )}
-            </div>
-            <div className="flex flex-row pt-4 gap-5 pb-4">
-              <button
-                disabled={isSaving}
-                onClick={handleSubmit}
-                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-              >
-                Submit
-              </button>
-              <button
-                onClick={handleResetAll}
-                className="bg-transparent  text-blue-700 font-semibold  py-2 px-4 border border-blue-500  rounded"
-              >
-                Reset
-              </button>
-            </div>
+              )} */}
+              </div>
+            ) : (
+              <div className="my-4">
+                <p className="text-center text-lg font-semibold mx-auto">
+                  You are not authorized to configure the selected Quiz.
+                </p>
+                <p className="text-center text-lg font-semibold mx-auto">
+                  Please contact admin
+                </p>
+              </div>
+            )}
+            {!isNotAllowed && (
+              <div className="flex flex-row pt-4 gap-5 pb-4">
+                <button
+                  disabled={isSaving}
+                  onClick={handleSubmit}
+                  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                >
+                  Submit
+                </button>
+                <button
+                  onClick={handleResetAll}
+                  className="bg-transparent  text-blue-700 font-semibold  py-2 px-4 border border-blue-500  rounded"
+                >
+                  Reset
+                </button>
+              </div>
+            )}
           </div>
         )}
         {recoverQuiz && (
@@ -963,13 +802,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
             message={quizRecoveryMsg}
           />
         )}
-        {showSummary && (
-          <CustomizationSummary
-            quickConfig={quicKConfigSelected}
-            quizConfig={quizConfig}
-            handleSave={handleSubmit}
-          />
-        )}
+        {showConfigSummary && !isNotAllowed && <CustomizationSummary />}
         {showWaitingModal && (
           <WaitingModal
             visible={showWaitingModal}
