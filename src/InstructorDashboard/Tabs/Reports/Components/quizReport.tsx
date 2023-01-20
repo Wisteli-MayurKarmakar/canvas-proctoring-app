@@ -1,6 +1,6 @@
 import "antd/dist/antd.min.css";
 import { message, Table } from "antd";
-import React, { FunctionComponent, useEffect, useState } from "react";
+import { FunctionComponent, useEffect, useState } from "react";
 import axios from "axios";
 import Report from "../../../../report";
 import InfoModal from "../../../../infoModal";
@@ -22,6 +22,7 @@ import {
   useAssignmentStore,
   useCommonStudentDashboardStore,
 } from "../../../../store/StudentDashboardStore";
+import NoQuiz from "../../../../CommonUtilites/NoQuiz";
 
 const QuizReports: FunctionComponent = (): JSX.Element => {
   let [quizConfigs, setQuizConfigs] = useState<any>([]);
@@ -40,6 +41,8 @@ const QuizReports: FunctionComponent = (): JSX.Element => {
   const [studList, setStudList] = useState<any>(null);
   const [quizData, setQuizData] = useState<any[]>([]);
   const [isFetchingReport, setIsFetchingReport] = useState<boolean>(false);
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+  const [noQuiz, setNoQuiz] = useState<boolean>(false);
   let [selectedQuiz, setSelectedQuiz] = useState<any>(null);
   const { urlParamsData, tokenData } = useAppStore((state) => state);
   const { getJourneyDetails } = useProcotorJourneyStore((state) => state);
@@ -51,6 +54,10 @@ const QuizReports: FunctionComponent = (): JSX.Element => {
         `${getCanvasAssignmentDetails}/${tokenData.instituteId}/${urlParamsData.guid}/${urlParamsData.courseId}/${tokenData.lmsAccessToken}/`
       )
       .then((res: any) => {
+        if (res.data.length === 0) {
+          setNoQuiz(true);
+          return;
+        }
         let quizzes: any = [];
         res.data.forEach((item: any) => {
           if (item.id > 0) {
@@ -60,8 +67,10 @@ const QuizReports: FunctionComponent = (): JSX.Element => {
           }
         });
         setQuizData(quizzes);
+        setIsRefreshing(false);
       })
       .catch((err) => {
+        setNoQuiz(true);
         console.log(err);
       });
   };
@@ -248,7 +257,7 @@ const QuizReports: FunctionComponent = (): JSX.Element => {
   };
 
   const handleRefreshTable = () => {
-    setQuizData([]);
+    setIsRefreshing(true);
     getCourseQuizesById();
   };
 
@@ -420,6 +429,7 @@ const QuizReports: FunctionComponent = (): JSX.Element => {
             bordered={true}
             dataSource={quizData}
             pagination={{ position: ["bottomRight"] }}
+            loading={isRefreshing}
             expandable={{
               expandedRowRender: (rowData: any) => {
                 if (studList) {
@@ -462,8 +472,10 @@ const QuizReports: FunctionComponent = (): JSX.Element => {
               },
             }}
           />
+        ) : noQuiz ? (
+          <NoQuiz />
         ) : (
-          <p className="font-bold text-center mt-5">
+          <p className="text-center font-semibold">
             Fetching quizzes. Please wait...
           </p>
         )}
@@ -486,6 +498,7 @@ const QuizReports: FunctionComponent = (): JSX.Element => {
             courseId={urlParamsData.courseId}
             guid={urlParamsData.guid}
             fileName={mediaFileName}
+            updateReport={getAllProctorJourneyDetails}
             configuration={selectedQuizConfig}
           />
         )}

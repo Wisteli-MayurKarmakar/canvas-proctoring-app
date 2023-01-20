@@ -48,7 +48,7 @@ const LiveAuthentication: React.FC<Props> = (props): JSX.Element => {
     ],
   };
   const startVideo = async () => {
-    if (!props.authConfigs.examdLiveLaunch) {
+    if (!props.authConfigs.instructorProctored) {
       return;
     }
     let stream = await navigator.mediaDevices.getUserMedia({

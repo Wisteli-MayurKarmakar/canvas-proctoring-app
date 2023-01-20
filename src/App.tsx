@@ -10,6 +10,7 @@ import {
   fetchCanvasEnrollmentsByCourseId,
   getCanvasTokenUrl,
 } from "./apiConfigs";
+import UnauthorizedAccessPage from "./CommonUtilites/UnauthorizedAccessPage";
 
 const getUuid = require("uuid-by-string");
 
@@ -31,7 +32,9 @@ function App() {
   );
   const { setLoggedInUserEnrollmentType, setEnrollments } =
     useCommonStudentDashboardStore((state) => state);
-  const { setUrlParamsData, setTokenData } = useAppStore((state) => state);
+  const { setUrlParamsData, setTokenData, canAccessApp } = useAppStore(
+    (state) => state
+  );
 
   let userName = "ca6a42188e970ab77fab0e34";
   let password = "e5aa447e19ee4180b5ba1364";
@@ -67,6 +70,21 @@ function App() {
       setUserRoleById();
     }
   }, [tokenData, urlParamsData]);
+
+  // const getAccessRecordsByGuid = async (
+  //   guid: string,
+  // ) => {
+  //   try {
+  //     let response = await axios.get(`${getLtiAccessByGuid}/${guid}`);
+
+  //     if (response.status === 200) {
+  //       return response.data;
+  //     }
+  //   } catch (err) {
+  //     return [];
+  //   }
+  //   return [];
+  // };
 
   const setUserId = async () => {
     let url_string = window.location.href;
@@ -156,21 +174,6 @@ function App() {
     setUserId();
   }, [urlParamsData.invokeUrl]);
 
-  // useEffect(() => {
-  //   try {
-  //     let env = process.env.REACT_APP_ENV;
-  //     if (env === "DEV") {
-  //       window.ExamdAutoProctorJS.update_url =
-  //         "https://examd.us/cdn/urls/xproctor/1";
-  //     }
-
-  //     if (env === "PROD") {
-  //       window.ExamdAutoProctorJS.update_url =
-  //         "https://examd.online/cdn/urls/xproctor/1";
-  //     }
-  //   } catch (e) {}
-  // }, []);
-
   if (
     tokenData &&
     urlParamsData.userId &&
@@ -184,18 +187,21 @@ function App() {
     if (
       studentDashboardStore.loggedInUserEnrollmentType === "TeacherEnrollment"
     ) {
-      return (
-        <InstructorMenu
-          auth={tokenData}
-          emailAsId={urlParamsData.userId}
-          id={urlParamsData.userId}
-          courseId={urlParamsData.courseId}
-          toolConsumerGuid={urlParamsData.guid}
-          studentId={urlParamsData.studentId}
-          invokeUrl={urlParamsData.invokeUrl}
-          accountId={urlParamsData.accountId}
-        />
-      );
+      if (canAccessApp) {
+        return (
+          <InstructorMenu
+            auth={tokenData}
+            emailAsId={urlParamsData.userId}
+            id={urlParamsData.userId}
+            courseId={urlParamsData.courseId}
+            toolConsumerGuid={urlParamsData.guid}
+            studentId={urlParamsData.studentId}
+            invokeUrl={urlParamsData.invokeUrl}
+            accountId={urlParamsData.accountId}
+          />
+        );
+      }
+      return <UnauthorizedAccessPage />;
     }
     if (
       studentDashboardStore.loggedInUserEnrollmentType === "StudentEnrollment"

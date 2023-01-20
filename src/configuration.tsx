@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { SyntheticEvent, useEffect, useRef, useState } from "react";
 import {
   AudioOutlined,
   CalculatorOutlined,
@@ -30,6 +30,8 @@ import axios from "axios";
 import {
   defaultProcSettings,
   disabledConfigOptions,
+  generalInstructions,
+  infoMsgs,
 } from "./CommonUtilites/ProctorSettingDefaults";
 import "./configuration.css";
 import {
@@ -48,10 +50,14 @@ import {
   ConfigurationWithStatus,
   defualtProctingSettings,
   FullNameMap,
+  GeneralInstructions,
   IconMap,
   Quiz,
   QuizConfiguration,
 } from "./AppTypes";
+import NoQuiz from "./CommonUtilites/NoQuiz";
+import InfoModal from "./infoModal";
+import AlertModal from "./CommonUtilites/Modals/AlertModal";
 
 interface Props {
   auth: Object | any;
@@ -64,22 +70,22 @@ interface Props {
 const iconSize = "";
 
 const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
-  let [quizzesStat, setQuizzesStat] = useState<any>();
+  const [quizzesStat, setQuizzesStat] = useState<any>();
   const [quizzes, setQuizzes] = useState<any>(null);
   const [selectedQuiz, setSelectedQuiz] = useState<any>(null);
   const [showWaitingModal, setShowWaitingModal] = useState<boolean>(false);
   const [showConfigurations, setShowConfigurations] = useState<boolean>(false);
-  let [configSaveStatus, setConfigSaveStatus] = useState<boolean>(false);
-  let [defaultSettingsOptionsChecked, setDefaultSettingsOptionsChecked] =
+  const [configSaveStatus, setConfigSaveStatus] = useState<boolean>(false);
+  const [showQuickOptionAlter, setShowQuickOptionAlter] =
+    useState<boolean>(false);
+  const [alertMsg, setAlertMsg] = useState<string>("");
+  const [noQuizzes, setNoQuizzes] = useState<boolean>(false);
+  const [defaultSettingsOptionsChecked, setDefaultSettingsOptionsChecked] =
     useState<any>(null);
-  let [isReset, setIsReset] = useState<boolean>(false);
-  const {
-    tokenData,
-    courseDetails,
-    urlParamsData,
-    userAccessDetails,
-    isNotAllowed,
-  } = useAppStore((state) => state);
+  const [isReset, setIsReset] = useState<boolean>(false);
+  const { tokenData, courseDetails, urlParamsData, isNotAllowed } = useAppStore(
+    (state) => state
+  );
   const {
     customizableQuizConfig,
     isLockdown,
@@ -130,7 +136,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
     postExamReview: "Post Exam Review",
     examdLiveLaunch: "Live Launch",
     examdProctored: "Proctoring",
-    instructorProctored: "Live Verification",
+    instructorProctored: "Manual Verification",
   };
 
   const iconMap: IconMap = {
@@ -449,7 +455,10 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
       )
       .then((res) => {
         let quizzesStatus: any = {};
-
+        if (res.data.length === 0) {
+          setNoQuizzes(true);
+          return;
+        }
         res.data.forEach((quiz: any) => {
           quizzesStatus[quiz.title] = false;
         });
@@ -458,7 +467,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
         setAllQuizzes(res.data as Quiz[]);
       })
       .catch((err) => {
-        console.log(err);
+        setNoQuizzes(true);
       });
   };
 
@@ -529,6 +538,92 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
     return;
   };
 
+  const formatHelpMsg = (messages: string[]): JSX.Element => {
+    let msg: JSX.Element = (
+      <div className="flex flex-col w-full justify-start gap-2">
+        {messages.map((msg: string, index: number) => {
+          return (
+            <p key={index}>
+              {index + 1}. {msg}
+            </p>
+          );
+        })}
+      </div>
+    );
+    return msg;
+  };
+
+  if (noQuizzes) {
+    return (
+      <NoQuiz>
+        {courseDetails.name && (
+          <h2 className="text-center text-2xl underline">
+            Course Name - {courseDetails.name}
+          </h2>
+        )}
+      </NoQuiz>
+    );
+  }
+
+  const handleQuickConfigSelect = (
+    event: SyntheticEvent,
+    configName: string
+  ) => {
+    if (lockdownBrowser) {
+      if (configName !== "lockdownBrowser" && lockdownBrowser) {
+        setAlertMsg(
+          "If you select any Examd's assistant, the Lockdown Browser option will be off."
+        );
+        setShowQuickOptionAlter(true);
+      }
+    } else {
+      if (
+        configName === "lockdownBrowser" &&
+        (reportReview || liveLaunch || liveProctoring)
+      ) {
+        setAlertMsg(
+          "If you select the Lockdown Browser, all Examd's assistant options will be off."
+        );
+        setShowQuickOptionAlter(true);
+      }
+    }
+    handleQuizConfigSelect(configName);
+  };
+
+  const handleConfigOptionSelect = (category: string, key: string) => {
+    if (
+      key === "instructorProctored" &&
+      (customizableQuizConfig.examdLiveLaunch ||
+        customizableQuizConfig.studentIdDl ||
+        customizableQuizConfig.studentPicture)
+    ) {
+      setAlertMsg(
+        "If you select Manual Verification & Examd Live Launch, the AI option will be off."
+      );
+      setShowQuickOptionAlter(true);
+    }
+
+    if (key === "studentIdDl" || key === "studentPicture") {
+      if (customizableQuizConfig.instructorProctored) {
+        setAlertMsg(
+          "If you select AI option, the Manual Verification will be off."
+        );
+        setShowQuickOptionAlter(true);
+      }
+    }
+
+    if (key === "examdLiveLaunch") {
+      if (customizableQuizConfig.instructorProctored) {
+        setAlertMsg(
+          "If you select Examd Live Launch, the Manual Verification will be off."
+        );
+        setShowQuickOptionAlter(true);
+      }
+    }
+
+    handleConfigOptionChange(category, key);
+  };
+
   return (
     <>
       {courseDetails.name && (
@@ -536,6 +631,24 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
           Course Name - {courseDetails.name}
         </h2>
       )}
+      <div className="flex flex-row w-full justify-center gap-8 mt-3">
+        <p className="font-bold text-lg">Instructions:</p>
+        {generalInstructions.map((item: GeneralInstructions, index: number) => {
+          return (
+            <div
+              className="flex flex-row h-full items-center pt-3 md:pt-1 gap-1"
+              key={index}
+            >
+              <p className="font-semibold text-sm xl:text-base truncate">
+                {item.name}
+              </p>
+              <Tooltip placement="top" title={formatHelpMsg(item.infoMsg)}>
+                <InfoCircleFilled style={{ color: "rgb(96 165 250)" }} />
+              </Tooltip>
+            </div>
+          );
+        })}
+      </div>
       <div className="flex flex-col gap-5 justify-center items-center mt-5 text-center container text-lg">
         <div className="inline-flex flex-wrap gap-4 justify-center h-full w-full max-h-72 overflow-y-scroll pt-4">
           {quizzes ? (
@@ -584,78 +697,152 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
             </div>
           )}
         </div>
-        <div className="flex border box-border shadow-md rounded flex-row gap-4 h-16 w-full items-center mt-4">
-          <div className="flex flex-col md:flex-row w-full h-full gap-2 items-center justify-center p-2">
-            {defaultSettingsOptionsChecked &&
-              defaultProcSettings.map(
-                (setting: defualtProctingSettings, index: number) => {
-                  let checked: boolean = false;
+        <div className="flex flex-col w-full xl:w-2/3 justify-center border box-border shadow-md rounded gap-2 h-24  mt-4">
+          <div className="w-full h-full border-r-2">
+            <p className="text-center font-semibold underline mr-44 mb-2">
+              Examd's Assistance
+            </p>
+            <div className="flex flex-row h-full gap-2 items-start justify-center">
+              {defaultSettingsOptionsChecked &&
+                defaultProcSettings.map(
+                  (setting: defualtProctingSettings, index: number) => {
+                    let checked: boolean = false;
+                    let notAllowed: boolean = isNotAllowed;
 
-                  if (setting.configName === "reportReview") {
-                    checked = reportReview;
-                  } else if (setting.configName === "liveLaunch") {
-                    checked = liveLaunch;
-                  } else if (setting.configName === "liveProctoring") {
-                    checked = liveProctoring;
-                  } else if (setting.configName === "lockdownBrowser") {
-                    checked = lockdownBrowser;
-                  }
+                    if (configAvailable) {
+                      notAllowed = true;
+                    }
 
-                  return (
-                    <div
-                      className="flex flex-col w-full justify-center gap-1"
-                      key={index}
-                    >
-                      <div className="flex flex-row h-full w-full items-center justify-center gap-1">
-                        <input
-                          className="form-check-input appearance-none h-4 w-4 border self-center border-gray-300 rounded-sm bg-white checked:bg-blue-600 checked:border-blue-600 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer"
-                          type="checkbox"
-                          disabled={isNotAllowed}
-                          value=""
-                          id={`${setting.name}_${
-                            defaultSettingsOptionsChecked[setting.name]
-                          }`}
-                          onChange={(e) =>
-                            handleQuizConfigSelect(setting.configName)
-                          }
-                          checked={checked}
-                        />
-                        <Tooltip
-                          placement="top"
-                          title={setting.infoMsg}
-                          className="pt-1"
-                        >
-                          <InfoCircleFilled
-                            style={{ color: "rgb(96 165 250)" }}
+                    if (setting.configName === "reportReview") {
+                      checked = reportReview;
+                    } else if (setting.configName === "liveLaunch") {
+                      checked = liveLaunch;
+                    } else if (setting.configName === "liveProctoring") {
+                      checked = liveProctoring;
+                    } else if (setting.configName === "lockdownBrowser") {
+                      checked = lockdownBrowser;
+                    }
+
+                    return (
+                      <div
+                        className={`flex flex-col w-full justify-center gap-1 ${
+                          setting.configName === "liveProctoring" &&
+                          "border-r-2 border-black"
+                        }`}
+                        key={index}
+                      >
+                        <div className="flex flex-row h-full w-full items-center justify-center gap-1">
+                          <input
+                            className="form-check-input appearance-none h-4 w-4 border self-center border-gray-300 rounded-sm bg-white checked:bg-blue-600 checked:border-blue-600 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer"
+                            type="checkbox"
+                            disabled={notAllowed}
+                            value=""
+                            id={`${setting.name}_${
+                              defaultSettingsOptionsChecked[setting.name]
+                            }`}
+                            onChange={(e: SyntheticEvent) =>
+                              handleQuickConfigSelect(e, setting.configName)
+                            }
+                            checked={checked}
                           />
-                        </Tooltip>
+                          <Tooltip
+                            placement="top"
+                            title={setting.infoMsg}
+                            className="pt-1"
+                          >
+                            <InfoCircleFilled
+                              style={{ color: "rgb(96 165 250)" }}
+                            />
+                          </Tooltip>
+                        </div>
+                        <div className="mr-5 text-gray-700 font-semibold truncate">
+                          {setting.name}
+                        </div>
                       </div>
-                      <div className="mr-5 text-gray-700 font-semibold truncate">
-                        {setting.name}
-                      </div>
-                    </div>
-                  );
-                }
-              )}
+                    );
+                  }
+                )}
+            </div>
           </div>
         </div>
         {selectedQuiz && !isNotAllowed ? (
-          <div className="flex flex-row h-full items-center gap-8">
-            <p
-              className="text-center text-blue-400 font-semibold cursor-pointer underline text-lg mt-4 mb-4"
-              onClick={handleShowConfig}
-            >
-              {`${
-                showConfigurations ? "Hide Customization" : "Edit Customization"
-              }`}
-            </p>
-            {!showConfigurations && (
+          <div className="flex flex-row h-full w-full items-center justify-center gap-8">
+            <div className="flex flex-row h-full items-center gap-2">
               <p
                 className="text-center text-blue-400 font-semibold cursor-pointer underline text-lg mt-4 mb-4"
-                onClick={handleRepairModule}
+                onClick={handleShowConfig}
               >
-                Repair Proctoring Module
+                {`${
+                  showConfigurations
+                    ? "Hide Customization"
+                    : "Edit Customization"
+                }`}
               </p>
+              <Tooltip
+                placement="top"
+                title={infoMsgs["editCustomizationInfo"]}
+                className="pt-1"
+              >
+                <InfoCircleFilled style={{ color: "rgb(96 165 250)" }} />
+              </Tooltip>
+            </div>
+            <div className="flex flex-row h-full items-center gap-2">
+              <p
+                className="text-center text-blue-400 font-semibold cursor-pointer underline text-lg mt-4 mb-4 cursor-not-allowed"
+                onClick={(e: SyntheticEvent) => e.preventDefault()}
+              >
+                Delete Customization
+              </p>
+              <Tooltip
+                placement="top"
+                title={infoMsgs["deleteCustomization"]}
+                className="pt-1"
+              >
+                <InfoCircleFilled style={{ color: "rgb(96 165 250)" }} />
+              </Tooltip>
+            </div>
+            <div className="flex flex-row h-full items-center gap-2">
+              <p
+                className="text-center text-blue-400 font-semibold cursor-pointer underline text-lg mt-4 mb-4 cursor-not-allowed"
+                onClick={(e: SyntheticEvent) => e.preventDefault()}
+              >
+                Create Sample Quiz
+              </p>
+              <Tooltip
+                placement="top"
+                title={infoMsgs["createSampleQuiz"]}
+                className="pt-1"
+              >
+                <InfoCircleFilled style={{ color: "rgb(96 165 250)" }} />
+              </Tooltip>
+            </div>
+            {!showConfigurations && (
+              <div className="flex flex-row h-full items-center gap-2">
+                <p
+                  className="text-center text-blue-400 font-semibold cursor-pointer underline text-lg mt-4 mb-4"
+                  onClick={handleRepairModule}
+                >
+                  Repair Proctoring Module
+                </p>
+                <Tooltip
+                  placement="top"
+                  title={infoMsgs["repairModuleInfo"]}
+                  className="pt-1"
+                >
+                  <InfoCircleFilled style={{ color: "rgb(96 165 250)" }} />
+                </Tooltip>
+              </div>
+            )}
+            {selectedQuiz && (
+              <button
+                disabled={true}
+                type="button"
+                className="inline-block px-6 py-2.5 bg-gray-300 text-white 
+              font-medium text-xs leading-tight rounded shadow-md cursor-not-allowed
+               transition duration-150 ease-in-out"
+              >
+                Schedule
+              </button>
             )}
           </div>
         ) : (
@@ -734,7 +921,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
                                               : "bg-white"
                                           }`}
                                             onClick={() =>
-                                              handleConfigOptionChange(
+                                              handleConfigOptionSelect(
                                                 category,
                                                 key
                                               )
@@ -794,6 +981,14 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
               </div>
             )}
           </div>
+        )}
+        {showQuickOptionAlter && (
+          <AlertModal
+            visible={showQuickOptionAlter}
+            message={alertMsg}
+            title={"Alert"}
+            close={() => setShowQuickOptionAlter(false)}
+          />
         )}
         {recoverQuiz && (
           <WaitingModal

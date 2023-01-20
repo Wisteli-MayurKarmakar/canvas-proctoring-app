@@ -31,7 +31,7 @@ const Payments: React.FC<Props> = ({ visible, close }): JSX.Element => {
     setMessage,
   } = usePaymentsStore((state) => state);
 
-  const { urlParamsData, tokenData } = useAppStore((state) => state);
+  const { urlParamsData } = useAppStore((state) => state);
 
   const waitMsg: JSX.Element = (
     <p className="text-center mx-auto text-lg font-semibold">

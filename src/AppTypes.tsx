@@ -330,20 +330,28 @@ type ServerToClientEvents = {
 // Billing data type
 
 type BillingData = {
-  billingId?: string;
+  address1: string;
+  address2: string;
+  billingCurrency: string;
+  billingEmail: string;
+  billingId: string;
+  billingPhone: string;
+  billingRate: number;
+  city: string;
+  country: string;
+  endDate: string;
+  firstName: string;
   guid: string;
   instituteId: number;
-  billingTier?: string;
+  lastName: string;
   minNumber: number;
-  productType: string;
-  billingEmail: string;
-  studentPay: string;
   paymentType: string;
-  billingRate: number;
-  billingCurrency: string;
+  productType: string;
   startDate: string;
-  endDate: string;
-  status?: number;
+  state: string;
+  status: number;
+  studentPay: boolean;
+  zip: string;
 };
 
 type StudentDetails = {
@@ -686,12 +694,12 @@ type AccessDetails = {
 // Quiz Store
 
 type QuizStore = {
-  allQuizzes: any;
-  selectedQuiz: Quiz | null;
+  allQuizzes: Quiz[];
+  selectedQuiz?: Quiz;
   selectedQuizConfig: QuizConfiguration;
   defaultConfiguration: QuizConfigurationWithOnlyProcOpt;
   customizableQuizConfig: QuizConfigurationWithOnlyProcOpt;
-  defaultOptionSelected: string | null;
+  defaultOptionSelected?: string;
   isRecOptions: boolean;
   isVerification: boolean;
   reportReview: boolean;
@@ -715,7 +723,7 @@ type QuizStore = {
 
 type FullNameMap = {
   [key: string]: string;
-}
+};
 
 type ConfigurationWithStatus = {
   [key: string]: boolean | string | JSX.Element;
@@ -723,9 +731,14 @@ type ConfigurationWithStatus = {
 
 type IconMap = {
   [key: string]: JSX.Element;
-}
+};
 
-type ConfigurationOptionsWithStatus = ConfigurationWithStatus[]
+type ConfigurationOptionsWithStatus = ConfigurationWithStatus[];
+
+type GeneralInstructions = {
+  name: string;
+  infoMsg: string[];
+};
 
 export type {
   AllDates,
@@ -746,6 +759,7 @@ export type {
   StudentJourneyStore,
   SaveLtiInsituteDataType,
   AdminTableDataTypes,
+  GeneralInstructions,
   InstructorTableDataTypes,
   NotificationFormFieldType,
   ProctorJourneyStore,

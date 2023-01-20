@@ -253,12 +253,15 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
       true,
       props.quizConfig.recordScreen || screen,
       false,
-      (msg: any) => { },
-      (msg: any) => { }
+      (msg: any) => {},
+      (msg: any) => {}
     );
-
-    if (res.status === 1) {
-      return false;
+    try {
+      if (res.status === 1) {
+        return false;
+      }
+    } catch (e) {
+      return true;
     }
     return true;
   };
@@ -340,12 +343,11 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
       .then((resp: any) => {
         setAssignedId(resp.assignedId);
       })
-      .catch((error: any) => { });
+      .catch((error: any) => {});
 
     window.ExamdAutoProctorJS.setCredentials(props.username, props.pass);
 
-    await window.ExamdAutoProctorJS.getDefaultAudioVideoSync()
-
+    await window.ExamdAutoProctorJS.getDefaultAudioVideoSync();
 
     let video = assignmentStore.selectedAssignmentConfigurations?.recordWebcam;
     let screen = assignmentStore.selectedAssignmentConfigurations?.recordScreen;
@@ -397,7 +399,7 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
         stream = vidEle.get(0).captureStream();
       }
       if (vidEle) {
-        stream.getTracks().forEach((track: any) => { });
+        stream.getTracks().forEach((track: any) => {});
       }
     }
     saveLTIPrctoringRef(
@@ -688,10 +690,11 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
           <>
             <button
               disabled={assignmentStore.gotoQuiz ? false : true}
-              className={`inline-block px-6 py-2.5 ${assignmentStore.gotoQuiz
+              className={`inline-block px-6 py-2.5 ${
+                assignmentStore.gotoQuiz
                   ? "bg-blue-600 text-white"
                   : "bg-gray-400 text-black cursor-not-allowed"
-                } font-medium text-xs leading-tight rounded shadow-md transition duration-150 ease-in-out`}
+              } font-medium text-xs leading-tight rounded shadow-md transition duration-150 ease-in-out`}
               onClick={handleGoToQuiz}
             >
               Go to Quiz

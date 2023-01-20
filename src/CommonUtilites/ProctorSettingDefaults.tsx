@@ -1,11 +1,11 @@
-import { defualtProctingSettings, QuizConfigurationWithOnlyProcOpt } from "../AppTypes";
+import { defualtProctingSettings, GeneralInstructions, QuizConfigurationWithOnlyProcOpt } from "../AppTypes";
 
 export const defaultProcSettings: defualtProctingSettings[] = [
   {
     name: "Report Review",
     configName: "reportReview",
     infoMsg:
-      "AI-based proctoring is a process that assesses a test-taking individual’s behavior, environment and movement, similar to a human proctor. In AI-based proctoring, the AI algorithm is trained by experts to predict, flag and register even the minutest of discrepancies and suspicion.",
+      "Please click this check box, if you want Examd to review the report. If checked, Examd will check all the violation reports for the selected quiz and provide a Pass/Fail remark. Instructor can then revisit any of the report if they wish to do so.",
     settings: {
       recordWebcam: true,
       recordScreen: true,
@@ -36,7 +36,7 @@ export const defaultProcSettings: defualtProctingSettings[] = [
     name: "Live Launch",
     configName: "liveLaunch",
     infoMsg:
-      "Live Proctoring is an identity verification at the beginning of the exam or quiz. Here a human from our side will let the student start the quiz after verifying his/her identity.",
+      "Please click this check box, if you want Examd to conduct Live-launch. Live launch proctoring is an identity verification at the beginning of the exam or quiz. Here a human from our side will let the student start the quiz after verifying his/her identity.",
     settings: {
       recordWebcam: true,
       recordScreen: true,
@@ -67,7 +67,7 @@ export const defaultProcSettings: defualtProctingSettings[] = [
     name: "Live Proctoring",
     configName: "liveProctoring",
     infoMsg:
-      "Live Proctoring is an identity verification and automated digital remote proctoring solution, helping Institutions of higher education ensure the integrity of their high-stakes online assessments. Here a human either from Institution or from our side will monitor the full exam.",
+      "Please click this check box, if you want Examd to conduct full live proctoring. Live Proctoring is an identity verification and automated digital remote proctoring solution, helping Institutions of higher education ensure the integrity of their high-stakes online assessments. Here a human either from Institution or from our side will monitor the full exam.",
     settings: {
       recordWebcam: true,
       recordScreen: true,
@@ -127,7 +127,7 @@ export const defaultProcSettings: defualtProctingSettings[] = [
   },
 ];
 
-export const disabledConfigOptions:QuizConfigurationWithOnlyProcOpt = {
+export const disabledConfigOptions: QuizConfigurationWithOnlyProcOpt = {
   calculatorAllowed: false,
   cellPhone: false,
   chat: false,
@@ -152,3 +152,26 @@ export const disabledConfigOptions:QuizConfigurationWithOnlyProcOpt = {
   studentPicture: false,
   whitelistPages: false
 }
+
+export const infoMsgs: { [key: string]: string } = {
+  editCustomizationInfo: "When selecting any quiz you will see the default configuration for the quiz. If you want to change any configuration, please click this link.",
+  repairModuleInfo: "When you configure the quiz for the first time, we run few automation to create the module, assignment, placement etc., if you by mistake delete any of the object created by automation please click this link, so that the proctoring module can be restored.",
+  deleteCustomization: "Click this link if you want to Delete the proctoring option for the selected Quiz. All objects or records created for proctoring purpose will be deleted, and you can start over.",
+  createSampleQuiz: "Click this if you want to create a sample quiz for the students. Students can take this 2 minute quiz to experience our proctoring process from start to finish."
+
+}
+
+export const generalInstructions: GeneralInstructions[] = [
+  {
+    name: "Config a new Quiz (Default)",
+    infoMsg: ["Please select a quiz", "Select a checkbox, if you need any assistance from Examd.", "Click the Submit button at the bottom."]
+  },
+  {
+    name: "Config a new Quiz (Customized)",
+    infoMsg: ["Please select a quiz", "Please select the link Custmization and make changes.", "Click the Submit button at the bottom."]
+  },
+  {
+    name: "Previously configured Quiz (Customized)",
+    infoMsg: ["Please select a quiz", "Please select the link Custmization and make changes.", "Click the Submit button at the bottom."]
+  },
+]

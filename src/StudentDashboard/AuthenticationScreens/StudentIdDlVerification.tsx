@@ -2,7 +2,7 @@ import { message } from "antd";
 import axios from "axios";
 import React, { useEffect } from "react";
 import { useWebCamStore } from "../../store/globalStore";
-import {aiMatch, viewCanvasProfile, downloadDL} from "../../apiConfigs"
+import { aiMatch, viewCanvasProfile, downloadDL } from "../../apiConfigs"
 
 interface Props {
   authConfigs: any;
@@ -36,6 +36,8 @@ const StudentIdDlVerification: React.FC<Props> = (props): JSX.Element => {
   let canvasRef: any = React.useRef<any>();
   const imgWidth: number = 320;
   let imgHeight: number = 0;
+  const isPicReq = props.authConfigs.studentPicture;
+  const idIdProofReq = props.authConfigs.studentIdDl;
 
   function convertBase64toBlob(
     b64Data: string,
@@ -119,7 +121,7 @@ const StudentIdDlVerification: React.FC<Props> = (props): JSX.Element => {
             await f();
             resolve(true);
             return;
-          } catch (e) {}
+          } catch (e) { }
           await delay(delayBetweenRetries);
         }
         reject("failed to connect to");

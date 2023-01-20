@@ -55,10 +55,10 @@ const InstructorMenu: React.FunctionComponent<Props> = (props): JSX.Element => {
               toolConsumerGuid={urlParamsData.guid}
             />
           </TabPane>
-          <TabPane tab="Authentication" key="2">
+          <TabPane tab="Live Launch" key="2">
             <Authentication />
           </TabPane>
-          <TabPane tab="Proctoring" key="3">
+          <TabPane tab="Live Proctoring" key="3">
             <LiveProctoring />
           </TabPane>
           <TabPane tab="Reports" key="4">

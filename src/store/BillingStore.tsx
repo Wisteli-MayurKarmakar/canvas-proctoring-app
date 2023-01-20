@@ -34,7 +34,7 @@ type BillingStore = {
 const getBillingDeatilsByGuidInstituteId = async (
   guid: string,
   instituteId: number
-): Promise<BillingData | null> => {
+): Promise<BillingData[] | null> => {
   let payload = {
     guid: guid,
     instituteId: instituteId,
@@ -44,7 +44,7 @@ const getBillingDeatilsByGuidInstituteId = async (
   let response = await axios.post(`${getLtiBillingRate}/`, { ...payload });
 
   if (response.status === 200) {
-    return response.data as BillingData;
+    return response.data as BillingData[];
   }
   return null;
 };
@@ -484,7 +484,7 @@ export const useBillingStore = create<BillingStore>()(
       getBillingDetails: async () => {
         const { urlParamsData, tokenData } = useAppStore.getState();
         if (urlParamsData.guid && tokenData.instituteId) {
-          let details: BillingData | null =
+          let details: BillingData[] | null =
             await getBillingDeatilsByGuidInstituteId(
               urlParamsData.guid,
               parseInt(tokenData.instituteId)
@@ -497,24 +497,34 @@ export const useBillingStore = create<BillingStore>()(
             let timezoneOffset: string = `.${Math.abs(
               moment().utcOffset()
             ).toString()}Z`;
-            serviceAndBillingDetails.productType.value = details.productType;
-            contactDetails.email.value = details.billingEmail;
-            serviceAndBillingDetails.studentPay.value = details.studentPay
+            serviceAndBillingDetails.productType.value = details[0].productType;
+            contactDetails.email.value = details[0].billingEmail;
+            serviceAndBillingDetails.studentPay.value = details[0].studentPay
               ? "Yes"
               : "No";
-            serviceAndBillingDetails.paymentType.value = details.paymentType;
+            serviceAndBillingDetails.paymentType.value = details[0].paymentType;
             serviceAndBillingDetails.billRate.value =
-              details.billingRate.toString();
+              details[0].billingRate.toString();
             serviceAndBillingDetails.billCurrency.value =
-              details.billingCurrency;
+              details[0].billingCurrency;
             serviceAndBillingDetails.startDate.value =
-              details.startDate + timezoneOffset;
+              details[0].startDate + timezoneOffset;
             serviceAndBillingDetails.endDate.value =
-              details.endDate + timezoneOffset;
+              details[0].endDate + timezoneOffset;
+            serviceAndBillingDetails.minQuiz.value = "" + details[0].minNumber;
             set({
               serviceAndBillingDetails: serviceAndBillingDetails,
               contactDetails: contactDetails,
             });
+            contactDetails.firstName.value = details[0].firstName;
+            contactDetails.lastName.value = details[0].lastName;
+            contactDetails.firstAddress.value = details[0].address1;
+            contactDetails.city.value = details[0].city;
+            contactDetails.state.value = details[0].state;
+            contactDetails.zip.value = details[0].zip;
+            contactDetails.country.value = details[0].country;
+            contactDetails.secondAddress.value = details[0].address2 as string;
+            contactDetails.phone.value = details[0].billingPhone as string;
           }
         }
       },

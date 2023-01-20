@@ -39,15 +39,49 @@ const getSelectedQuizConfig = async (
 const updateQuizConfiguratio = async (quizConfig: QuizConfiguration) => {
   try {
     const response = await axios;
-  } catch (err) { }
+  } catch (err) {}
+};
+
+const setQuizConfiguration = (
+  quizConfig: QuizConfigurationWithOnlyProcOpt,
+  updatedConfig: QuizConfigurationWithOnlyProcOpt
+): QuizConfigurationWithOnlyProcOpt => {
+  let config: QuizConfigurationWithOnlyProcOpt = { ...quizConfig };
+
+  Object.keys(updatedConfig).forEach((key: string) => {
+    if (!config[key as keyof QuizConfigurationWithOnlyProcOpt]) {
+      config[key as keyof QuizConfigurationWithOnlyProcOpt] =
+        updatedConfig[key as keyof QuizConfigurationWithOnlyProcOpt];
+    }
+  });
+
+  return config;
+};
+
+const subtractQuizConfiguration = (
+  quizConfig: QuizConfigurationWithOnlyProcOpt,
+  updatedConfig: QuizConfigurationWithOnlyProcOpt
+): QuizConfigurationWithOnlyProcOpt => {
+  let config: QuizConfigurationWithOnlyProcOpt = { ...quizConfig };
+
+  Object.keys(updatedConfig).forEach((key: string) => {
+    if (
+      config[key as keyof QuizConfigurationWithOnlyProcOpt] &&
+      updatedConfig[key as keyof QuizConfigurationWithOnlyProcOpt]
+    ) {
+      config[key as keyof QuizConfigurationWithOnlyProcOpt] = false;
+    }
+  });
+
+  return config;
 };
 
 export const useQuizStore = create<QuizStore>()(
   devtools(
     (set, get) => ({
-      allQuizzes: [],
-      selectedQuiz: null,
-      defaultOptionSelected: null,
+      allQuizzes: [] as Quiz[],
+      selectedQuiz: undefined,
+      defaultOptionSelected: undefined,
       reportReview: false,
       liveLaunch: false,
       configAvailable: false,
@@ -151,7 +185,13 @@ export const useQuizStore = create<QuizStore>()(
         set({ allQuizzes: quizzes });
       },
       setSelectedQuiz: async (quiz: Quiz) => {
-        set({ selectedQuiz: quiz });
+        set({
+          selectedQuiz: quiz,
+          reportReview: false,
+          liveLaunch: false,
+          liveProctoring: false,
+          lockdownBrowser: false,
+        });
 
         let configAvailable: boolean = false;
         let quizConfig: QuizConfiguration | null = await getSelectedQuizConfig(
@@ -220,6 +260,21 @@ export const useQuizStore = create<QuizStore>()(
             quizConfig.examdLiveLaunch ||
             quizConfig.examdProctored
           ) {
+            if (quizConfig.postExamReview) {
+              set({
+                reportReview: true,
+              });
+            }
+            if (quizConfig.examdLiveLaunch) {
+              set({
+                liveLaunch: true,
+              });
+            }
+            if (quizConfig.examdProctored) {
+              set({
+                liveProctoring: true,
+              });
+            }
             isProcExamd = true;
           }
 
@@ -293,9 +348,10 @@ export const useQuizStore = create<QuizStore>()(
       },
       updateQuizConfig: (configName: string, selected: boolean) => {
         if (get().customizableQuizConfig) {
-          let quizConfig: QuizConfigurationWithOnlyProcOpt = {
-            ...(get().customizableQuizConfig as QuizConfiguration),
+          let quizConfig = {
+            ...get().customizableQuizConfig,
           };
+
           quizConfig[configName as keyof QuizConfigurationWithOnlyProcOpt] =
             selected;
 
@@ -457,77 +513,41 @@ export const useQuizStore = create<QuizStore>()(
         };
 
         if (option === "instructorProctored") {
-          if (config.studentIdDl || config.studentPicture) {
-            message.error(
-              "Cannot select any live authentication option with Ai Proctoring option"
-            );
-            return;
-          }
+          // if (config.studentIdDl || config.studentPicture) {
+          //   message.error(
+          //     "Cannot select any live authentication option with Ai Proctoring option"
+          //   );
+          //   return;
+          // }
 
-          if (config.examdLiveLaunch) {
-            message.error(
-              "Cannot select option with examd live launch"
-            );
-            return;
-          }
+          // if (config.examdLiveLaunch) {
+          //   message.error("Cannot select option with examd live launch");
+          //   return;
+          // }
+          config.studentIdDl = false;
+          config.studentPicture = false;
+          config.examdLiveLaunch = false;
         }
 
         if (option === "studentIdDl" || option === "studentPicture") {
-          if (config.instructorProctored) {
-            message.error(
-              "Cannot select any ai authentication option with live authentication"
-            );
-            return;
-          }
+          config.instructorProctored = false;
+          // if (config.instructorProctored) {
+          //   message.error(
+          //     "Cannot select any ai authentication option with manual authentication"
+          //   );
+          //   return;
+          // }
         }
 
         if (option === "examdLiveLaunch") {
-          if (config.instructorProctored) {
-            message.error(
-              "Cannot select live launch option with live authentication"
-            );
-            return;
-          }
+          // if (config.instructorProctored) {
+          //   message.error(
+          //     "Cannot select live launch option with manual authentication"
+          //   );
+          //   return;
+          // }
+          config.instructorProctored = false;
         }
-
-        // if (category === "isVerification") {
-        //   if (get().liveProctoring) {
-        //     if (option === "studentPicture" || option === "studentIdDl") {
-        //       message.error(
-        //         "Cannot select any AI authentication option with Live Proctoring option"
-        //       );
-        //       return;
-        //     } else {
-        //       return;
-        //     }
-        //   }
-
-        //   if (get().reportReview) {
-        //     if (option === "instructorProctored") {
-        //       message.error(
-        //         "Cannot select any live authentication option with Ai Proctoring option"
-        //       );
-        //       return;
-        //     }
-        //   }
-
-        //   if (get().liveProctoring || get().isLockdown) {
-        //     if (option === "instructorProctored") {
-        //       if (config.studentIdDl || config.studentPicture) {
-        //         message.error("Please de-select ai verification options first");
-        //         return;
-        //       }
-        //     }
-        //     if (option === "studentPicture" || option === "studentIdDl") {
-        //       if (config.instructorProctored) {
-        //         message.error(
-        //           "Please de-select live verification option first"
-        //         );
-        //         return;
-        //       }
-        //     }
-        //   }
-        // }
 
         if (category === "isVerification" && !get().isVerification) {
           message.error("Please enable verification option first");
@@ -566,7 +586,6 @@ export const useQuizStore = create<QuizStore>()(
         });
       },
       handleQuizConfigSelect: (configName: string) => {
-
         let isLockdown: boolean = false;
         let isProcExamd: boolean = false;
         let isRecOptions: boolean = false;
@@ -574,43 +593,69 @@ export const useQuizStore = create<QuizStore>()(
         let isVerification: boolean = false;
         let isViolation: boolean = false;
 
-        let reportReview: boolean = false;
-        let liveLaunch: boolean = false;
-        let liveProctoring: boolean = false;
-        let lockdownBrowser: boolean = false;
+        let reportReview: boolean = get().reportReview;
+        let liveLaunch: boolean = get().liveLaunch;
+        let liveProctoring: boolean = get().liveProctoring;
+        let lockdownBrowser: boolean = get().lockdownBrowser;
 
-        let config: QuizConfigurationWithOnlyProcOpt | null = null;
+        let config: QuizConfigurationWithOnlyProcOpt = {
+          ...get().customizableQuizConfig,
+        };
+
+        if (!get().selectedQuiz) {
+          message.error("Please select a quiz");
+          return;
+        }
 
         if (configName === "reportReview") {
-          config = defaultProcSettings[0].settings
-          reportReview = !get().reportReview
+          reportReview = !reportReview;
 
           if (!reportReview) {
-            config = get().selectedQuizConfig
+            config.postExamReview = false;
+          } else {
+            config.postExamReview = true;
+            config.lockdownBrowser = false;
+            lockdownBrowser = false
           }
         }
 
         if (configName === "liveLaunch") {
-          config = defaultProcSettings[1].settings
-          liveLaunch = !get().liveLaunch
+          liveLaunch = !liveLaunch;
           if (!liveLaunch) {
-            config = get().selectedQuizConfig
+            config.examdLiveLaunch = false;
+          } else {
+            config.examdLiveLaunch = true;
+            config.lockdownBrowser = false;
+            lockdownBrowser = false
+            if (config.instructorProctored) {
+              config.instructorProctored = false;
+            }
           }
         }
 
         if (configName === "liveProctoring") {
-          config = defaultProcSettings[2].settings
-          liveProctoring = !get().liveProctoring
+          liveProctoring = !liveProctoring;
           if (!liveProctoring) {
-            config = get().selectedQuizConfig
+            config.examdProctored = false;
+          } else {
+            config.examdProctored = true;
+            config.lockdownBrowser = false;
+            lockdownBrowser = false;
           }
         }
 
         if (configName === "lockdownBrowser") {
-          config = defaultProcSettings[3].settings
-          lockdownBrowser = !get().lockdownBrowser
+          lockdownBrowser = !lockdownBrowser;
           if (!lockdownBrowser) {
-            config = get().selectedQuizConfig
+            config.lockdownBrowser = false;
+          } else {
+            config.lockdownBrowser = true;
+            reportReview = false;
+            liveLaunch = false;
+            liveProctoring = false;
+            config.postExamReview = false;
+            config.examdLiveLaunch = false;
+            config.examdProctored = false;
           }
         }
         if (config) {
@@ -679,8 +724,8 @@ export const useQuizStore = create<QuizStore>()(
           liveProctoring: liveProctoring,
           liveLaunch: liveLaunch,
           reportReview: reportReview,
-          lockdownBrowser: lockdownBrowser
-        })
+          lockdownBrowser: lockdownBrowser,
+        });
       },
     }),
     { name: "Quiz Store" }

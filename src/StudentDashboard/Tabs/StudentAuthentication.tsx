@@ -184,7 +184,7 @@ const StudentAuthentication: React.FC<Props> = (props): JSX.Element => {
       });
     }
 
-    if (props.authConfigs.instructorProctored && !props.authConfigs.examdLiveLaunch) {
+    if (props.authConfigs.instructorProctored) {
       steps.push({
         name: "Live Authentication",
         key: "Live",

@@ -12,6 +12,7 @@ import {
 import { useAppStore } from "../../store/AppSotre";
 import { QuizTypeProctoringByQuiz } from "../../AppTypes";
 import { useSocketStore } from "../../store/SocketStore";
+import NoQuiz from "../../CommonUtilites/NoQuiz";
 
 type QuizStatus = {
   [key: string]: { ongoing: boolean };
@@ -21,6 +22,7 @@ const ProcotoringByQuiz: React.FC = (): JSX.Element => {
   const [quizzes, setQuizzes] = React.useState<any>(null);
   const [qzSelectTrack, setQzSelectTrack] = React.useState<any>(null);
   const [enrollments, setEnrollments] = React.useState<any>(null);
+  const [noQuiz, setNoQuiz] = React.useState<boolean>(false);
   const [selectedQuizSchedules, setSelectedQuizSchedules] =
     React.useState<any>(null);
   let [selectedQuiz, setSelectedQuiz] =
@@ -99,6 +101,11 @@ const ProcotoringByQuiz: React.FC = (): JSX.Element => {
         `${getCanvasAssignmentDetails}/${tokenData.instituteId}/${urlParamsData.guid}/${urlParamsData.courseId}/${tokenData.lmsAccessToken}/`
       )
       .then((res) => {
+        if (res.data.length === 0) {
+          setNoQuiz(true);
+          return;
+        }
+
         let temp: any = {};
         let quizzesStatus: QuizStatus = {};
         let quizzes = res.data.filter((item: any) => {
@@ -114,6 +121,7 @@ const ProcotoringByQuiz: React.FC = (): JSX.Element => {
       })
       .catch((err) => {
         console.log(err);
+        setNoQuiz(true);
       });
     axios
       .get(
@@ -303,6 +311,8 @@ const ProcotoringByQuiz: React.FC = (): JSX.Element => {
             );
           })}
         </div>
+      ) : noQuiz ? (
+        <NoQuiz />
       ) : (
         <p className="text-center font-semibold">
           Fetching quizzes. Please wait ...

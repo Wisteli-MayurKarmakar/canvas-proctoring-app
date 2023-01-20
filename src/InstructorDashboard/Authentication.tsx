@@ -15,6 +15,7 @@ import {
 } from "../apiConfigs";
 import { useAppStore } from "../store/AppSotre";
 import moment from "moment";
+import { CheckCircleOutlined, CloseCircleOutlined } from "@ant-design/icons";
 
 const Authentication: React.FC = (): JSX.Element => {
   let [quizzes, setQuizzes] = React.useState<Object | null>(null);
@@ -30,6 +31,7 @@ const Authentication: React.FC = (): JSX.Element => {
   const [quizId, setQuizId] = React.useState<string | null>(null);
   const [selectedRow, setSelectedRow] = React.useState<any>(null);
   let [showWait, setShowWait] = React.useState<boolean>(false);
+  const [isRefreshing, setIsRefreshing] = React.useState<boolean>(false);
   let [doAuth, setDoAuth] = React.useState<any>(null);
   let [stuLiveStatusObj, setStuLiveStatusObj] = React.useState<any>(null);
   const [selectedQuizTitle, setSelectedQuizTitle] = React.useState<
@@ -46,6 +48,17 @@ const Authentication: React.FC = (): JSX.Element => {
       dataIndex: "name",
       key: "Name",
       title: `Assignment Name`,
+    },
+    {
+      dataIndex: "",
+      key: "instructorProctored",
+      title: `By Instructor`,
+      render: (row: any) => {
+        if (row.instructorProctored === "Y") {
+          return <CheckCircleOutlined style={{color: "green", fontSize: 20}}/>;
+        }
+        return <CloseCircleOutlined style={{color: "red", fontSize: 20}}/>;
+      },
     },
     {
       dataIndex: "",
@@ -183,12 +196,18 @@ const Authentication: React.FC = (): JSX.Element => {
       .then((response) => {
         let assignments = response.data.filter((assignment: any) => {
           if (assignment.id !== 0) {
-            assignment.key = assignment.id;
-            return assignment;
+            if (
+              assignment.instructorProctored === "Y" ||
+              assignment.examdLiveLaunch === "Y"
+            ) {
+              assignment.key = assignment.id;
+              return assignment;
+            }
           }
         });
         // setQuizzes(response.data);
         setQuizzes(assignments);
+        setIsRefreshing(false);
       })
       .catch((error) => {
         console.log(error);
@@ -348,7 +367,7 @@ const Authentication: React.FC = (): JSX.Element => {
   };
 
   const handleRefreshTable = () => {
-    setQuizzes(null);
+    setIsRefreshing(true);
     fetchQuizzesByCourseId();
   };
 
@@ -394,6 +413,7 @@ const Authentication: React.FC = (): JSX.Element => {
           mainTableActions={null}
           expandedRow={getExpandedRow}
           studentAuthStatus={studentAuthed}
+          loading={isRefreshing}
         />
       ) : (
         <div className="flex flex-col gap-6 justify-center items-center h-full">

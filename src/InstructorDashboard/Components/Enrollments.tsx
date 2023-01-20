@@ -26,6 +26,7 @@ const Enrollments: React.FC = (): JSX.Element => {
   const { urlParamsData, tokenData } = useAppStore((state) => state);
   const [studentId, setStudentId] = useState<any>(null);
   const [selectedStudentId, setSelectedStudentId] = useState<any>(null);
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [showUpdateProfileModal, setShowUpdateProfileModal] =
     useState<boolean>(false);
   const setAccessibilityConfigurations = useAccessiblityStore(
@@ -108,7 +109,12 @@ const Enrollments: React.FC = (): JSX.Element => {
             <button key="approveId" onClick={() => handleUpdateProfile(row.id)}>
               Id Approval
             </button>
-            <button key="contact" className="cursor-not-allowed text-gray-300" onClick={() => handleAction(row.id)} disabled>
+            <button
+              key="contact"
+              className="cursor-not-allowed text-gray-300"
+              onClick={() => handleAction(row.id)}
+              disabled
+            >
               Contact
             </button>
           </div>
@@ -130,11 +136,17 @@ const Enrollments: React.FC = (): JSX.Element => {
         course_id: urlParamsData.courseId,
       }));
       setStudents(data);
+      setIsRefreshing(false);
     } else {
       setGetStudentsError(true);
     }
     setFetchingStudents(false);
   };
+
+  const handleRefreshTable = () => {
+    setIsRefreshing(true);
+    getStudentsByCourseId();
+  }
 
   useEffect(() => {
     getStudentsByCourseId();
@@ -144,33 +156,46 @@ const Enrollments: React.FC = (): JSX.Element => {
     if (!getStudentsError) {
       if (students.length > 0) {
         return (
-          <div className="flex flex-row w-full h-full items-center justify-center">
-            <Table
-              dataSource={students}
-              columns={studentColumns}
-              pagination={{ position: ["bottomRight"] }}
-              bordered={true}
-            />
-            {selectedAction === "accessibility" && studentId && (
-              <AcccessibilityModal
-                visible={selectedAction === "accessibility" && true}
-                onClose={() => setSelectedAction("")}
-                studentId={studentId}
+          <div className="flex flex-col h-full items-end justify-center gap-4">
+            <button
+              type="button"
+              onClick={handleRefreshTable}
+              data-mdb-ripple="true"
+              data-mdb-ripple-color="light"
+              className="btn px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700  focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out flex items-center"
+            >
+              Refresh Table
+            </button>
+            <div className="flex space-x-2 justify-center"></div>
+            <div className="flex flex-row w-full h-full items-center justify-center">
+              <Table
+                dataSource={students}
+                columns={studentColumns}
+                pagination={{ position: ["bottomRight"] }}
+                bordered={true}
+                loading={isRefreshing}
               />
-            )}
-            {showUpdateProfileModal &&
-              tokenData.lmsAccessToken &&
-              urlParamsData.guid &&
-              selectedStudentId && (
-                <UpdateProfile
-                  show={showUpdateProfileModal}
-                  close={() => setShowUpdateProfileModal(false)}
-                  authToken={tokenData.lmsAccessToken}
-                  guid={urlParamsData.guid}
-                  userId={selectedStudentId}
-                  title={"idApproval"}
+              {selectedAction === "accessibility" && studentId && (
+                <AcccessibilityModal
+                  visible={selectedAction === "accessibility" && true}
+                  onClose={() => setSelectedAction("")}
+                  studentId={studentId}
                 />
               )}
+              {showUpdateProfileModal &&
+                tokenData.lmsAccessToken &&
+                urlParamsData.guid &&
+                selectedStudentId && (
+                  <UpdateProfile
+                    show={showUpdateProfileModal}
+                    close={() => setShowUpdateProfileModal(false)}
+                    authToken={tokenData.lmsAccessToken}
+                    guid={urlParamsData.guid}
+                    userId={selectedStudentId}
+                    title={"idApproval"}
+                  />
+                )}
+            </div>
           </div>
         );
       }

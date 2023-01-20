@@ -17,6 +17,7 @@ interface Props {
   courseId: string;
   guid: string;
   fileName: string;
+  updateReport: () => void;
   configuration: { [key: string]: boolean };
 }
 
@@ -32,20 +33,26 @@ const Report: React.FC<Props> = ({
   guid,
   courseId,
   fileName,
+  updateReport,
   configuration,
 }): JSX.Element => {
   const tokenData = useAppStore((state) => state.tokenData);
-  const {journeyDetails, setJourneyDetails} = useProcotorJourneyStore((state) => state)
+  const { setJourneyDetails } = useProcotorJourneyStore((state) => state);
 
   const handleReportResult = (result: string) => {
-    setJourneyDetails(result, studentId, quizId)
-  }
+    setJourneyDetails(result, studentId, quizId);
+  };
+
+  const handleClose = () => {
+    updateReport();
+    close();
+  };
 
   return (
     <Modal
       visible={show}
       title={title}
-      onCancel={close}
+      onCancel={handleClose}
       width={"70pc"}
       footer={null}
     >

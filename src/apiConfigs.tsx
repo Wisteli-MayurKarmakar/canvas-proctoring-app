@@ -1,5 +1,7 @@
 let baseUrl: string | undefined = process.env.REACT_APP_BASE_URL;
 
+const baseAiUrl: string = process.env.REACT_APP_BASE_AI_URL as string
+
 const baseApiUrl: string = baseUrl + "canvaslms/api/v1";
 
 const getEndPoints: string = `${baseUrl}cdn/urls/xproctor/1`;
@@ -8,11 +10,11 @@ const newTabQuizUrl: string = `${baseUrl}lti/config/index.html?`;
 
 const sendEmail: string = `${baseUrl}notification/api/v1/mail/sendEmail`;
 
-const aiMatch: string = `${baseUrl}ai/frame/match`;
+const aiMatch: string = `${baseAiUrl}ai/frame/match`;
 
-const getExceptions: string = `${baseUrl}ai/db/excp/list/ex/`;
+const getExceptions: string = `${baseAiUrl}ai/db/excp/list/ex/`;
 
-const getMedia: string = `${baseUrl}media`;
+const getMedia: string = `${baseAiUrl}media`;
 
 const canvasEnrollmentsByCourseId: string = `${baseApiUrl}/fetchCanvasEnrollmentsByCourseId/`;
 const autoCompleteSetup: string = `${baseApiUrl}/autoCompleteSetup/`;

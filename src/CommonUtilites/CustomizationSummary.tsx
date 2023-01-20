@@ -1,105 +1,13 @@
 import React from "react";
-import { defaultProcSettings } from "../CommonUtilites/ProctorSettingDefaults";
 import { CheckSquareOutlined, CloseCircleOutlined } from "@ant-design/icons";
 import { useQuizStore } from "../store/QuizStore";
 import { ConfigurationWithStatus, FullNameMap } from "../AppTypes";
-
-const settingOptions: any = {
-  "Recording Options": {
-    recordWebcam: {
-      fullName: "Record Webcam",
-    },
-    recordScreen: {
-      fullName: "Record Screen",
-    },
-    recordAudio: {
-      fullName: "Record Audio",
-    },
-    chat: {
-      fullName: "Chat",
-    },
-  },
-  "Verification Options": {
-    studentPicture: {
-      fullName: "Student Picture",
-    },
-    studentIdDl: {
-      fullName: "Student ID or DL",
-    },
-    roomScan: {
-      fullName: "Room Scan",
-    },
-    otp: {
-      fullName: "One Time Password",
-    },
-  },
-  "Student Resources": {
-    calculatorAllowed: {
-      fullName: "Calculator",
-    },
-    scratchPadAllowed: {
-      fullName: "Scratch Pad",
-    },
-    liveHelp: {
-      fullName: "Live Help",
-    },
-    whitelistPages: {
-      fullName: "Whitelist Pages",
-    },
-  },
-  "Lock Down Options": {
-    disableCopyPaste: {
-      fullName: "Disable Copy/ Paste",
-    },
-    disablePrinting: {
-      fullName: "Disable Printing",
-    },
-    lockdownBrowser: {
-      fullName: "Lock Down Browser",
-    },
-  },
-  "Violation Options": {
-    multiplePerson: {
-      fullName: "Multiple Person",
-    },
-    cellPhone: {
-      fullName: "Cell Phone",
-    },
-    noPersonInRoom: {
-      fullName: "No Person In Room",
-    },
-    speaking: {
-      fullName: "Speaking",
-    },
-  },
-  "Proctor Options": {
-    postExamReview: {
-      fullName: "Post Exam Review",
-    },
-    examdLiveLaunch: {
-      fullName: "Examd Live Launch",
-    },
-    examdProctored: {
-      fullName: "Examd Proctored",
-    },
-  },
-};
 
 const CustomizationSummary: React.FC = (): JSX.Element => {
   const {
     customizableQuizConfig,
     configAvailable,
   } = useQuizStore((state) => state);
-
-  let customizations: any = [];
-  let configKeys: string[] = [
-    "Recording Options",
-    "Verification Options",
-    "Student Resources",
-    "Lock Down Options",
-    "Violation Options",
-    "Proctor Options",
-  ];
 
   const fullNameMap: FullNameMap = {
     recOptions: "Recording Options",
@@ -130,7 +38,7 @@ const CustomizationSummary: React.FC = (): JSX.Element => {
     postExamReview: "Post Exam Review",
     examdLiveLaunch: "Live Launch",
     examdProctored: "Proctoring",
-    instructorProctored: "Live Verification"
+    instructorProctored: "Manual Verification"
   };
 
   const configuration: ConfigurationWithStatus[] = [

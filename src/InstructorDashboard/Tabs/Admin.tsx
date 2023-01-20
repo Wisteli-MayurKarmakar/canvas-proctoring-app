@@ -8,7 +8,7 @@ const Admin: React.FC = (): JSX.Element => {
   const [subOptionSelected, setSubOptionSelected] =
     useState<string>("Payments");
 
-  const subMenus: string[] = ["Institute", "Billing", "Payments", "Access"];
+  const subMenus: string[] = ["Institute", "Billing", "Access", "Payments"];
 
   const handleSubOptionSelection = (option: string) => {
     setSubOptionSelected(option);

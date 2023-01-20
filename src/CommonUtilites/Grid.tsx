@@ -14,6 +14,7 @@ interface Props {
   expandedRow: (row: any) => void;
   enableAuth: any;
   studentAuthStatus: boolean;
+  loading?: boolean;
 }
 
 const Grid: React.FunctionComponent<Props> = (props): JSX.Element => {
@@ -49,9 +50,13 @@ const Grid: React.FunctionComponent<Props> = (props): JSX.Element => {
                     )
                   }
                 >
-                  {props.studentAuthStatus === false ? "Authenticate": "Authenticated"}
+                  {props.studentAuthStatus === false
+                    ? "Authenticate"
+                    : "Authenticated"}
                 </Button>
-                <Button type="link" disabled={true}>Contacts</Button>
+                <Button type="link" disabled={true}>
+                  Contacts
+                </Button>
               </div>
             );
           };
@@ -64,6 +69,7 @@ const Grid: React.FunctionComponent<Props> = (props): JSX.Element => {
     return (
       <Table
         dataSource={props.data}
+        loading={props.loading}
         columns={props.mainTableColumns}
         pagination={props.pagination ? { position: ["bottomLeft"] } : false}
         expandable={{
@@ -122,6 +128,7 @@ const Grid: React.FunctionComponent<Props> = (props): JSX.Element => {
   return (
     <Table
       dataSource={props.data}
+      loading={props.loading}
       columns={props.mainTableColumns}
       pagination={props.pagination ? { position: ["bottomLeft"] } : false}
     />

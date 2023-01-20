@@ -159,14 +159,14 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
     config["studentIdDl"] = props.quizConfig.studentIdDl;
     config["roomScan"] = props.quizConfig.roomScan;
     config["otp"] = props.quizConfig.otp;
-    config["examdLiveLaunch"] = props.quizConfig.examdLiveLaunch;
+    config["instructorProctored"] = props.quizConfig.instructorProctored;
     if (props.quizConfig) {
       if (
         props.quizConfig.studentPicture ||
         props.quizConfig.studentIdDl ||
         props.quizConfig.roomScan ||
         props.quizConfig.otp ||
-        props.quizConfig.examdLiveLaunch
+        props.quizConfig.instructorProctored
       ) {
         steps.push({
           name: "Authentication",
@@ -257,7 +257,7 @@ const AuthenticationModal: React.FC<Props> = (props): JSX.Element => {
         </div>
       }
       visible={props.view}
-      bodyStyle={{ maxHeight: "50%", height: 600, overflowY: "scroll" }}
+      bodyStyle={{ maxHeight: "50%", height: "30em", overflowY: "scroll" }}
       onCancel={() => {
         closeWebCamResources();
         props.close();

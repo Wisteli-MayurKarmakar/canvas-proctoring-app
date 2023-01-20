@@ -6,8 +6,6 @@ import { saveLtiBillingRate } from "../../apiConfigs";
 import {
   AddBillingPropertyTypes,
   BillingContactDetails,
-  BillingData,
-  // PastRecordTableColumns,
   ServicesAndBillingFieldTypes,
 } from "../../AppTypes";
 import WaitingModal from "../../CommonUtilites/WaitingModal";
@@ -31,49 +29,6 @@ const Billing: React.FC = (): JSX.Element => {
       Saving billing information. Please wait...
     </p>
   );
-
-  // const tableColumns: PastRecordTableColumns[] = [
-  //   {
-  //     dataIndex: "",
-  //     key: "productType",
-  //     title: "Product Type",
-  //   },
-  //   {
-  //     dataIndex: "",
-  //     key: "supportType",
-  //     title: "Support Type",
-  //   },
-  //   {
-  //     dataIndex: "",
-  //     key: "studentProctor",
-  //     title: "Student/ Proctor",
-  //   },
-  //   {
-  //     dataIndex: "",
-  //     key: "paymentType",
-  //     title: "Payment Type",
-  //   },
-  //   {
-  //     dataIndex: "",
-  //     key: "billRate",
-  //     title: "Billing Rate",
-  //   },
-  //   {
-  //     dataIndex: "",
-  //     key: "status",
-  //     title: "Status",
-  //   },
-  //   {
-  //     dataIndex: "",
-  //     key: "startDate",
-  //     title: "Start Date",
-  //   },
-  //   {
-  //     dataIndex: "",
-  //     key: "endDate",
-  //     title: "End Date",
-  //   },
-  // ];
 
   const validateFormValues = (): boolean => {
     let { productType, paymentType, studentPay } =
@@ -216,7 +171,7 @@ const Billing: React.FC = (): JSX.Element => {
 
   useEffect(() => {
     getBillingDetails();
-  }, [getBillingDetails]);
+  }, []);
 
   return (
     <form

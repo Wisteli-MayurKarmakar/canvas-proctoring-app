@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { SyntheticEvent, useState } from "react";
 import NeedHelp from "./NeedHelp";
 import SystemCheck from "../../Tabs/SystemCheck";
 import PrivacyPolicy from "../../Tabs/PrivacyPolicy";
@@ -10,6 +10,7 @@ import { useAppStore } from "../../../store/AppSotre";
 import { Button, Modal } from "antd";
 import AssibilityModal from "../../../CommonUtilites/Modals/AccessibilityModal";
 import Payments from "./Payments";
+import { useBillingStore } from "../../../store/BillingStore";
 
 const SideMenu: React.FC = (): JSX.Element => {
   const [showModal, setShowModal] = useState<JSX.Element | null>(null);
@@ -28,6 +29,9 @@ const SideMenu: React.FC = (): JSX.Element => {
   const stream = useWebCamStore((state) => state.stream);
   const closeWebCamResouce = useWebCamStore(
     (state) => state.closeWebCamResouce
+  );
+  const { studentPay } = useBillingStore(
+    (state) => state.serviceAndBillingDetails
   );
 
   const options: string[] = [
@@ -106,20 +110,39 @@ const SideMenu: React.FC = (): JSX.Element => {
     setShowModal(null);
   };
 
+  const handleClick = (e: SyntheticEvent, item: string) => {
+    if (item === "Payment" && !enablePay) {
+      e.preventDefault();
+      return;
+    }
+    setModal(item);
+  };
+  let enablePay: boolean =
+    studentPay.value === "Select student pay" || studentPay.value === "No"
+      ? false
+      : true;
+
   return (
     <div className="flex flex-col gap-4 w-5/12 xl:w-3/12 h-full items-center">
       <NeedHelp />
       {!urlParamsData.newTab && (
         <div className="flex flex-col w-full box-border border-1 rounded bg-gray-200 gap-2 p-2 justify-center">
           {options.map((item: string, index: number) => {
+            let cssClass: string =
+              "font-semibold text-base w-full inline-block py-2 bg-transparent cursor-pointer leading-tight text-gray-500 hover:text-blue-500 hover:scale-125";
+
+            if (item === "Payment" && !enablePay) {
+              cssClass =
+                "font-semibold text-base w-full inline-block py-2 bg-transparent cursor-not-allowed leading-tight text-gray-500";
+            }
             return (
               <div
                 className="flex space-x-2 space-y-4 text-center justify-center"
                 key={index}
               >
                 <p
-                  className="font-semibold text-base w-full inline-block py-2 bg-transparent cursor-pointer leading-tight text-gray-500 hover:text-blue-500 hover:scale-125"
-                  onClick={() => setModal(item)}
+                  className={cssClass}
+                  onClick={(e: SyntheticEvent) => handleClick(e, item)}
                 >
                   {item}
                 </p>

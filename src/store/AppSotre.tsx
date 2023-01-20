@@ -37,6 +37,7 @@ type AppStore = {
   urlParamsData: URLParamsData;
   tokenData: AuthenticationData;
   courseDetails: CourseDetails;
+  canAccessApp: boolean;
   userAccessDetails?: AccessDetails;
   isNotAllowed: boolean;
   isAdmin: boolean;
@@ -60,9 +61,8 @@ const getCourseDetails = async (
   return null;
 };
 
-const getAccessRecordsByGuid = async (
-  guid: string,
-  id: string
+export const getAccessRecordsByGuid = async (
+  guid: string
 ): Promise<AccessDetails[]> => {
   try {
     let response = await axios.get(`${getLtiAccessByGuid}/${guid}`);
@@ -79,6 +79,7 @@ const getAccessRecordsByGuid = async (
 export const useAppStore = create<AppStore>()(
   devtools(
     (set) => ({
+      canAccessApp: false,
       urlParamsData: {
         courseId: null,
         quizId: null,
@@ -143,25 +144,39 @@ export const useAppStore = create<AppStore>()(
               loginId: data.loginId,
             },
           });
-          let response = await getAccessRecordsByGuid(
-            data.guid,
-            data.studentId
-          );
-          set({
-            accessRecords: response
-          })
+
+          let response = await getAccessRecordsByGuid(data.guid);
           response.forEach((item: AccessDetails) => {
-            if (item.accessType === "ADMIN" && item.userId === data.studentId) {
+            if (item.userId === data.studentId) {
               let notAllowed: boolean = false;
-              if (!item.aiQuiz && !item.aiWithReport && !item.lockdownBrowser && !item.liveProctor && !item.liveLaunch) {
+              if (
+                !item.aiQuiz &&
+                !item.aiWithReport &&
+                !item.lockdownBrowser &&
+                !item.liveProctor &&
+                !item.liveLaunch
+              ) {
                 notAllowed = true;
               }
-              set({
-                isAdmin: true,
-                userAccessDetails: item,
-                isNotAllowed: true
-              });
+              if (item.accessType === "ADMIN") {
+                set({
+                  isAdmin: true,
+                  userAccessDetails: item,
+                  isNotAllowed: notAllowed,
+                  canAccessApp: true,
+                });
+              } else {
+                set({
+                  isAdmin: false,
+                  userAccessDetails: item,
+                  isNotAllowed: notAllowed,
+                  canAccessApp: item.aiQuiz === "Y" ? true : false,
+                });
+              }
             }
+          });
+          set({
+            accessRecords: response,
           });
         }
       },

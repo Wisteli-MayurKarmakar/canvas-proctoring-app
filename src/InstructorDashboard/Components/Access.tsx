@@ -151,7 +151,7 @@ const Access: React.FC = (): JSX.Element => {
       dataIndex: "status",
     },
     {
-      title: "AI",
+      title: "Base Access",
       key: "ai",
       dataIndex: "",
       render: (row: AccessDetails) => {
@@ -167,7 +167,7 @@ const Access: React.FC = (): JSX.Element => {
       },
     },
     {
-      title: "AI with Report",
+      title: "Report Review",
       key: "aiWRep",
       dataIndex: "",
       render: (row: AccessDetails) => {
@@ -176,6 +176,7 @@ const Access: React.FC = (): JSX.Element => {
             className="form-check-input appearance-none h-4 w-4 border border-gray-300 rounded-sm bg-white checked:bg-blue-600 checked:border-blue-600 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer"
             type="checkbox"
             id={`${row.idAccess}_aiWithReport`}
+            disabled={row.aiQuiz === "Y" ? false: true}
             defaultChecked={row.aiWithReport === "Y" ? true : false}
             onChange={() => handleOptionClick(row.idAccess, "aiWithReport")}
           ></input>
@@ -191,6 +192,7 @@ const Access: React.FC = (): JSX.Element => {
           <input
             className="form-check-input appearance-none h-4 w-4 border border-gray-300 rounded-sm bg-white checked:bg-blue-600 checked:border-blue-600 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer"
             type="checkbox"
+            disabled={row.aiQuiz === "Y" ? false: true}
             id={`${row.idAccess}liveLaunch`}
             defaultChecked={row.liveLaunch === "Y" ? true : false}
             onChange={() => handleOptionClick(row.idAccess, "liveLaunch")}
@@ -199,7 +201,7 @@ const Access: React.FC = (): JSX.Element => {
       },
     },
     {
-      title: "Full Proctoring",
+      title: "Live Proctoring",
       key: "proctoring",
       dataIndex: "",
       render: (row: AccessDetails) => {
@@ -207,6 +209,7 @@ const Access: React.FC = (): JSX.Element => {
           <input
             className="form-check-input appearance-none h-4 w-4 border border-gray-300 rounded-sm bg-white checked:bg-blue-600 checked:border-blue-600 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer"
             type="checkbox"
+            disabled={row.aiQuiz === "Y" ? false: true}
             id={`${row.idAccess}_ai`}
             defaultChecked={row.liveProctor === "Y" ? true : false}
             onChange={() => handleOptionClick(row.idAccess, "liveProctor")}

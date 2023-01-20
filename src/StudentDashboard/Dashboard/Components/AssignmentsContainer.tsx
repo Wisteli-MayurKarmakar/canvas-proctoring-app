@@ -14,6 +14,7 @@ import { useStudentWorflowControllerStore } from "../../../store/StudentWorkflow
 import ConfirmModal from "../../../CommonUtilites/Modals/ConfirmModal";
 import axios from "axios";
 import { getLtiStudentProfileDetails } from "../../../apiConfigs";
+import { useBillingStore } from "../../../store/BillingStore";
 
 type Props = {
   isNewTab: boolean;
@@ -39,11 +40,10 @@ const AssignmentsContainer: React.FC<Props> = (props): JSX.Element => {
   const inputRef = useRef<any>();
   const { enrollments, updateEnrollmentWithIdApprovalStatus } =
     useCommonStudentDashboardStore((state) => state);
-  let scheduleInterval: any = null;
-  let expiryInterval: any = null;
   const handleSelectAssignment = (assignment: any): void => {
     setSelectedAssignment(assignment);
   };
+  const {getBillingDetails} = useBillingStore((state) => state);
   const approvalWarningMsg: string =
     "You have uploaded Photo or ID which is not yet approved by your Instructor. Please contact your instructor. Thanks.";
 
@@ -102,6 +102,7 @@ const AssignmentsContainer: React.FC<Props> = (props): JSX.Element => {
         inputRef.current.focus();
       }
     });
+    getBillingDetails()
   }, []);
 
   if (assignments) {
