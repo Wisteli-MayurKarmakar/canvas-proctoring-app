@@ -5,6 +5,7 @@ import { devtools } from "zustand/middleware";
 import { getLtiCanvasConfigByAssignment, getScheduling } from "../apiConfigs";
 import { QuizConfiguration } from "../AppTypes";
 import { useAppStore } from "./AppSotre";
+import { useQuizStore } from "./QuizStore";
 import { useStudentWorflowControllerStore } from "./StudentWorkflowControllerStore";
 
 type Assignment = {
@@ -89,6 +90,7 @@ type Schedule = {
 type AssignmentStore = {
   assignments?: Assignment[];
   selectedAssignment?: Assignment;
+  instructorSchedulesAvailable: boolean;
   showAuth: boolean;
   disableAuth: boolean;
   selectedAssignmentConfigurations?: QuizConfiguration;
@@ -211,6 +213,53 @@ const getAssignmentSchedule = async (isProctoredAssignment: boolean) => {
   }
 };
 
+const checkInstructorSchedules = async () => {
+  let payload = {
+    scheduleId: "",
+    instituteId: useAppStore.getState().tokenData.instituteId,
+    assignmentId: parseInt(useAppStore.getState().urlParamsData.assignmentId as string),
+    quizId:
+      useAssignmentStore.getState().selectedAssignmentConfigurations?.quizId,
+    studentId: useAppStore.getState().userAccessDetails?.instructorId,
+    courseId: useAppStore.getState().urlParamsData.courseId,
+    scheduleDate: "",
+    status: "0",
+    guid: useAppStore.getState().urlParamsData.guid,
+  };
+
+  try {
+    let response: any = await axios.post(
+      `${getScheduling}`,
+      {
+        ...payload,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${
+            useAppStore.getState().tokenData.lmsAccessToken
+          }`,
+        },
+      }
+    );
+
+    if (response.status === 200) {
+      useAssignmentStore.setState({
+        instructorSchedulesAvailable: true,
+      });
+      useQuizStore.setState({
+        isConfigAvailable: true
+      })
+    }
+  } catch (err) {
+    useAssignmentStore.setState({
+      instructorSchedulesAvailable: false,
+    });
+    useQuizStore.setState({
+      isConfigAvailable: false
+    })
+  }
+};
+
 const checkIfProctored = async (assignmentConfig: AssignmentConfiguration) => {
   let resProctoring: boolean = false;
 
@@ -222,6 +271,7 @@ const checkIfProctored = async (assignmentConfig: AssignmentConfiguration) => {
     resProctoring = true;
   }
   useAssignmentStore.setState({ isProctoredAssignment: resProctoring });
+  await checkInstructorSchedules();
   await getAssignmentSchedule(resProctoring);
 };
 
@@ -230,6 +280,7 @@ export const useAssignmentStore = create<AssignmentStore>()(
     (set, get) => ({
       // isProctoredAssignment: false,
       showAuth: false,
+      instructorSchedulesAvailable: false,
       disableAuth: true,
       schedulesAvailable: false,
       assignmentSubmitted: false,
@@ -334,8 +385,8 @@ export const useCommonStudentDashboardStore =
         },
         updateEnrollmentWithIdApprovalStatus: (data: StudentEnrollments) => {
           set({
-            enrollments: data
-          })
+            enrollments: data,
+          });
         },
       }),
       { name: "Common Student_Dashboard_Store" }

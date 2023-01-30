@@ -27,10 +27,16 @@ const getSelectedQuizConfig = async (
       );
       if (response.status === 200) {
         res = response.data as QuizConfiguration;
+        useQuizStore.setState({
+          isConfigAvailable: true
+        })
       }
     }
   } catch (e) {
     res = null;
+    useQuizStore.setState({
+      isConfigAvailable: false
+    })
   }
 
   return res;
@@ -42,45 +48,13 @@ const updateQuizConfiguratio = async (quizConfig: QuizConfiguration) => {
   } catch (err) {}
 };
 
-const setQuizConfiguration = (
-  quizConfig: QuizConfigurationWithOnlyProcOpt,
-  updatedConfig: QuizConfigurationWithOnlyProcOpt
-): QuizConfigurationWithOnlyProcOpt => {
-  let config: QuizConfigurationWithOnlyProcOpt = { ...quizConfig };
-
-  Object.keys(updatedConfig).forEach((key: string) => {
-    if (!config[key as keyof QuizConfigurationWithOnlyProcOpt]) {
-      config[key as keyof QuizConfigurationWithOnlyProcOpt] =
-        updatedConfig[key as keyof QuizConfigurationWithOnlyProcOpt];
-    }
-  });
-
-  return config;
-};
-
-const subtractQuizConfiguration = (
-  quizConfig: QuizConfigurationWithOnlyProcOpt,
-  updatedConfig: QuizConfigurationWithOnlyProcOpt
-): QuizConfigurationWithOnlyProcOpt => {
-  let config: QuizConfigurationWithOnlyProcOpt = { ...quizConfig };
-
-  Object.keys(updatedConfig).forEach((key: string) => {
-    if (
-      config[key as keyof QuizConfigurationWithOnlyProcOpt] &&
-      updatedConfig[key as keyof QuizConfigurationWithOnlyProcOpt]
-    ) {
-      config[key as keyof QuizConfigurationWithOnlyProcOpt] = false;
-    }
-  });
-
-  return config;
-};
-
 export const useQuizStore = create<QuizStore>()(
   devtools(
     (set, get) => ({
       allQuizzes: [] as Quiz[],
       selectedQuiz: undefined,
+      isConfigAvailable: false,
+      isAutomatingQuizSetup: false,
       defaultOptionSelected: undefined,
       reportReview: false,
       liveLaunch: false,
@@ -191,6 +165,7 @@ export const useQuizStore = create<QuizStore>()(
           liveLaunch: false,
           liveProctoring: false,
           lockdownBrowser: false,
+          isConfigAvailable: false,
         });
 
         let configAvailable: boolean = false;
@@ -615,7 +590,7 @@ export const useQuizStore = create<QuizStore>()(
           } else {
             config.postExamReview = true;
             config.lockdownBrowser = false;
-            lockdownBrowser = false
+            lockdownBrowser = false;
           }
         }
 
@@ -626,7 +601,7 @@ export const useQuizStore = create<QuizStore>()(
           } else {
             config.examdLiveLaunch = true;
             config.lockdownBrowser = false;
-            lockdownBrowser = false
+            lockdownBrowser = false;
             if (config.instructorProctored) {
               config.instructorProctored = false;
             }

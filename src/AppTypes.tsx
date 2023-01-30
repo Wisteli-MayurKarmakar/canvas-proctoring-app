@@ -139,6 +139,7 @@ type QuizConfiguration = {
   studentPicture: boolean;
   timeLimit: number;
   whitelistPages: boolean;
+  status?: string;
 };
 
 type QuizConfigurationWithOnlyProcOpt = {
@@ -693,9 +694,32 @@ type AccessDetails = {
 
 // Quiz Store
 
+type SampleQuiz = {
+  id: string;
+  title: string;
+  quiz_type: string;
+  shuffle_answers: string;
+  question_count: string;
+  allowed_attempts: string;
+  time_limit: 2;
+  one_question_at_a_time: string;
+  show_correct_answers: string;
+  published: string;
+  all_dates: [
+    {
+      due_at: string;
+      unlock_at: string;
+      lock_at: string;
+    }
+  ];
+};
+
 type QuizStore = {
   allQuizzes: Quiz[];
   selectedQuiz?: Quiz;
+  sampleQuiz?: SampleQuiz[];
+  isConfigAvailable: boolean;
+  isAutomatingQuizSetup: boolean;
   selectedQuizConfig: QuizConfiguration;
   defaultConfiguration: QuizConfigurationWithOnlyProcOpt;
   customizableQuizConfig: QuizConfigurationWithOnlyProcOpt;
@@ -740,6 +764,28 @@ type GeneralInstructions = {
   infoMsg: string[];
 };
 
+type StudentReportAndJourneyDetails = {
+  createUser: string;
+  createDate: string;
+  modifyUser: string;
+  modifyDate: string;
+  idLtiVideoRef: string;
+  idUser: string;
+  idReference: string;
+  idExam: string;
+  courseId: string;
+  examDate: string;
+  examActualStartTime: string;
+  examActualEndTime: string;
+  passFail: string;
+  status: string;
+  guid: string;
+  scheduleDate: string;
+  key?: string;
+  violationCount: number;
+  comments: string;
+};
+
 export type {
   AllDates,
   Quiz,
@@ -750,6 +796,7 @@ export type {
   NotificationType,
   PaymentsTableColumns,
   AccessDetails,
+  StudentReportAndJourneyDetails,
   IconMap,
   FullNameMap,
   PaymentRecords,

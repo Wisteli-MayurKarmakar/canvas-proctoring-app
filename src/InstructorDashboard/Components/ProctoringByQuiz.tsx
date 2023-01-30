@@ -7,12 +7,14 @@ import LiveSreaming from "../Modals/LiveStreaming";
 import {
   fetchAccountsByCourseAndEnrollemntType,
   getCanvasAssignmentDetails,
+  getLtiCanvasConfigByGuidCourseIdQuizId,
   getLtiScheduleByQuizId,
 } from "../../apiConfigs";
 import { useAppStore } from "../../store/AppSotre";
-import { QuizTypeProctoringByQuiz } from "../../AppTypes";
+import { QuizConfiguration, QuizTypeProctoringByQuiz } from "../../AppTypes";
 import { useSocketStore } from "../../store/SocketStore";
 import NoQuiz from "../../CommonUtilites/NoQuiz";
+import { CheckCircleOutlined, CloseCircleOutlined } from "@ant-design/icons";
 
 type QuizStatus = {
   [key: string]: { ongoing: boolean };
@@ -39,6 +41,8 @@ const ProcotoringByQuiz: React.FC = (): JSX.Element => {
   const { createConnection, messagesIncoming } = useSocketStore(
     (state) => state
   );
+  const [selectedQzConfig, setSelectedQzConfig] =
+    React.useState<QuizConfiguration | null>(null);
 
   const studentCols = [
     {
@@ -69,6 +73,22 @@ const ProcotoringByQuiz: React.FC = (): JSX.Element => {
           return "Getting schedules...";
         }
         return "Please select a quiz";
+      },
+    },
+    {
+      dataIndex: "",
+      key: "examdProctored",
+      title: `By Examd`,
+      render: (row: any) => {
+        if (!selectedQzConfig) {
+          return <p className="text-center font-semibold">N/ A</p>;
+        }
+        if (selectedQzConfig.examdProctored) {
+          return (
+            <CheckCircleOutlined style={{ color: "green", fontSize: 20 }} />
+          );
+        }
+        return <CloseCircleOutlined style={{ color: "red", fontSize: 20 }} />;
       },
     },
     {
@@ -191,7 +211,7 @@ const ProcotoringByQuiz: React.FC = (): JSX.Element => {
         let offsetTime: string = Math.abs(moment().utcOffset()).toString();
         let schedule = {
           ...response.data,
-          scheduleDate: response.data.scheduleDate + `.${offsetTime}Z`,
+          scheduleDate: response.data[0].scheduleDate + `.${offsetTime}Z`,
         };
         setSelectedQuizSchedules(schedule);
       })
@@ -199,6 +219,26 @@ const ProcotoringByQuiz: React.FC = (): JSX.Element => {
         setSelectedQuizSchedules(false);
         console.log(error);
       });
+  };
+
+  const getQuizConfiguration = async (quiz: any) => {
+    console.log("quiz", quiz);
+    const guid: string = useAppStore.getState().urlParamsData.guid as any;
+    const courseId: string = useAppStore.getState().urlParamsData
+      .courseId as any;
+
+    try {
+      if (guid && courseId) {
+        let response = await axios.get(
+          `${getLtiCanvasConfigByGuidCourseIdQuizId}?guid=${guid}&courseId=${courseId}&quizId=${quiz.quizId}`
+        );
+        if (response.status === 200) {
+          setSelectedQzConfig(response.data);
+        }
+      }
+    } catch (e) {
+      setSelectedQzConfig(null);
+    }
   };
 
   const handleQuizClick = (quizz: any) => {
@@ -213,6 +253,7 @@ const ProcotoringByQuiz: React.FC = (): JSX.Element => {
         assignmentId: quizz.assignment_id,
       });
       setSelectedQuizSchedules(null);
+      getQuizConfiguration(quizz);
       getQuizSchedules(quizz.quizId, quizz.id);
       temp[quizz.id.toString()] = true;
       setQzSelectTrack(temp);
@@ -334,50 +375,6 @@ const ProcotoringByQuiz: React.FC = (): JSX.Element => {
             bordered={true}
           />
         )}
-        {/* {enrollments ? (
-          enrollments.map((enrollment: any, index: number) => {
-            return (
-              <div
-                className="box-border border rounded shadow-lg w-40 h-40 bg-gray-100 text-black"
-                key={index}
-              >
-                <div className="flex flex-col w-full h-full items-center justify-center gap-4 p-2">
-                  <p className="text-lg text-center truncate w-full font-semibold">
-                    {enrollment.name}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => showLiveStreamModal(enrollment)}
-                    className={`inline-block px-6 py-2.5 font-medium text-xs 
-                    leading-tight rounded-full ${
-                      selectedStudent && selectedStudent.id === enrollment.id
-                        ? "bg-blue-400 text-white"
-                        : "bg-gray-300 text-black border border-blue-400  hover:bg-blue-400 hover:text-white transition duration-150 ease-in-out"
-                    } 
-                      `}
-                  >
-                    Live Stream
-                  </button>
-                  {selectedQuiz && selectedQuizSchedules ? (
-                    <p className="text-center font-semibold">
-                      {moment(selectedQuizSchedules.scheduleDate).format(
-                        "MM-DD-YYYY hh:mm a"
-                      )}
-                    </p>
-                  ) : (
-                    selectedQuiz && (
-                      <p className="text-center font-semibold">Not scheduled</p>
-                    )
-                  )}
-                </div>
-              </div>
-            );
-          })
-        ) : (
-          <p className="text-center font-semibold">
-            Fetching students. Please wait...
-          </p>
-        )} */}
       </div>
 
       {showLiveStream && selectedStudent && selectedQuiz && (

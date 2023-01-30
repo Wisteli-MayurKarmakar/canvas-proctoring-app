@@ -9,7 +9,6 @@ import Student from "./InstructorDashboard/Tabs/Student/Students";
 import Admin from "./InstructorDashboard/Tabs/Admin";
 import { useAppStore } from "./store/AppSotre";
 import DummyPage from "./dummyPage";
-import HelpAndSupport from "./InstructorDashboard/Components/HelpAndSupport";
 
 interface Props {
   auth: any;
@@ -70,9 +69,6 @@ const InstructorMenu: React.FunctionComponent<Props> = (props): JSX.Element => {
           {isAdmin && <TabPane tab="Admin" key="6">
             <Admin />
           </TabPane>}
-          <TabPane tab="Help & Support" key="7">
-            <HelpAndSupport />
-          </TabPane>
         </Tabs>
       </div>
     );

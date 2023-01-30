@@ -47,7 +47,7 @@ const fetchAccountsByCourseAndEnrollemntType: string = `${baseApiUrl}/fetchAccou
 const fetchCanvasEnrollmentsByInstituteForThreeHours: string = `${baseApiUrl}/fetchCanvasEnrollmentsByInstituteForThreeHours`;
 const fetchCanvasEnrollmentsByInstituteForTwentyFourHours: string = `${baseApiUrl}/fetchCanvasEnrollmentsByInstituteForTwentyFourHours`;
 const fetchCanvasEnrollmentsByInstituteForSevenDays: string = `${baseApiUrl}/fetchCanvasEnrollmentsByInstituteForSevenDays`;
-const getGetCanvasQuizDetails: string = `${baseApiUrl}/getGetCanvasQuizDetails`;
+const getCanvasQuizDetails: string = `${baseApiUrl}/getCanvasQuizDetails`;
 const saveLtiAccessibility: string = `${baseApiUrl}/saveLtiAccessibility`;
 const getLtiAccessibility: string = `${baseApiUrl}/getLtiAccessibility`;
 const saveLtiAccessibilityApproval: string = `${baseApiUrl}/saveLtiAccessibilityApproval`;
@@ -67,6 +67,8 @@ const saveLtiConsumptions: string = `${baseApiUrl}/saveLtiConsumptions`;
 const getLtiConsumptions: string = `${baseApiUrl}/getLtiConsumptions`;
 const recoverQuiz: string = `${baseApiUrl}/recoverQuiz`;
 const updateLtiAccessRecord: string = `${baseApiUrl}/lti-access`;
+const createSampleQuiz: string = `${baseApiUrl}/createQuiz`
+const deleteQuizConfig: string = `${baseApiUrl}/deleteQuiz`
 // const getLtiAccessByGuid: string = `http://canvaslmsdev.eba-9ambmmcn.us-east-1.elasticbeanstalk.com/canvaslms/api/v1/lti-access-guid`
 // const ltiEmailNotificationTypes: string =
 //   "http://canvaslmsdev.eba-9ambmmcn.us-east-1.elasticbeanstalk.com/canvaslms/api/v1/lti-email-notification-types";
@@ -81,9 +83,17 @@ const ltiEmailNotificationTypes: string = `${baseApiUrl}/lti-email-notification-
 const ltiDefaultEmailTemplate: string = `${baseApiUrl}/lti-default-email-template`;
 const ltiTestEmail: string = `${baseApiUrl}/lti-test-email`;
 const createLtiEmailTopic: string = `${baseApiUrl}/lti-email-topic`;
+const createQuiz: string =`${baseApiUrl}/createQuiz`
+const addSampleQuestion: string = `${baseApiUrl}/createOneQuestion`
+const getLtiCanvasVideoCombRef: string = `${baseApiUrl}/getLtiCanvasVideoCombRef`
 
 export {
   getEndPoints,
+  createSampleQuiz,
+  getLtiCanvasVideoCombRef,
+  deleteQuizConfig,
+  addSampleQuestion,
+  createQuiz,
   fetchAccountsByCourseAndEnrollemntType,
   saveScheduling,
   updateLtiAccessRecord,
@@ -103,7 +113,7 @@ export {
   saveLtiStudentJourney,
   ltiEmailNotificationTypes,
   createLtiEmailTopic,
-  getGetCanvasQuizDetails,
+  getCanvasQuizDetails,
   saveLtiAccessibility,
   getLtiCanvasConfigByGuidCourseId,
   ltiTestEmail,

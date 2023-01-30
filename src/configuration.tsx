@@ -1,4 +1,4 @@
-import React, { SyntheticEvent, useEffect, useRef, useState } from "react";
+import React, { SyntheticEvent, useEffect, useState } from "react";
 import {
   AudioOutlined,
   CalculatorOutlined,
@@ -24,7 +24,7 @@ import {
   UserOutlined,
   VideoCameraOutlined,
 } from "@ant-design/icons";
-
+import App from "./CommonUtilites/DateTimePicker";
 import ExamdLogo from "./ExamdLogo.png";
 import axios from "axios";
 import {
@@ -39,12 +39,15 @@ import {
   saveLtiCanvasConfig,
   fetchCanvasQuizzesByCourseId,
   recoverQuiz,
+  deleteQuizConfig,
+  createSampleQuiz,
 } from "./apiConfigs";
-import { message, Tooltip } from "antd";
+import { Dropdown, Menu, message, Space, Tooltip } from "antd";
 import CustomizationSummary from "./CommonUtilites/CustomizationSummary";
 import { useQuizStore } from "./store/QuizStore";
 import WaitingModal from "./CommonUtilites/WaitingModal";
 import { useAppStore } from "./store/AppSotre";
+import HelpAndSupport from "./InstructorDashboard/Components/HelpAndSupport";
 import {
   ConfigurationOptionsWithStatus,
   ConfigurationWithStatus,
@@ -56,8 +59,9 @@ import {
   QuizConfiguration,
 } from "./AppTypes";
 import NoQuiz from "./CommonUtilites/NoQuiz";
-import InfoModal from "./infoModal";
 import AlertModal from "./CommonUtilites/Modals/AlertModal";
+import moment from "moment";
+import { addSampleQuestions } from "./CommonUtilites/HelperFunctions";
 
 interface Props {
   auth: Object | any;
@@ -76,6 +80,10 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
   const [showWaitingModal, setShowWaitingModal] = useState<boolean>(false);
   const [showConfigurations, setShowConfigurations] = useState<boolean>(false);
   const [configSaveStatus, setConfigSaveStatus] = useState<boolean>(false);
+  const [isCreatingQuiz, setIsCreatingQuiz] = useState<boolean>(false);
+  const [isDeletingConfig, setIsDeletingConfig] = useState<boolean>(false);
+  const [scheduleQuiz, setScheduleQuiz] = useState<boolean>(false);
+  const [showHelp, setShowHelp] = useState<boolean>(false);
   const [showQuickOptionAlter, setShowQuickOptionAlter] =
     useState<boolean>(false);
   const [alertMsg, setAlertMsg] = useState<string>("");
@@ -86,6 +94,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
   const { tokenData, courseDetails, urlParamsData, isNotAllowed } = useAppStore(
     (state) => state
   );
+
   const {
     customizableQuizConfig,
     isLockdown,
@@ -105,6 +114,8 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
     selectedQuizConfig,
     configAvailable,
     setAllQuizzes,
+    isAutomatingQuizSetup,
+    isConfigAvailable,
   } = useQuizStore((state) => state);
 
   const fullNameMap: FullNameMap = {
@@ -216,12 +227,30 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
 
   const [recoveringQuiz, setRecoveringQuiz] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [newQuiz, setNewQuiz] = useState<any>();
   const quizStoreState = useQuizStore((state) => state);
+  const sampleQzCreateMsg: JSX.Element = (
+    <p className="text-center font-semibold text-lg">
+      Sample quiz creation is in progress. Please wait...
+    </p>
+  );
   const quizRecoveryMsg: JSX.Element = (
     <p className="text-center font-semibold text-lg">
       Recovering Quiz. Please wait...
     </p>
   );
+  const createSampleQuizMsg: JSX.Element = (
+    <p className="text-center font-semibold text-lg">
+      Creating a sample quiz. Please wait...
+    </p>
+  );
+
+  const deleteQuizConfigMsg: JSX.Element = selectedQuiz && (
+    <p className="text-center font-semibold text-lg">
+      Deleting {selectedQuiz["title"]} configuration. Please wait...
+    </p>
+  );
+
   const waitingModalMessage: JSX.Element = (
     <div className="flex flex-row h-full w-full items-center justify-center gap-2">
       <p className="mx-atuo text-xl text-center font-bold">
@@ -247,21 +276,6 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
       </div>
     </div>
   );
-
-  // const setDefaultCheckedStatus = () => {
-  //   let checks: checkTypes = {};
-  //   for (let key in settingOptions) {
-  //     let subOptions: subOptionsProto = {};
-  //     for (let subKey in settingOptions[key]) {
-  //       subOptions[subKey] = false;
-  //     }
-  //     let obj: objProto = {
-  //       [key]: subOptions,
-  //     };
-  //     Object.assign(checks, obj);
-  //   }
-  //   setChecked(checks);
-  // };
 
   function uuid() {
     return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
@@ -406,6 +420,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
     config.studentPicture = customizableQuizConfig.studentPicture;
     config.whitelistPages = customizableQuizConfig.whitelistPages;
     config.instructorProctored = customizableQuizConfig.instructorProctored;
+    config.status = "0";
 
     if (configAvailable) {
       config.assignmentId = selectedQuizConfig.assignmentId;
@@ -488,6 +503,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
   const handleSelectQuiz = (quiz: any) => {
     quizStoreState.setSelectedQuiz(quiz);
     setSelectedQuiz(quiz);
+    setNewQuiz(quiz);
     setShowConfigurations(false);
     let quizStat: any = { ...quizzesStat };
 
@@ -598,7 +614,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
         customizableQuizConfig.studentPicture)
     ) {
       setAlertMsg(
-        "If you select Manual Verification & Examd Live Launch, the AI option will be off."
+        "If you select Manual Verification, Examd Live Launch and the AI option will be off."
       );
       setShowQuickOptionAlter(true);
     }
@@ -623,6 +639,91 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
 
     handleConfigOptionChange(category, key);
   };
+
+  const handleDeleteQuizConfig = async () => {
+    setIsDeletingConfig(true);
+    try {
+      let response = await axios.post(
+        `${deleteQuizConfig}/${tokenData.instituteId}/${urlParamsData.guid}/${selectedQuiz.id}/${tokenData.lmsAccessToken}`
+      );
+      if (response.status === 200) {
+        setIsDeletingConfig(false);
+      } else {
+        setIsDeletingConfig(false);
+      }
+    } catch (e) {
+      setIsDeletingConfig(false);
+    }
+  };
+
+  const handleCreateSampleQuiz = async () => {
+    setIsCreatingQuiz(true);
+    try {
+      let payload = {
+        quizId: "",
+        quizName: `Test Proctoring`,
+        description: "",
+        quizType: "practice_quiz",
+        shuffleAnswers: "false",
+        questionCount: "2",
+        allowedAttempts: "true",
+        timeLimit: 2,
+        quizDates: [
+          {
+            dueAt: moment().toISOString(),
+            unlockAt: moment().toISOString(),
+            lockAt: moment().add(1, "years").toISOString(),
+          },
+        ],
+        oneQuestionAtATime: "true",
+        showCorrectAnswers: "false",
+        published: "true",
+      };
+      let response = await axios.post(
+        `${createSampleQuiz}/${tokenData.instituteId}/${urlParamsData.courseId}/${tokenData.lmsAccessToken}`,
+        payload
+      );
+      if (response.status === 200) {
+        setNewQuiz(response.data[0]);
+        let responseAddQuest = await addSampleQuestions(
+          response.data[response.data.length - 1].id,
+          response.data[response.data.length - 1].title,
+          tokenData.instituteId as string,
+          urlParamsData.courseId as string,
+          tokenData.lmsAccessToken as string,
+          urlParamsData.guid as string,
+          urlParamsData.userId as string
+        );
+        setIsCreatingQuiz(false);
+      } else {
+        setIsCreatingQuiz(false);
+      }
+    } catch (e) {
+      message.error("Error creating sample quiz. Please try again.");
+      setIsCreatingQuiz(false);
+    }
+  };
+
+  const otherActions = (
+    <Menu>
+      <Menu.Item key={0} onClick={handleRepairModule} disabled={!selectedQuiz}>
+        Repair Proctoring Module
+      </Menu.Item>
+      <Menu.Item
+        key={1}
+        onClick={handleDeleteQuizConfig}
+        disabled={!selectedQuiz}
+      >
+        Delete Customization
+      </Menu.Item>
+      <Menu.Item key={2} onClick={handleCreateSampleQuiz}>
+        Create Sample Quiz
+      </Menu.Item>
+      <Menu.Item key={3} onClick={() => setShowHelp(!showHelp)}>
+        Test Owner / Instructors Guide
+      </Menu.Item>
+    </Menu>
+  );
 
   return (
     <>
@@ -786,69 +887,37 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
                 <InfoCircleFilled style={{ color: "rgb(96 165 250)" }} />
               </Tooltip>
             </div>
-            <div className="flex flex-row h-full items-center gap-2">
-              <p
-                className="text-center text-blue-400 font-semibold cursor-pointer underline text-lg mt-4 mb-4 cursor-not-allowed"
-                onClick={(e: SyntheticEvent) => e.preventDefault()}
-              >
-                Delete Customization
-              </p>
-              <Tooltip
-                placement="top"
-                title={infoMsgs["deleteCustomization"]}
-                className="pt-1"
-              >
-                <InfoCircleFilled style={{ color: "rgb(96 165 250)" }} />
-              </Tooltip>
-            </div>
-            <div className="flex flex-row h-full items-center gap-2">
-              <p
-                className="text-center text-blue-400 font-semibold cursor-pointer underline text-lg mt-4 mb-4 cursor-not-allowed"
-                onClick={(e: SyntheticEvent) => e.preventDefault()}
-              >
-                Create Sample Quiz
-              </p>
-              <Tooltip
-                placement="top"
-                title={infoMsgs["createSampleQuiz"]}
-                className="pt-1"
-              >
-                <InfoCircleFilled style={{ color: "rgb(96 165 250)" }} />
-              </Tooltip>
-            </div>
-            {!showConfigurations && (
-              <div className="flex flex-row h-full items-center gap-2">
-                <p
-                  className="text-center text-blue-400 font-semibold cursor-pointer underline text-lg mt-4 mb-4"
-                  onClick={handleRepairModule}
-                >
-                  Repair Proctoring Module
-                </p>
-                <Tooltip
-                  placement="top"
-                  title={infoMsgs["repairModuleInfo"]}
-                  className="pt-1"
-                >
-                  <InfoCircleFilled style={{ color: "rgb(96 165 250)" }} />
-                </Tooltip>
-              </div>
-            )}
-            {selectedQuiz && (
+            {selectedQuiz && isConfigAvailable && (
               <button
-                disabled={true}
                 type="button"
-                className="inline-block px-6 py-2.5 bg-gray-300 text-white 
-              font-medium text-xs leading-tight rounded shadow-md cursor-not-allowed
+                onClick={() => setScheduleQuiz(true)}
+                className="inline-block px-6 py-2.5 bg-blue-500 text-white 
+              font-medium text-xs leading-tight rounded shadow-md
                transition duration-150 ease-in-out"
               >
                 Schedule
               </button>
             )}
+            <Dropdown overlay={otherActions}>
+              <a onClick={(e: SyntheticEvent) => e.preventDefault()}>
+                <Space>
+                  <p className="text-blue-500">Other Actions</p>
+                  {/* <DownOutlined /> */}
+                </Space>
+              </a>
+            </Dropdown>
           </div>
         ) : (
-          <p className="text-lg font-semibold text-center mt-8">
-            Please select a quiz.
-          </p>
+          <div className="flex flex-row h-full w-full items-center justify-center gap-16 mt-4">
+            <p className="text-lg font-semibold text-center">
+              Please select a quiz.
+            </p>
+            <Dropdown overlay={otherActions}>
+              <a onClick={(e: SyntheticEvent) => e.preventDefault()}>
+                <Space>Other Actions</Space>
+              </a>
+            </Dropdown>
+          </div>
         )}
         {showConfigurations && selectedQuiz && (
           <div className="container mx-auto mt-2">
@@ -946,12 +1015,6 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
                     )}
                   </div>
                 )}
-                {/* {applySettings && (
-                <InfoModal
-                  title="User settings"
-                  message="Fetching user settings. Please wait."
-                />
-              )} */}
               </div>
             ) : (
               <div className="my-4">
@@ -990,6 +1053,13 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
             close={() => setShowQuickOptionAlter(false)}
           />
         )}
+        {isCreatingQuiz && (
+          <WaitingModal
+            visible={isCreatingQuiz}
+            title="Creating sample quiz"
+            message={sampleQzCreateMsg}
+          />
+        )}
         {recoverQuiz && (
           <WaitingModal
             visible={recoveringQuiz}
@@ -997,12 +1067,44 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
             message={quizRecoveryMsg}
           />
         )}
-        {showConfigSummary && !isNotAllowed && <CustomizationSummary />}
-        {showWaitingModal && (
+        {showConfigSummary && !isNotAllowed && (
+          <CustomizationSummary handleSave={handleSubmit} />
+        )}
+        {isCreatingQuiz && (
+          <WaitingModal
+            visible={isCreatingQuiz}
+            title="Creating Sample Quiz"
+            message={createSampleQuizMsg}
+          />
+        )}
+        {isDeletingConfig && (
+          <WaitingModal
+            visible={isDeletingConfig}
+            title="Deleting Configuration"
+            message={deleteQuizConfigMsg}
+          />
+        )}
+        {showHelp && (
+          <HelpAndSupport
+            visible={showHelp}
+            close={() => setShowHelp(!showHelp)}
+          />
+        )}
+        {(showWaitingModal || isAutomatingQuizSetup) && (
           <WaitingModal
             visible={showWaitingModal}
             title="Setting up quiz"
             message={waitingModalMessage}
+          />
+        )}
+        {scheduleQuiz && newQuiz && (
+          <App
+            visible={scheduleQuiz}
+            close={() => setScheduleQuiz(false)}
+            assignment={""}
+            assignmentConfig={""}
+            assignmentId={selectedQuizConfig.assignmentId}
+            quizId={newQuiz.id}
           />
         )}
       </div>

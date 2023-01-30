@@ -44,6 +44,9 @@ const getBillingDeatilsByGuidInstituteId = async (
   let response = await axios.post(`${getLtiBillingRate}/`, { ...payload });
 
   if (response.status === 200) {
+    if (response.data.length === 0) {
+      return null
+    }
     return response.data as BillingData[];
   }
   return null;

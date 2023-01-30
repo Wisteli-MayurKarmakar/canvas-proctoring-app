@@ -4,17 +4,20 @@ import moment from "moment";
 import { useState } from "react";
 import { useAssignmentStore } from "../store/StudentDashboardStore";
 import { useAppStore } from "..//store/AppSotre";
-import { useCommonStudentDashboardStore } from "../store/StudentDashboardStore";
-import emailjs from "@emailjs/browser";
+// import { useCommonStudentDashboardStore } from "../store/StudentDashboardStore";
+// import emailjs from "@emailjs/browser";
 import axios from "axios";
 import { saveScheduling } from "../apiConfigs";
-import { useStudentWorflowControllerStore } from "../store/StudentWorkflowControllerStore";
+import { useQuizStore } from "../store/QuizStore";
+// import { useStudentWorflowControllerStore } from "../store/StudentWorkflowControllerStore";
 
 type Props = {
   visible: boolean;
   close: () => void;
   assignment: any;
   assignmentConfig: any;
+  assignmentId?: number;
+  quizId?: string;
 };
 
 type SchedulingData = {
@@ -36,9 +39,9 @@ const App: React.FC<Props> = (props): JSX.Element => {
   const [isSavingSchedule, setIsSavingSchedule] = useState<boolean>(false);
   const tokenData = useAppStore((state) => state.tokenData);
   const urlParamsData = useAppStore((state) => state.urlParamsData);
-  const enrollments = useCommonStudentDashboardStore(
-    (state) => state.enrollments
-  );
+  // const enrollments = useCommonStudentDashboardStore(
+  //   (state) => state.enrollments
+  // );
   const selectedAssignment = useAssignmentStore(
     (state) => state.selectedAssignment
   );
@@ -54,36 +57,35 @@ const App: React.FC<Props> = (props): JSX.Element => {
   const onDateChange = (value: Moment) => {
     setDate(value);
   };
-  const { initWorkflow } = useStudentWorflowControllerStore((state) => state);
 
-  const sendMail = (date: Moment | null, time: Moment | null) => {
-    let serviceId: string = "service_2su5kx4";
-    let templateId: string = "template_iqbfsp2";
-    let pubKey: string = "qaGgmKlvzp5138RXC";
-    let messageBody: { [key: string]: string } = {
-      subject: `Schedule for ${selectedAssignment?.name} - ${date?.format(
-        "DD/MMM/YYYY"
-      )}/ ${time?.format("hh:mm:ss A")}`,
-      recipent_name: `${enrollments?.user.name}`,
-      message: `Your quiz ${
-        selectedAssignment?.name
-      } has been scheduled. Below are the scheduling details.<br>
-      Date - ${date?.format("DD/MMM/YYYY")}<br>
-      Time - ${time?.format("hh:mm:ss A")}
-      `,
-      send_to: `${enrollments?.user.login_id}`,
-      reply_to: "devshantanu@gmail.com",
-    };
-    emailjs
-      .send(serviceId, templateId, messageBody, pubKey)
-      .then((response: any) => {
-        message.success("Quiz has been scheduled successfully");
-        setIsSavingSchedule(false);
-      })
-      .catch((error: any) => {
-        message.error("Failed to schedule the quiz");
-      });
-  };
+  // const sendMail = (date: Moment | null, time: Moment | null) => {
+  //   let serviceId: string = "service_2su5kx4";
+  //   let templateId: string = "template_iqbfsp2";
+  //   let pubKey: string = "qaGgmKlvzp5138RXC";
+  //   let messageBody: { [key: string]: string } = {
+  //     subject: `Schedule for ${selectedAssignment?.name} - ${date?.format(
+  //       "DD/MMM/YYYY"
+  //     )}/ ${time?.format("hh:mm:ss A")}`,
+  //     recipent_name: `${enrollments?.user.name}`,
+  //     message: `Your quiz ${
+  //       selectedAssignment?.name
+  //     } has been scheduled. Below are the scheduling details.<br>
+  //     Date - ${date?.format("DD/MMM/YYYY")}<br>
+  //     Time - ${time?.format("hh:mm:ss A")}
+  //     `,
+  //     send_to: `${enrollments?.user.login_id}`,
+  //     reply_to: "devshantanu@gmail.com",
+  //   };
+  //   emailjs
+  //     .send(serviceId, templateId, messageBody, pubKey)
+  //     .then((response: any) => {
+  //       message.success("Quiz has been scheduled successfully");
+  //       setIsSavingSchedule(false);
+  //     })
+  //     .catch((error: any) => {
+  //       message.error("Failed to schedule the quiz");
+  //     });
+  // };
 
   const saveSchedule = async (date: Moment, time: Moment) => {
     setIsSavingSchedule(true);
@@ -96,8 +98,12 @@ const App: React.FC<Props> = (props): JSX.Element => {
     let data: SchedulingData = {
       scheduleId: "",
       instituteId: tokenData.instituteId as any,
-      assignmentId: selectedAssignment?.id as any,
-      quizId: selectedAssignmentConfigurations?.quizId as any,
+      assignmentId: selectedAssignment
+        ? (selectedAssignment?.id as any)
+        : props.assignmentId,
+      quizId: selectedAssignmentConfigurations
+        ? (selectedAssignmentConfigurations?.quizId as any)
+        : props.quizId,
       studentId: urlParamsData.studentId as any,
       courseId: urlParamsData.courseId as any,
       scheduleDate: scheduleDate.toISOString(),
@@ -117,10 +123,16 @@ const App: React.FC<Props> = (props): JSX.Element => {
 
     if (response.status !== 200 && response.status !== 201) {
       message.error("Failed to save the schedule. Please try again");
+      useQuizStore.setState({
+        isConfigAvailable: false
+      })
       return;
     }
+    useQuizStore.setState({
+      isConfigAvailable: true
+    })
     checkAssignmentSchedules();
-    sendMail(date, time);
+    // sendMail(date, time);
     close();
   };
 
@@ -145,7 +157,7 @@ const App: React.FC<Props> = (props): JSX.Element => {
           onClick={handleClose}
           loading={isSavingSchedule}
         >
-          {!isSavingSchedule ? "Ok" : "Saving"}
+          {!isSavingSchedule ? "Save" : "Saving"}
         </Button>,
       ]}
     >

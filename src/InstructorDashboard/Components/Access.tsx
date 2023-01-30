@@ -8,6 +8,7 @@ import { useAppStore } from "../../store/AppSotre";
 import moment from "moment";
 import WaitingModal from "../../CommonUtilites/WaitingModal";
 import ConfirmModal from "../../CommonUtilites/Modals/ConfirmModal";
+import AddInstructor from "../Modals/AddInstructor";
 
 const Access: React.FC = (): JSX.Element => {
   const [admins, setAdmins] = useState<AccessDetails[]>([]);
@@ -15,6 +16,8 @@ const Access: React.FC = (): JSX.Element => {
   const { urlParamsData, accessRecords } = useAppStore((state) => state);
   const [isUpdating, setIsUpdating] = useState<boolean>(false);
   const [showUpdateInfo, setShowUpdateInfo] = useState<boolean>(false);
+  const [showAddProctorModel, setShowAddProctorModel] =
+    useState<boolean>(false);
 
   const waitMsg: JSX.Element = (
     <p className="text-center font-xl font-semibold">
@@ -61,6 +64,12 @@ const Access: React.FC = (): JSX.Element => {
         if (item.idAccess === id) {
           if (option === "aiQuiz") {
             item.aiQuiz = item.aiQuiz === "Y" ? "N" : "Y";
+            if (item.aiQuiz === "N") {
+              item.aiWithReport = "N";
+              item.liveLaunch = "N";
+              item.liveProctor = "N";
+              item.lockdownBrowser = "N";
+            }
           }
           if (option === "liveLaunch") {
             item.liveLaunch = item.liveLaunch === "Y" ? "N" : "Y";
@@ -176,7 +185,7 @@ const Access: React.FC = (): JSX.Element => {
             className="form-check-input appearance-none h-4 w-4 border border-gray-300 rounded-sm bg-white checked:bg-blue-600 checked:border-blue-600 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer"
             type="checkbox"
             id={`${row.idAccess}_aiWithReport`}
-            disabled={row.aiQuiz === "Y" ? false: true}
+            disabled={row.aiQuiz === "Y" ? false : true}
             defaultChecked={row.aiWithReport === "Y" ? true : false}
             onChange={() => handleOptionClick(row.idAccess, "aiWithReport")}
           ></input>
@@ -192,7 +201,7 @@ const Access: React.FC = (): JSX.Element => {
           <input
             className="form-check-input appearance-none h-4 w-4 border border-gray-300 rounded-sm bg-white checked:bg-blue-600 checked:border-blue-600 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer"
             type="checkbox"
-            disabled={row.aiQuiz === "Y" ? false: true}
+            disabled={row.aiQuiz === "Y" ? false : true}
             id={`${row.idAccess}liveLaunch`}
             defaultChecked={row.liveLaunch === "Y" ? true : false}
             onChange={() => handleOptionClick(row.idAccess, "liveLaunch")}
@@ -209,7 +218,7 @@ const Access: React.FC = (): JSX.Element => {
           <input
             className="form-check-input appearance-none h-4 w-4 border border-gray-300 rounded-sm bg-white checked:bg-blue-600 checked:border-blue-600 focus:outline-none transition duration-200 mt-1 align-top bg-no-repeat bg-center bg-contain float-left mr-2 cursor-pointer"
             type="checkbox"
-            disabled={row.aiQuiz === "Y" ? false: true}
+            disabled={row.aiQuiz === "Y" ? false : true}
             id={`${row.idAccess}_ai`}
             defaultChecked={row.liveProctor === "Y" ? true : false}
             onChange={() => handleOptionClick(row.idAccess, "liveProctor")}
@@ -249,7 +258,10 @@ const Access: React.FC = (): JSX.Element => {
           item.status = "Not Active";
         }
 
-        if (item.accessType === "INSTR") {
+        if (
+          item.accessType === "INSTR" ||
+          item.accessType === "TeacherEnrollment"
+        ) {
           let timezoneOffset: string = `.${Math.abs(moment().utcOffset())}Z`;
           item.createDate = moment(item.createDate + timezoneOffset).format(
             "MM-DD-YYYY hh:mm a"
@@ -285,11 +297,12 @@ const Access: React.FC = (): JSX.Element => {
       <p className="text-center text-lg font-semibold underline mt-8">
         Instructor
       </p>
-      <div className="flex flex-row h-full items-start mt-4">
-        <p className="text-[20px] font-semibold">Email</p>
-        <input
-          type="text"
-          className="
+      <div className="flex flex-row h-full justify-between mt-4">
+        <div className="flex flex-row h-full items-center gap-1">
+          <p className="text-[20px] font-semibold">Email</p>
+          <input
+            type="text"
+            className="
           form-control
           block
           ml-4
@@ -306,30 +319,42 @@ const Access: React.FC = (): JSX.Element => {
           m-0
           focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none
         "
-          id="exampleFormControlInput4"
-          placeholder="Search"
-        />
-        <span
-          className="input-group-text flex items-center px-3 py-1.5 text-base font-normal text-gray-700 text-center whitespace-nowrap rounded"
-          id="basic-addon2"
-        >
-          <svg
-            aria-hidden="true"
-            focusable="false"
-            data-prefix="fas"
-            data-icon="search"
-            className="w-4 cursor-pointer"
-            role="img"
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 512 512"
-            onClick={() => console.log("clicked")}
+            id="exampleFormControlInput4"
+            placeholder="Search"
+          />
+          <span
+            className="input-group-text flex items-center px-3 py-1.5 text-base font-normal text-gray-700 text-center whitespace-nowrap rounded"
+            id="basic-addon2"
           >
-            <path
-              fill="currentColor"
-              d="M505 442.7L405.3 343c-4.5-4.5-10.6-7-17-7H372c27.6-35.3 44-79.7 44-128C416 93.1 322.9 0 208 0S0 93.1 0 208s93.1 208 208 208c48.3 0 92.7-16.4 128-44v16.3c0 6.4 2.5 12.5 7 17l99.7 99.7c9.4 9.4 24.6 9.4 33.9 0l28.3-28.3c9.4-9.4 9.4-24.6.1-34zM208 336c-70.7 0-128-57.2-128-128 0-70.7 57.2-128 128-128 70.7 0 128 57.2 128 128 0 70.7-57.2 128-128 128z"
-            ></path>
-          </svg>
-        </span>
+            <svg
+              aria-hidden="true"
+              focusable="false"
+              data-prefix="fas"
+              data-icon="search"
+              className="w-4 cursor-pointer"
+              role="img"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 512 512"
+              onClick={() => console.log("clicked")}
+            >
+              <path
+                fill="currentColor"
+                d="M505 442.7L405.3 343c-4.5-4.5-10.6-7-17-7H372c27.6-35.3 44-79.7 44-128C416 93.1 322.9 0 208 0S0 93.1 0 208s93.1 208 208 208c48.3 0 92.7-16.4 128-44v16.3c0 6.4 2.5 12.5 7 17l99.7 99.7c9.4 9.4 24.6 9.4 33.9 0l28.3-28.3c9.4-9.4 9.4-24.6.1-34zM208 336c-70.7 0-128-57.2-128-128 0-70.7 57.2-128 128-128 70.7 0 128 57.2 128 128 0 70.7-57.2 128-128 128z"
+              ></path>
+            </svg>
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowAddProctorModel(true)}
+          data-mdb-ripple="true"
+          data-mdb-ripple-color="light"
+          className="inline-block px-6 py-2.5 bg-blue-600
+           text-white font-medium text-xs leading-tight
+            rounded shadow-md"
+        >
+          Add Instructor
+        </button>
       </div>
       <Table
         columns={instructorColumns}
@@ -349,6 +374,12 @@ const Access: React.FC = (): JSX.Element => {
           title={"Update Info"}
           close={() => setShowUpdateInfo(false)}
           message={accessUpdateInfo}
+        />
+      )}
+      {showAddProctorModel && (
+        <AddInstructor
+          visible={showAddProctorModel}
+          close={() => setShowAddProctorModel(false)}
         />
       )}
     </div>

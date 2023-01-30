@@ -32,6 +32,7 @@ const AssignmentsContainer: React.FC<Props> = (props): JSX.Element => {
     setSelectedAssignment,
     selectedAssignment,
     assignmentSubmitted,
+    instructorSchedulesAvailable,
   } = useAssignmentStore((state) => state);
   const { tokenData, urlParamsData } = useAppStore((state) => state);
   let [showDateTimePicker, setShowDateTimePicker] = useState<boolean>(false);
@@ -43,7 +44,7 @@ const AssignmentsContainer: React.FC<Props> = (props): JSX.Element => {
   const handleSelectAssignment = (assignment: any): void => {
     setSelectedAssignment(assignment);
   };
-  const {getBillingDetails} = useBillingStore((state) => state);
+  const { getBillingDetails } = useBillingStore((state) => state);
   const approvalWarningMsg: string =
     "You have uploaded Photo or ID which is not yet approved by your Instructor. Please contact your instructor. Thanks.";
 
@@ -102,7 +103,7 @@ const AssignmentsContainer: React.FC<Props> = (props): JSX.Element => {
         inputRef.current.focus();
       }
     });
-    getBillingDetails()
+    getBillingDetails();
   }, []);
 
   if (assignments) {
@@ -146,7 +147,7 @@ const AssignmentsContainer: React.FC<Props> = (props): JSX.Element => {
           <div className="flex flex-row h-full w-full max-h-80 xl:max-h-92 items-center justify-center self-center mx-auto flex-wrap gap-4  overflow-y-scroll p-2">
             {assignments.length > 0 ? (
               assignments.map((assignment: any, index: number) => {
-                if ("lock_at" in assignment) {
+                if (selectedAssignmentSchedules) {
                   if (moment(assignment.lock_at).isSameOrAfter(moment())) {
                     return (
                       <Tooltip
@@ -202,7 +203,7 @@ const AssignmentsContainer: React.FC<Props> = (props): JSX.Element => {
                   );
                 }
                 return (
-                  <Tooltip key={index} placement="top" title={"Not available"}>
+                  <Tooltip key={index} placement="top" title={"Not scheduled"}>
                     <div className="flex flex-col gap-4" key={index}>
                       <div
                         className={`flex p-6 h-40 w-48 relative rounded-lg text-md shadow-lg border break-before-right
@@ -249,7 +250,8 @@ const AssignmentsContainer: React.FC<Props> = (props): JSX.Element => {
             !urlParamsData.newTab &&
             selectedAssignmentConfigurations &&
             !schedulesAvailable &&
-            !assignmentSubmitted && (
+            !assignmentSubmitted &&
+            !instructorSchedulesAvailable && (
               <div className="flex items-center justify-center">
                 <button
                   type="button"
@@ -266,7 +268,8 @@ const AssignmentsContainer: React.FC<Props> = (props): JSX.Element => {
             !urlParamsData.newTab &&
             selectedAssignmentConfigurations &&
             schedulesAvailable &&
-            !assignmentSubmitted && (
+            !assignmentSubmitted &&
+            !instructorSchedulesAvailable && (
               <div className="flex items-center justify-center">
                 <button
                   type="button"

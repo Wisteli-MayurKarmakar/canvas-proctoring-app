@@ -1,5 +1,5 @@
 import "antd/dist/antd.min.css";
-import { message, Table } from "antd";
+import { message, Row, Table, Tooltip } from "antd";
 import { FunctionComponent, useEffect, useState } from "react";
 import axios from "axios";
 import Report from "../../../../report";
@@ -8,31 +8,35 @@ import {
   getLtiCanvasConfigByGuidCourseIdQuizId,
   viewCanvasProfile,
   getExceptions as getExceptionsUrl,
-  getLtiCVideoRef,
-  fetchAccountsByCourseAndEnrollemntType,
-  getCanvasAssignmentDetails,
-  getLtiScheduleByQuizId,
-  getLtiProctorJourney,
+  // getLtiCVideoRef,
+  // getLtiProctorJourney,
+  getCanvasQuizDetails,
+  getLtiCanvasVideoCombRef,
+  saveLtiVideoRef,
 } from "../../../../apiConfigs";
 import { useAppStore } from "../../../../store/AppSotre";
 import moment from "moment";
 import { useProcotorJourneyStore } from "../../../../store/ProctorJourneyStore";
-import { StudentQuizReport } from "../../../../AppTypes";
+import {
+  // StudentQuizReport,
+  StudentReportAndJourneyDetails,
+} from "../../../../AppTypes";
 import {
   useAssignmentStore,
-  useCommonStudentDashboardStore,
+  // useCommonStudentDashboardStore,
 } from "../../../../store/StudentDashboardStore";
 import NoQuiz from "../../../../CommonUtilites/NoQuiz";
+import { InfoCircleFilled } from "@ant-design/icons";
 
 const QuizReports: FunctionComponent = (): JSX.Element => {
   let [quizConfigs, setQuizConfigs] = useState<any>([]);
-  let [row, setRow] = useState<any>(null);
+  let [row, setRow] = useState<StudentReportAndJourneyDetails | null>(null);
   let [mediaFileName, setMediaFileName] = useState<string>("");
   let [exceptions, setExceptions] = useState<any>(null);
   let [currentRow, setCurrentRow] = useState<any>([]);
   let [profilePic, setProfilePic] = useState<any>(null);
-  const [studentResultsByQuiz, setStudentResultsByQuiz] =
-    useState<StudentQuizReport | null>(null);
+  // const [studentResultsByQuiz, setStudentResultsByQuiz] =
+  //   useState<StudentQuizReport | null>(null);
   let [selectedQuizConfig, setSelectedQuizConfig] = useState<{
     [key: string]: boolean;
   }>({});
@@ -51,7 +55,7 @@ const QuizReports: FunctionComponent = (): JSX.Element => {
   const getCourseQuizesById = () => {
     axios
       .get(
-        `${getCanvasAssignmentDetails}/${tokenData.instituteId}/${urlParamsData.guid}/${urlParamsData.courseId}/${tokenData.lmsAccessToken}/`
+        `${getCanvasQuizDetails}/${tokenData.instituteId}/${urlParamsData.guid}/${urlParamsData.courseId}/${tokenData.lmsAccessToken}`
       )
       .then((res: any) => {
         if (res.data.length === 0) {
@@ -61,8 +65,8 @@ const QuizReports: FunctionComponent = (): JSX.Element => {
         let quizzes: any = [];
         res.data.forEach((item: any) => {
           if (item.id > 0) {
-            item.key = item.quizId;
-            item.id = item.quizId;
+            item.key = item.id;
+            // item.id = item.quizId;
             quizzes.push(item);
           }
         });
@@ -75,25 +79,25 @@ const QuizReports: FunctionComponent = (): JSX.Element => {
       });
   };
 
-  const getStudentsByCourseId = () => {
-    axios
-      .get(
-        `${fetchAccountsByCourseAndEnrollemntType}/${urlParamsData.courseId}/student/${tokenData.instituteId}/${tokenData.lmsAccessToken}`
-      )
-      .then((res: any) => {
-        let data = res.data.map((item: any) => ({
-          ...item,
-          key: item.id,
-          user_id: item.id,
-          course_id: urlParamsData.courseId,
-        }));
+  // const getStudentsByCourseId = () => {
+  //   axios
+  //     .get(
+  //       `${fetchAccountsByCourseAndEnrollemntType}/${urlParamsData.courseId}/student/${tokenData.instituteId}/${tokenData.lmsAccessToken}`
+  //     )
+  //     .then((res: any) => {
+  //       let data = res.data.map((item: any) => ({
+  //         ...item,
+  //         key: item.id,
+  //         user_id: item.id,
+  //         course_id: urlParamsData.courseId,
+  //       }));
 
-        setStudList(data);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  };
+  //       setStudList(data);
+  //     })
+  //     .catch((err) => {
+  //       console.log(err);
+  //     });
+  // };
 
   const getQuizConfigs = async (id: string) => {
     let config = await axios.get(
@@ -119,80 +123,39 @@ const QuizReports: FunctionComponent = (): JSX.Element => {
     }
   };
 
-  const getAllProctorJourneyDetails = async () => {
+  const updateJourneyDetails = async (result: string, comment: string) => {
     let payload = {
-      guid: urlParamsData.guid,
-      studentId: 0,
-      proctorId: useCommonStudentDashboardStore.getState().enrollments?.user.id,
-      quizId: 0,
-      courseId: urlParamsData.courseId,
+      idLtiVideoRef: row?.idLtiVideoRef,
+      idUser: row?.idUser,
+      idInstructor: urlParamsData.userId,
+      idReference: row?.idReference,
+      idExam: row?.idExam,
+      courseId: row?.courseId,
+      status: row?.status,
+      examDate: row?.examDate,
+      guid: row?.guid,
+      examActualStartTime: row?.examActualStartTime,
+      examActualEndTime: row?.examActualEndTime,
+      authPictureFileName: "",
+      authPictureFileIndex: "",
+      passFail: result,
+      comments: comment,
+      violationCount: row?.violationCount,
     };
-    let response = await axios.post(`${getLtiProctorJourney}`, { ...payload });
-    if (response.status === 200) {
-      let reports: StudentQuizReport = {};
-      let data = [...response.data];
-      data.forEach((item: any) => {
-        reports[item.quizId.toString()] = {
-          [item.studentId.toString()]: {
-            reportReviwed: item.reportReviwed,
-            resultPass: item.reportPass,
-          },
-        };
-      });
-      setStudentResultsByQuiz(reports);
+    try {
+      let response = await axios.post(`${saveLtiVideoRef}`, { ...payload });
+      if (response.status === 201) {
+        message.success("Result updated successfully.");
+        if (row) getStudentsByExamdIdGuidIdCourseId(row?.idExam);
+      }
+    } catch (e) {
+      message.success("Failed to  updated result.");
     }
   };
 
   useEffect(() => {
-    getAllProctorJourneyDetails();
     getCourseQuizesById();
-    getStudentsByCourseId();
   }, []);
-
-  const getVideoRefId = async (
-    quizId: string,
-    quizDate: string,
-    id: string
-  ) => {
-    let configObj: any = null;
-    quizConfigs.forEach((config: any) => {
-      if (config.quizId === selectedQuiz.id) {
-        configObj = config.config;
-      }
-    });
-    if (!selectedQuiz.due_at) {
-      message.error("Something went wrong. Please try again later");
-      return;
-    }
-
-    let ltiVidRefResponse = null;
-    try {
-      ltiVidRefResponse = await axios.post(
-        getLtiCVideoRef,
-        {
-          idUser: id,
-          idExam: quizId,
-          examDate: new Date(quizDate).toISOString(),
-          courseId: urlParamsData.courseId,
-          toolConsumerInstanceGuid: urlParamsData.guid,
-        },
-        {
-          headers: { Authorization: `Bearer ${tokenData.lmsAccessToken}` },
-        }
-      );
-    } catch (e) {
-      message.error("No report available");
-      return;
-    }
-
-    if (ltiVidRefResponse && ltiVidRefResponse.data) {
-      setMediaFileName(ltiVidRefResponse.data.idReference);
-      getExceptions(ltiVidRefResponse.data.idReference);
-      setShowRepModal(true);
-    } else {
-      console.log("error");
-    }
-  };
 
   const getExceptions = async (fileId: string) => {
     let exceptions = await axios.get(`${getExceptionsUrl}${fileId}`, {
@@ -243,41 +206,47 @@ const QuizReports: FunctionComponent = (): JSX.Element => {
     }
   };
 
-  const handleViewReport = (row: any) => {
+  const handleViewReport = (row: StudentReportAndJourneyDetails) => {
     if (selectedQuizConfig.lockdownBrowser) {
       message.error(
         "This Quiz/Test is configured as as Lock Down Browser. No report is available. Thank you."
       );
       return;
     }
-    getJourneyDetails(row.id);
     setRow(row);
-    getUserProfilePicture(row.id);
-    getVideoRefId(selectedQuiz.id, selectedQuiz.due_at, row.id);
+    getUserProfilePicture(row.idUser);
+    setMediaFileName(row.idReference);
+    getExceptions(row.idReference);
+    setShowRepModal(true);
+    // getJourneyDetails(row.idUser);
+    // getVideoRefId(selectedQuiz.id, selectedQuiz.due_at, row.idLtiVideoRef);
   };
 
   const handleRefreshTable = () => {
+    setRow(null);
     setIsRefreshing(true);
     getCourseQuizesById();
   };
 
   let studentColumns = [
     {
-      dataIndex: "",
-      key: "",
-      title: `Name`,
-      render: (row: any) => {
-        return row.name;
-      },
+      dataIndex: "firstName",
+      key: "firstName",
+      title: `First Name`,
+    },
+    {
+      dataIndex: "lastName",
+      key: "lastName",
+      title: `Last Name`,
     },
     {
       dataIndex: "",
       key: "scheduleDate",
       title: `Schedule Date`,
-      render: (row: any) => {
-        if (schedules) {
+      render: (row: StudentReportAndJourneyDetails) => {
+        if ("examDate" in row) {
           let offsetTime: string = Math.abs(moment().utcOffset()).toString();
-          let schedule = schedules.scheduleDate + `.${offsetTime}Z`;
+          let schedule = row.examDate + `.${offsetTime}Z`;
           return moment(schedule).format("MM-DD-YYYY h:mm A");
         }
         if (schedules === false) {
@@ -287,59 +256,49 @@ const QuizReports: FunctionComponent = (): JSX.Element => {
       },
     },
     {
+      dataIndex: "violationCount",
+      key: "violations",
+      title: `Violation(s)`,
+    },
+    {
       dataIndex: "",
       key: "result",
       title: "Result",
-      render: (row: any) => {
-        if (!studentResultsByQuiz) {
+      render: (row: StudentReportAndJourneyDetails) => {
+        if (row.passFail === "N") {
           return "Not available";
         }
-        if (selectedQuiz.quizId in studentResultsByQuiz) {
-          if (row.id.toString() in studentResultsByQuiz[selectedQuiz.quizId]) {
-            return studentResultsByQuiz[selectedQuiz.quizId][row.id.toString()]
-              .resultPass ? (
+        if (row.passFail === "Y") {
+          return (
+            <div className="flex flex-row h-full items-center gap-4">
               <p className="font-semibold text-green-600 text-lg">Pass</p>
-            ) : (
-              <p className="font-semibold text-red-500 text-lg">Fail</p>
-            );
-          }
-          return "Not available";
+              <Tooltip placement="top" title={row.comments} className="pt-1">
+                <InfoCircleFilled style={{ color: "rgb(96 165 250)" }} />
+              </Tooltip>
+            </div>
+          );
         }
-        return "Not available";
+        if (row.passFail === "F") {
+          return (
+            <div className="flex flex-row h-full items-center gap-4">
+              <p className="font-semibold text-red-500 text-lg">Fail</p>
+              <Tooltip placement="top" title={row.comments} className="pt-1">
+                <InfoCircleFilled style={{ color: "rgb(96 165 250)" }} />
+              </Tooltip>
+            </div>
+          );
+        }
+        // if (selectedQuiz.quizId in studentResultsByQuiz) {
+        //   return "Not available";
+        // }
+        // return "Not available";
       },
     },
     {
       dataIndex: "",
       key: "action",
       title: `Action`,
-      render: (row: any) => {
-        if (!studentResultsByQuiz) {
-          return (
-            <button onClick={() => handleViewReport(row)}>
-              <p className="font-semibold">View Report</p>
-            </button>
-          );
-        }
-        if (studentResultsByQuiz) {
-          if (selectedQuiz.quizId.toString() in studentResultsByQuiz) {
-            if (
-              row.id.toString() in
-              studentResultsByQuiz[selectedQuiz.quizId.toString()]
-            ) {
-              return studentResultsByQuiz[selectedQuiz.quizId.toString()][
-                row.id.toString()
-              ].reportReviwed ? (
-                <button onClick={() => handleViewReport(row)}>
-                  <p className="text-green-500 font-semibold">View Report</p>
-                </button>
-              ) : (
-                <button onClick={() => handleViewReport(row)}>
-                  <p className="font-semibold">View Report</p>
-                </button>
-              );
-            }
-          }
-        }
+      render: (row: StudentReportAndJourneyDetails) => {
         return (
           <button onClick={() => handleViewReport(row)}>
             <p className="font-semibold">View Report</p>
@@ -351,7 +310,7 @@ const QuizReports: FunctionComponent = (): JSX.Element => {
 
   let columns = [
     {
-      dataIndex: "quizName",
+      dataIndex: "title",
       key: "title",
       title: `Quiz Name`,
     },
@@ -386,24 +345,28 @@ const QuizReports: FunctionComponent = (): JSX.Element => {
     },
   ];
 
-  const getAssignmentSchedule = (assignmentId: number, quizId: string) => {
-    let data = {
-      instituteId: tokenData.instituteId,
-      assignmentId: assignmentId,
-      quizId: quizId,
-      courseId: parseInt(urlParamsData.courseId as any),
-      status: 0,
+  const getStudentsByExamdIdGuidIdCourseId = async (quizId: string) => {
+    let payload = {
+      idExam: quizId,
+      courseId: urlParamsData.courseId,
       guid: urlParamsData.guid,
     };
-    axios
-      .post(`${getLtiScheduleByQuizId}`, { ...data })
-      .then((response: any) => {
-        setSchedules(response.data);
-      })
-      .catch((error: any) => {
-        setSchedules(false);
-        console.log(error);
+
+    try {
+      const response = await axios.post(`${getLtiCanvasVideoCombRef}`, {
+        ...payload,
       });
+      if (response.status === 200) {
+        response.data.forEach(
+          (item: StudentReportAndJourneyDetails, index: number) => {
+            item.key = index.toString();
+          }
+        );
+        setStudList(response.data);
+      }
+    } catch (e) {
+      setStudList(false);
+    }
   };
 
   return (
@@ -450,15 +413,18 @@ const QuizReports: FunctionComponent = (): JSX.Element => {
                     </>
                   );
                 } else {
-                  return <p className="font-bold">Getting students...</p>;
+                  if (studList === false) {
+                    return <p className="text-center font-bold">No reports available</p>;
+                  }
+                  return <p className="text-center font-bold">Getting students...</p>;
                 }
               },
               rowExpandable: (record) => true,
               expandedRowKeys: currentRow,
               onExpand(expanded, record) {
                 if (expanded) {
-                  setSchedules(null);
-                  getAssignmentSchedule(record.assignment_id, record.quizId);
+                  setStudList(null);
+                  getStudentsByExamdIdGuidIdCourseId(record.id);
                   setSelectedQuiz(record);
                   setCurrentRow([record.key]);
                 } else {
@@ -490,15 +456,15 @@ const QuizReports: FunctionComponent = (): JSX.Element => {
             show={showRepModal}
             close={() => setShowRepModal(false)}
             title="Quiz Report"
-            data={null}
+            data={row}
             exceptions={exceptions}
             profilePic={profilePic}
-            studentId={row.id}
+            studentId={row.idUser}
             quizId={selectedQuiz.id}
             courseId={urlParamsData.courseId}
             guid={urlParamsData.guid}
             fileName={mediaFileName}
-            updateReport={getAllProctorJourneyDetails}
+            updateReport={updateJourneyDetails}
             configuration={selectedQuizConfig}
           />
         )}

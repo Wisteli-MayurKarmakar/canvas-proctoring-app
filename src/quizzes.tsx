@@ -254,25 +254,6 @@ const Quzzies: React.FC<Props> = (props) => {
     }
   }, [studentQuizAuthObject]);
 
-  // const checkStoreForRecord = (quiz: {
-  //   [key: string]: string | number;
-  // }): boolean => {
-  //   let authObj = [...studentQuizAuthObject];
-  //   let res: boolean = false;
-  //   authObj.forEach((item) => {
-  //     if (item.quizId === quiz.id) {
-  //       if (item.studentAuthState) {
-  //         setStudentAuthed(true);
-  //       } else {
-  //         setStudentAuthed(false);
-  //       }
-  //       res = true;
-  //       return;
-  //     }
-  //   });
-  //   return res;
-  // };
-
   if (assignments) {
     return <Layout />;
   } else {

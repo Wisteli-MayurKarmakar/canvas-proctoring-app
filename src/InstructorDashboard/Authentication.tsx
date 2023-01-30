@@ -52,9 +52,9 @@ const Authentication: React.FC = (): JSX.Element => {
     {
       dataIndex: "",
       key: "instructorProctored",
-      title: `By Instructor`,
+      title: `By Examd`,
       render: (row: any) => {
-        if (row.instructorProctored === "Y") {
+        if (row.examdLiveLaunch === "Y") {
           return <CheckCircleOutlined style={{color: "green", fontSize: 20}}/>;
         }
         return <CloseCircleOutlined style={{color: "red", fontSize: 20}}/>;
