@@ -7,14 +7,16 @@ import {
   yahoo,
   CalendarEvent,
 } from "calendar-link";
-import moment from "moment";
 import {
   CalendarOutlined,
   GoogleOutlined,
   YahooOutlined,
   AppleOutlined,
   WindowsOutlined,
+  WechatOutlined,
 } from "@ant-design/icons";
+import { Tooltip } from "antd";
+import { useAppStore } from "../store/AppSotre";
 
 type EventProto = {
   [key: string]: any;
@@ -22,10 +24,12 @@ type EventProto = {
 
 interface Props {
   assignment: EventProto;
+  showChat: () => void;
 }
 
 const AddToCalendarButton: React.FC<Props> = (props): JSX.Element => {
   let [showCalendars, setShowCalendars] = React.useState<boolean>(false);
+  const { urlParamsData } = useAppStore((state) => state);
 
   useEffect(() => {
     setShowCalendars(false);
@@ -76,13 +80,22 @@ const AddToCalendarButton: React.FC<Props> = (props): JSX.Element => {
     }
   };
 
+  const showCalendar: boolean = urlParamsData.newTab;
+
   return (
     <div className="flex flex-row gap-4 items-center justify-center">
-      <CalendarOutlined style={{fontSize: 20, fill: "grey"}}/>
-      <p className="md:font-semibold cursor-pointer md:block text-xs md:text-base text-ellipsis break-all transition focus:outline-none" onClick={handleAddCalendarClick}>
-        Add to Calendar: {props.assignment.name}
-      </p>
-      {showCalendars ? (
+      {!showCalendar && (
+        <CalendarOutlined style={{ fontSize: 20, fill: "grey" }} />
+      )}
+      {!showCalendar && (
+        <p
+          className="md:font-semibold cursor-pointer md:block text-xs md:text-base text-ellipsis break-all transition focus:outline-none"
+          onClick={handleAddCalendarClick}
+        >
+          Add to Calendar: {props.assignment.name}
+        </p>
+      )}
+      {showCalendars && !showCalendar ? (
         <svg
           className="w-4 h-4 cursor-pointer"
           aria-hidden="true"
@@ -98,22 +111,24 @@ const AddToCalendarButton: React.FC<Props> = (props): JSX.Element => {
           ></path>
         </svg>
       ) : (
-        <svg
-          className="mr-2 w-4 h-4 cursor-pointer"
-          aria-hidden="true"
-          fill="currentColor"
-          viewBox="0 0 20 20"
-          xmlns="http://www.w3.org/2000/svg"
-          onClick={handleAddCalendarClick}
-        >
-          <path
-            fillRule="evenodd"
-            d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
-            clipRule="evenodd"
-          ></path>
-        </svg>
+        !showCalendar && (
+          <svg
+            className="mr-2 w-4 h-4 cursor-pointer"
+            aria-hidden="true"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+            xmlns="http://www.w3.org/2000/svg"
+            onClick={handleAddCalendarClick}
+          >
+            <path
+              fillRule="evenodd"
+              d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+              clipRule="evenodd"
+            ></path>
+          </svg>
+        )
       )}
-      {showCalendars && (
+      {showCalendars && !showCalendar && (
         <div className="flex flex-row gap-2 transition-all ease-in duration-150">
           {calendars.map((item: { [key: string]: any }, index: number) => {
             if (item.name === "iCal") {
@@ -131,7 +146,10 @@ const AddToCalendarButton: React.FC<Props> = (props): JSX.Element => {
               );
             } else {
               return (
-                <div className="flex flex-row gap-1 items-center border-r-2 border-black pr-1 md:border-white" key={index}>
+                <div
+                  className="flex flex-row gap-1 items-center border-r-2 border-black pr-1 md:border-white"
+                  key={index}
+                >
                   {item.icon}
                   <p
                     onClick={(e) => handleCalendarClick(e, item.name)}
@@ -145,6 +163,15 @@ const AddToCalendarButton: React.FC<Props> = (props): JSX.Element => {
             }
           })}
         </div>
+      )}
+      {urlParamsData.newTab && (
+        <Tooltip placement="top" overlay="Chat">
+          <WechatOutlined
+            onClick={() => props.showChat()}
+            className="text-4xl cursor-pointer absolute right-52"
+            style={{ color: "#42c8f5" }}
+          />
+        </Tooltip>
       )}
     </div>
   );

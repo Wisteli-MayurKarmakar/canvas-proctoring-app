@@ -44,6 +44,7 @@ type AppStore = {
   accessRecords?: AccessDetails[];
   setTokenData: (data: AuthenticationData) => void;
   setUrlParamsData: (data: URLParamsData) => void;
+  getAccessRecords: (guid: string, studentId: string) => void;
 };
 
 const getCourseDetails = async (
@@ -144,10 +145,12 @@ export const useAppStore = create<AppStore>()(
               loginId: data.loginId,
             },
           });
-
-          let response = await getAccessRecordsByGuid(data.guid);
+        }
+      },
+      getAccessRecords: async (guid: string, studentId: string) => {
+        let response = await getAccessRecordsByGuid(guid);
           response.forEach((item: AccessDetails) => {
-            if (item.userId === data.studentId) {
+            if (item.userId === studentId) {
               let notAllowed: boolean = false;
               if (
                 !item.aiQuiz &&
@@ -178,7 +181,6 @@ export const useAppStore = create<AppStore>()(
           set({
             accessRecords: response,
           });
-        }
       },
     }),
     { name: "AppStore" }

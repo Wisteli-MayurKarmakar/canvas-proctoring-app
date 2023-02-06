@@ -220,6 +220,7 @@ const Payments: React.FC = (): JSX.Element => {
         </button>
       </div>
       <Table
+      bordered
         columns={consumptionTableColumns}
         className="mt-2"
         dataSource={allConsumptions}
@@ -272,6 +273,7 @@ const Payments: React.FC = (): JSX.Element => {
         </button>
       </div>
       <Table
+      bordered
         columns={paymentsTableColumns}
         className="mt-2"
         dataSource={allPayments}

@@ -68,6 +68,7 @@ const Grid: React.FunctionComponent<Props> = (props): JSX.Element => {
   if (props.nestedTable) {
     return (
       <Table
+        bordered
         dataSource={props.data}
         loading={props.loading}
         columns={props.mainTableColumns}
@@ -90,6 +91,7 @@ const Grid: React.FunctionComponent<Props> = (props): JSX.Element => {
                     {rowData.name} enrollments
                   </p>
                   <Table
+                    bordered
                     columns={props.nestedTableColumns}
                     dataSource={props.nestedTableData}
                     pagination={
@@ -127,6 +129,7 @@ const Grid: React.FunctionComponent<Props> = (props): JSX.Element => {
 
   return (
     <Table
+      bordered
       dataSource={props.data}
       loading={props.loading}
       columns={props.mainTableColumns}

@@ -1,12 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, lazy, Suspense } from "react";
+import LazyLoading from "../../CommonUtilites/LazyLoadFallback";
 import { useAppStore } from "../../store/AppSotre";
-import ProctoringByQuiz from "../Components/ProctoringByQuiz";
-import ProctoringByTime from "../Components/ProctoringByTime";
+// import ProctoringByQuiz from "../Components/ProctoringByQuiz";
+// import ProctoringByTime from "../Components/ProctoringByTime";
 
 const LiveProctoring: React.FC = (): JSX.Element => {
   const [loadPage, setLoadPage] = useState<string>("By Quiz");
   const { courseDetails } = useAppStore.getState();
   const subMenus: string[] = ["By Time", "By Quiz"];
+  const ProctoringByQuiz = lazy(() => import("../Components/ProctoringByQuiz"));
+  const ProctoringByTime = lazy(() => import("../Components/ProctoringByTime"));
 
   const handleClick = (page: string) => {
     setLoadPage(page);
@@ -43,8 +46,10 @@ const LiveProctoring: React.FC = (): JSX.Element => {
         })}
       </div>
       <div className="flex flex-col tab-content w-full justify-center">
-        {loadPage === "By Quiz" && <ProctoringByQuiz />}
-        {loadPage === "By Time" && <ProctoringByTime />}
+        <Suspense fallback={<LazyLoading />}>
+          {loadPage === "By Quiz" && <ProctoringByQuiz />}
+          {loadPage === "By Time" && <ProctoringByTime />}
+        </Suspense>
       </div>
     </div>
   );

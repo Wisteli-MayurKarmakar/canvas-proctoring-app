@@ -61,16 +61,33 @@ const ProcotoringByQuiz: React.FC = (): JSX.Element => {
         if (!quizzes) {
           return "Fetching quizzes...";
         }
+        if (!selectedQuizSchedules) {
+          return "Not scheduled";
+        }
         if (selectedQuiz) {
-          if (selectedQuizSchedules) {
-            return moment(selectedQuizSchedules.scheduleDate).format(
+          let schedule = null;
+          selectedQuizSchedules.forEach((item: any) => {
+            if (row.id === item.userId) {
+              schedule = item;
+            }
+          });
+
+          if (schedule) {
+            return moment(schedule["scheduleDate"]).format(
               "MM-DD-YYYY hh:mm a"
             );
           }
-          if (selectedQuizSchedules === false) {
-            return "Not Scheduled";
-          }
-          return "Getting schedules...";
+
+          return "N/ A";
+          // if (selectedQuizSchedules) {
+          //   return moment(selectedQuizSchedules.scheduleDate).format(
+          //     "MM-DD-YYYY hh:mm a"
+          //   );
+          // }
+          // if (selectedQuizSchedules === false) {
+          //   return "Not Scheduled";
+          // }
+          // return "Getting schedules...";
         }
         return "Please select a quiz";
       },
@@ -209,11 +226,14 @@ const ProcotoringByQuiz: React.FC = (): JSX.Element => {
       .post(`${getLtiScheduleByQuizId}`, { ...data })
       .then((response: any) => {
         let offsetTime: string = Math.abs(moment().utcOffset()).toString();
-        let schedule = {
-          ...response.data,
-          scheduleDate: response.data[0].scheduleDate + `.${offsetTime}Z`,
-        };
-        setSelectedQuizSchedules(schedule);
+        const schedules = response.data.map((item: any) => {
+          return {
+            ...item,
+            scheduleDate: item.scheduleDate + `.${offsetTime}Z`,
+            userId: item.studentId.toString(),
+          };
+        });
+        setSelectedQuizSchedules(schedules);
       })
       .catch((error: any) => {
         setSelectedQuizSchedules(false);

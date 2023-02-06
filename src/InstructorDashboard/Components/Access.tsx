@@ -4,7 +4,7 @@ import { AccessDetails } from "../../AppTypes";
 import { Table } from "antd";
 import axios from "axios";
 import { updateLtiAccessRecord } from "../../apiConfigs";
-import { useAppStore } from "../../store/AppSotre";
+import { getAccessRecordsByGuid, useAppStore } from "../../store/AppSotre";
 import moment from "moment";
 import WaitingModal from "../../CommonUtilites/WaitingModal";
 import ConfirmModal from "../../CommonUtilites/Modals/ConfirmModal";
@@ -16,6 +16,7 @@ const Access: React.FC = (): JSX.Element => {
   const { urlParamsData, accessRecords } = useAppStore((state) => state);
   const [isUpdating, setIsUpdating] = useState<boolean>(false);
   const [showUpdateInfo, setShowUpdateInfo] = useState<boolean>(false);
+  const [recordType, setRecordType] = useState<string>("all");
   const [showAddProctorModel, setShowAddProctorModel] =
     useState<boolean>(false);
 
@@ -26,7 +27,7 @@ const Access: React.FC = (): JSX.Element => {
   );
 
   const accessUpdateInfo: string =
-    "This change will be effective from next month. Thanks";
+    "This change may take 2-4 weeks to be effective. You will get an email from support team.";
 
   const updateLtiAccessRecordDetails = (record: AccessDetails) => {
     setIsUpdating(true);
@@ -36,7 +37,7 @@ const Access: React.FC = (): JSX.Element => {
       instructorId: record.instructorId,
       instituteId: record.instituteId,
       accessType: record.accessType,
-      status: record.status === "Active" ? "1" : "N",
+      status: record.status,
       aiQuiz: record.aiQuiz,
       aiWithReport: record.aiWithReport,
       liveLaunch: record.liveLaunch,
@@ -48,7 +49,7 @@ const Access: React.FC = (): JSX.Element => {
       .post(`${updateLtiAccessRecord}`, {
         ...payload,
       })
-      .then(() => {
+      .then(async () => {
         setIsUpdating(false);
         setShowUpdateInfo(true);
       })
@@ -61,7 +62,7 @@ const Access: React.FC = (): JSX.Element => {
     if (instructors) {
       let records: AccessDetails[] = [...instructors];
       records.forEach((item: AccessDetails, index: number) => {
-        if (item.idAccess === id) {
+        if (item.userId === id) {
           if (option === "aiQuiz") {
             item.aiQuiz = item.aiQuiz === "Y" ? "N" : "Y";
             if (item.aiQuiz === "N") {
@@ -83,11 +84,14 @@ const Access: React.FC = (): JSX.Element => {
           if (option === "lockdownBrowser") {
             item.lockdownBrowser = item.lockdownBrowser === "Y" ? "N" : "Y";
           }
+          if (option === "status") {
+            item.status = item.status === "Y" ? "N" : "Y";
+          }
         }
       });
       setInstructors(records);
       let record: AccessDetails | undefined = records.find(
-        (record) => record.idAccess === id
+        (record) => record.userId === id
       );
       if (record) {
         updateLtiAccessRecordDetails(record);
@@ -157,7 +161,31 @@ const Access: React.FC = (): JSX.Element => {
     {
       title: "Status",
       key: "status",
-      dataIndex: "status",
+      dataIndex: "",
+      render: (row: AccessDetails) => {
+        return (
+          <select
+            value={row.status}
+            className="form-select appearance-none
+              block
+              w-full
+              px-3
+              py-1.5
+              text-base
+              font-normal
+              text-black
+              bg-white bg-clip-padding bg-no-repeat
+              rounded
+              m-0
+             "
+            aria-label="Default select example"
+            onChange={() => handleOptionClick(row.userId, "status")}
+          >
+            <option value="Inactive">Inactive</option>
+            <option value="Active">Active</option>
+          </select>
+        );
+      },
     },
     {
       title: "Base Access",
@@ -170,7 +198,7 @@ const Access: React.FC = (): JSX.Element => {
             type="checkbox"
             id={`${row.idAccess}_ai`}
             defaultChecked={row.aiQuiz === "Y" ? true : false}
-            onChange={() => handleOptionClick(row.idAccess, "aiQuiz")}
+            onChange={() => handleOptionClick(row.userId, "aiQuiz")}
           ></input>
         );
       },
@@ -187,7 +215,7 @@ const Access: React.FC = (): JSX.Element => {
             id={`${row.idAccess}_aiWithReport`}
             disabled={row.aiQuiz === "Y" ? false : true}
             defaultChecked={row.aiWithReport === "Y" ? true : false}
-            onChange={() => handleOptionClick(row.idAccess, "aiWithReport")}
+            onChange={() => handleOptionClick(row.userId, "aiWithReport")}
           ></input>
         );
       },
@@ -204,7 +232,7 @@ const Access: React.FC = (): JSX.Element => {
             disabled={row.aiQuiz === "Y" ? false : true}
             id={`${row.idAccess}liveLaunch`}
             defaultChecked={row.liveLaunch === "Y" ? true : false}
-            onChange={() => handleOptionClick(row.idAccess, "liveLaunch")}
+            onChange={() => handleOptionClick(row.userId, "liveLaunch")}
           ></input>
         );
       },
@@ -221,7 +249,7 @@ const Access: React.FC = (): JSX.Element => {
             disabled={row.aiQuiz === "Y" ? false : true}
             id={`${row.idAccess}_ai`}
             defaultChecked={row.liveProctor === "Y" ? true : false}
-            onChange={() => handleOptionClick(row.idAccess, "liveProctor")}
+            onChange={() => handleOptionClick(row.userId, "liveProctor")}
           ></input>
         );
       },
@@ -244,38 +272,41 @@ const Access: React.FC = (): JSX.Element => {
     },
   ];
 
-  const processAccessRecords = () => {
+  const processAccessRecords = (processType: string) => {
     if (accessRecords) {
       let instructors: AccessDetails[] = [];
       let admins: AccessDetails[] = [];
 
       accessRecords.map((item: AccessDetails) => {
-        if (item.status === "1") {
+        if (item.status === "Y") {
           item.status = "Active";
         } else if (item.status === "N") {
-          item.status = "N/ A";
+          item.status = "Inactive";
         } else {
           item.status = "Not Active";
         }
-
-        if (
-          item.accessType === "INSTR" ||
-          item.accessType === "TeacherEnrollment"
-        ) {
-          let timezoneOffset: string = `.${Math.abs(moment().utcOffset())}Z`;
-          item.createDate = moment(item.createDate + timezoneOffset).format(
-            "MM-DD-YYYY hh:mm a"
-          );
-          item.key = item.idAccess;
-          instructors.push(item);
+        if (processType === "all" || processType === "INSTR") {
+          if (
+            item.accessType === "INSTR" ||
+            item.accessType === "TeacherEnrollment"
+          ) {
+            let timezoneOffset: string = `.${Math.abs(moment().utcOffset())}Z`;
+            item.createDate = moment(item.createDate + timezoneOffset).format(
+              "MM-DD-YYYY hh:mm a"
+            );
+            item.key = item.idAccess;
+            instructors.push(item);
+          }
         }
-        if (item.accessType === "ADMIN") {
-          let timezoneOffset: string = `.${Math.abs(moment().utcOffset())}Z`;
-          item.createDate = moment(item.createDate + timezoneOffset).format(
-            "MM-DD-YYYY hh:mm a"
-          );
-          item.key = item.idAccess;
-          admins.push(item);
+        if (processType === "all" || processType === "ADMIN") {
+          if (item.accessType === "ADMIN") {
+            let timezoneOffset: string = `.${Math.abs(moment().utcOffset())}Z`;
+            item.createDate = moment(item.createDate + timezoneOffset).format(
+              "MM-DD-YYYY hh:mm a"
+            );
+            item.key = item.idAccess;
+            admins.push(item);
+          }
         }
       });
       setAdmins(admins);
@@ -283,9 +314,18 @@ const Access: React.FC = (): JSX.Element => {
     }
   };
 
+  const handleReferesh = (refreshDataType: string) => {
+    if (refreshDataType === "Admin") {
+      setRecordType("ADMIN");
+    } else {
+      setRecordType("INSTR");
+    }
+    getAccessRecordsByGuid(urlParamsData.guid as string);
+  };
+
   useEffect(() => {
-    processAccessRecords();
-  }, []);
+    processAccessRecords(recordType);
+  }, [accessRecords]);
 
   return (
     <div className="flex flex-col w-full justify-center">
@@ -293,7 +333,20 @@ const Access: React.FC = (): JSX.Element => {
         Access Control
       </p>
       <p className="text-center text-lg font-semibold underline mt-8">Admin</p>
-      <Table columns={adminColumns} className="mt-2" dataSource={admins} />
+      <div className="flex flex-row h-full w-full items-center justify-end">
+        <button
+          type="button"
+          onClick={() => handleReferesh("ADMIN")}
+          data-mdb-ripple="true"
+          data-mdb-ripple-color="light"
+          className="inline-block px-6 py-2.5 bg-blue-600
+           text-white font-medium text-xs leading-tight
+            rounded shadow-md"
+        >
+          Refresh Table
+        </button>
+      </div>
+      <Table columns={adminColumns} className="mt-2" dataSource={admins} bordered/>
       <p className="text-center text-lg font-semibold underline mt-8">
         Instructor
       </p>
@@ -344,19 +397,33 @@ const Access: React.FC = (): JSX.Element => {
             </svg>
           </span>
         </div>
-        <button
-          type="button"
-          onClick={() => setShowAddProctorModel(true)}
-          data-mdb-ripple="true"
-          data-mdb-ripple-color="light"
-          className="inline-block px-6 py-2.5 bg-blue-600
+        <div className="flex flex-row h-full items-center gap-4">
+          <button
+            type="button"
+            onClick={() => setShowAddProctorModel(true)}
+            data-mdb-ripple="true"
+            data-mdb-ripple-color="light"
+            className="inline-block px-6 py-2.5 bg-blue-600
            text-white font-medium text-xs leading-tight
             rounded shadow-md"
-        >
-          Add Instructor
-        </button>
+          >
+            Add Instructor
+          </button>
+          <button
+            type="button"
+            onClick={() => handleReferesh("INSTR")}
+            data-mdb-ripple="true"
+            data-mdb-ripple-color="light"
+            className="inline-block px-6 py-2.5 bg-blue-600
+           text-white font-medium text-xs leading-tight
+            rounded shadow-md"
+          >
+            Refresh Table
+          </button>
+        </div>
       </div>
       <Table
+      bordered
         columns={instructorColumns}
         className="mt-2"
         dataSource={instructors}

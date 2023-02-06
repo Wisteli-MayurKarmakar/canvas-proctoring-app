@@ -68,8 +68,9 @@ export type StudentEnrollments = {
   user_id: string;
 };
 
-type CommonStudentDashboardStore = {
+export type CommonStudentDashboardStore = {
   enrollments?: StudentEnrollments;
+  showChat: boolean;
   loggedInUserEnrollmentType: string;
   setEnrollments: (data: StudentEnrollments) => void;
   setLoggedInUserEnrollmentType: (type: string) => void;
@@ -145,7 +146,7 @@ const getAssignmentSchedule = async (isProctoredAssignment: boolean) => {
   };
 
   try {
-    let response: any = await axios.post(
+    let response = await axios.post(
       `${getScheduling}`,
       {
         ...data,
@@ -165,7 +166,7 @@ const getAssignmentSchedule = async (isProctoredAssignment: boolean) => {
         moment().utcOffset()
       ).toString()}Z`;
       const scheduleDate: Moment = moment(
-        response.data.scheduleDate + timezoneOffset
+        response.data[0].scheduleDate + timezoneOffset
       );
       let scheduleExpired: boolean = false;
       if (
@@ -175,10 +176,10 @@ const getAssignmentSchedule = async (isProctoredAssignment: boolean) => {
         scheduleExpired = true;
       }
       useAssignmentStore.setState({
-        selectedAssignmentSchedules: response.data,
+        selectedAssignmentSchedules: response.data[response.data.length - 1],
         scheduleExpired: scheduleExpired,
       });
-      if (Object.keys(data).length > 0) {
+      if (response.data.length > 0) {
         res = true;
       }
       if (!isProctoredAssignment && scheduleExpired) {
@@ -213,14 +214,21 @@ const getAssignmentSchedule = async (isProctoredAssignment: boolean) => {
   }
 };
 
-const checkInstructorSchedules = async () => {
+const checkInstructorSchedules = async (
+  isProctoredAssignment: boolean
+): Promise<boolean> => {
+  let res: boolean = false;
   let payload = {
     scheduleId: "",
     instituteId: useAppStore.getState().tokenData.instituteId,
-    assignmentId: parseInt(useAppStore.getState().urlParamsData.assignmentId as string),
+    assignmentId:
+      useAssignmentStore.getState().selectedAssignmentConfigurations
+        ?.assignmentId,
     quizId:
       useAssignmentStore.getState().selectedAssignmentConfigurations?.quizId,
-    studentId: useAppStore.getState().userAccessDetails?.instructorId,
+    studentId:
+      useAssignmentStore.getState().selectedAssignmentConfigurations
+        ?.idInstructor,
     courseId: useAppStore.getState().urlParamsData.courseId,
     scheduleDate: "",
     status: "0",
@@ -228,7 +236,7 @@ const checkInstructorSchedules = async () => {
   };
 
   try {
-    let response: any = await axios.post(
+    let response = await axios.post(
       `${getScheduling}`,
       {
         ...payload,
@@ -243,21 +251,60 @@ const checkInstructorSchedules = async () => {
     );
 
     if (response.status === 200) {
-      useAssignmentStore.setState({
-        instructorSchedulesAvailable: true,
-      });
+      res = true;
+      if (response.data) {
+        const today: Moment = moment();
+        const timezoneOffset: string = `.${Math.abs(
+          moment().utcOffset()
+        ).toString()}Z`;
+        const scheduleDate: Moment = moment(
+          response.data[0].scheduleDate + timezoneOffset
+        );
+        let scheduleExpired: boolean = false;
+        if (
+          today.diff(scheduleDate, "minutes") > 0 ||
+          today.diff(scheduleDate, "days")
+        ) {
+          scheduleExpired = true;
+        }
+        useAssignmentStore.setState({
+          selectedAssignmentSchedules: response.data[response.data.length - 1],
+          scheduleExpired: scheduleExpired,
+        });
+        if (response.data.length > 0) {
+          res = true;
+        }
+        if (!isProctoredAssignment && scheduleExpired) {
+          useAssignmentStore.setState({
+            gotoQuiz: true,
+          });
+        }
+        if (isProctoredAssignment && scheduleExpired) {
+          useAssignmentStore.setState({
+            gotoQuiz: true,
+          });
+        }
+        useAssignmentStore.setState({
+          instructorSchedulesAvailable: true,
+          schedulesAvailable: true,
+          selectedAssignmentSchedules: response.data[response.data.length - 1],
+        });
+      }
       useQuizStore.setState({
-        isConfigAvailable: true
-      })
+        isConfigAvailable: true,
+      });
     }
   } catch (err) {
+    res = false;
     useAssignmentStore.setState({
       instructorSchedulesAvailable: false,
+      schedulesAvailable: false,
     });
     useQuizStore.setState({
-      isConfigAvailable: false
-    })
+      isConfigAvailable: false,
+    });
   }
+  return res;
 };
 
 const checkIfProctored = async (assignmentConfig: AssignmentConfiguration) => {
@@ -271,8 +318,12 @@ const checkIfProctored = async (assignmentConfig: AssignmentConfiguration) => {
     resProctoring = true;
   }
   useAssignmentStore.setState({ isProctoredAssignment: resProctoring });
-  await checkInstructorSchedules();
-  await getAssignmentSchedule(resProctoring);
+  const scheduledByInstr: boolean = await checkInstructorSchedules(
+    resProctoring
+  );
+  if (!scheduledByInstr) {
+    await getAssignmentSchedule(resProctoring);
+  }
 };
 
 export const useAssignmentStore = create<AssignmentStore>()(
@@ -369,6 +420,7 @@ export const useCommonStudentDashboardStore =
   create<CommonStudentDashboardStore>()(
     devtools(
       (set) => ({
+        showChat: false,
         loggedInUserEnrollmentType: "",
         setEnrollments: (studentEnrollments: StudentEnrollments) => {
           set({

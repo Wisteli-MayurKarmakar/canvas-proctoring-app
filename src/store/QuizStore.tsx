@@ -1,14 +1,18 @@
 import { message } from "antd";
-import axios from "axios";
+import axios, { AxiosError, AxiosResponse } from "axios";
 import create from "zustand";
 import { devtools } from "zustand/middleware";
-import { getLtiCanvasConfigByGuidCourseIdQuizId } from "../apiConfigs";
+import {
+  getLtiCanvasConfigByGuidCourseIdQuizId,
+  getScheduling,
+} from "../apiConfigs";
 import {
   defualtProctingSettings,
   Quiz,
   QuizStore,
   QuizConfiguration,
   QuizConfigurationWithOnlyProcOpt,
+  GetQuizSchedulePayload,
 } from "../AppTypes";
 import { defaultProcSettings } from "../CommonUtilites/ProctorSettingDefaults";
 import { useAppStore } from "../store/AppSotre";
@@ -27,16 +31,17 @@ const getSelectedQuizConfig = async (
       );
       if (response.status === 200) {
         res = response.data as QuizConfiguration;
+        getQuizSchedule(res.assignmentId, res.quizId);
         useQuizStore.setState({
-          isConfigAvailable: true
-        })
+          isConfigAvailable: true,
+        });
       }
     }
   } catch (e) {
     res = null;
     useQuizStore.setState({
-      isConfigAvailable: false
-    })
+      isConfigAvailable: false,
+    });
   }
 
   return res;
@@ -46,6 +51,38 @@ const updateQuizConfiguratio = async (quizConfig: QuizConfiguration) => {
   try {
     const response = await axios;
   } catch (err) {}
+};
+
+const getQuizSchedule = (assignmentId: number, quizId: string) => {
+  const tokenData = useAppStore.getState().tokenData;
+  const urlParamsData = useAppStore.getState().urlParamsData;
+  
+  let payload: GetQuizSchedulePayload = {
+    scheduleId: "",
+    instituteId: parseInt(tokenData.instituteId as string),
+    assignmentId: assignmentId,
+    quizId: quizId,
+    studentId: urlParamsData.studentId as string,
+    courseId: urlParamsData.courseId as string,
+    scheduleDate: "",
+    guid: urlParamsData.guid as string,
+    status: "",
+  };
+
+  axios
+    .post(getScheduling, { ...payload })
+    .then((response: AxiosResponse) => {
+      if (response.status === 200) {
+        useQuizStore.setState({
+          selectedQuizSchedule: response.data,
+        });
+      }
+    })
+    .catch((error: AxiosError) => {
+      useQuizStore.setState({
+        selectedQuizSchedule: [],
+      });
+    });
 };
 
 export const useQuizStore = create<QuizStore>()(
@@ -60,6 +97,7 @@ export const useQuizStore = create<QuizStore>()(
       liveLaunch: false,
       configAvailable: false,
       liveProctoring: false,
+      selectedQuizSchedule: [],
       defaultConfiguration: {
         recordWebcam: true,
         recordScreen: true,
@@ -166,6 +204,7 @@ export const useQuizStore = create<QuizStore>()(
           liveProctoring: false,
           lockdownBrowser: false,
           isConfigAvailable: false,
+          selectedQuizSchedule: [],
         });
 
         let configAvailable: boolean = false;

@@ -152,7 +152,7 @@ const Report: React.FC<Props> = ({
                 Video recording
               </p>
             </div>
-            <div className="flex flex-col h-full items-center justify-center">
+            <div className="flex flex-col">
               <div className="box-border h-64 w-80 p-4 border-4 rounded">
                 {configuration.recordScreen ? (
                   <video controls className="object-fill rounded">
@@ -214,12 +214,15 @@ const Report: React.FC<Props> = ({
                   <p className="text-lg font-semibold">No exceptions...</p>
                 )}
               </div>
-              <textarea
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                className="
+              <div className="flex flex-col w-full h-full justify-center gap-2">
+                <p className="font-semibold text-red-400 text-center">
+                  Please write a comment
+                </p>
+                <textarea
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  className="
                   form-control
-                  block
                   w-full
                   mr-4
                   px-3
@@ -232,12 +235,15 @@ const Report: React.FC<Props> = ({
                   rounded
                   transition
                   ease-in-out
+                  h-full
+                  mt-2
                   m-0 focus:bg-white focus:outline-none
                 "
-                id="commentBox"
-                rows={7}
-                placeholder="Your comment"
-              ></textarea>
+                  id="commentBox"
+                  rows={8}
+                  placeholder="Your comment"
+                ></textarea>
+              </div>
             </div>
           </div>
           <div className="flex flex-row h-full w-full items-center justify-center gap-4">

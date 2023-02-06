@@ -1,11 +1,13 @@
-import React, { SyntheticEvent, useState } from "react";
+import React, { SyntheticEvent, useState, lazy, Suspense } from "react";
+import LazyLoading from "../../../CommonUtilites/LazyLoadFallback";
 import { useAppStore } from "../../../store/AppSotre";
-import QuizReports from "./Components/quizReport";
+// import QuizReports from "./Components/quizReport";
 
 const Reports: React.FC = (): JSX.Element => {
   const [loadPage, setLoadPage] = useState<string>("By Quiz");
   const { courseDetails } = useAppStore((state) => state);
   const subMenus: string[] = ["By Quiz", "By Time"];
+  const QuizReports = lazy(() => import("./Components/quizReport"));
 
   const handleClick = (e: SyntheticEvent, value: string) => {
     if (value === "By Time") {
@@ -50,7 +52,7 @@ const Reports: React.FC = (): JSX.Element => {
           );
         })}
       </div>
-      {loadPage === "By Quiz" && <QuizReports />}
+      <Suspense fallback={<LazyLoading />}>{loadPage === "By Quiz" && <QuizReports />}</Suspense>
     </div>
   );
 };

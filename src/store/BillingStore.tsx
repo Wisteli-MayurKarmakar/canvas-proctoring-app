@@ -494,40 +494,41 @@ export const useBillingStore = create<BillingStore>()(
             );
 
           if (details) {
+            let idx: number = details.length - 1;
             let serviceAndBillingDetails: ServicesAndBillingFieldTypes =
               get().serviceAndBillingDetails;
             let contactDetails: ContactDetailsFieldTypes = get().contactDetails;
             let timezoneOffset: string = `.${Math.abs(
               moment().utcOffset()
             ).toString()}Z`;
-            serviceAndBillingDetails.productType.value = details[0].productType;
-            contactDetails.email.value = details[0].billingEmail;
-            serviceAndBillingDetails.studentPay.value = details[0].studentPay
+            serviceAndBillingDetails.productType.value = details[idx].productType;
+            contactDetails.email.value = details[idx].billingEmail;
+            serviceAndBillingDetails.studentPay.value = details[idx].studentPay
               ? "Yes"
               : "No";
-            serviceAndBillingDetails.paymentType.value = details[0].paymentType;
+            serviceAndBillingDetails.paymentType.value = details[idx].paymentType;
             serviceAndBillingDetails.billRate.value =
-              details[0].billingRate.toString();
+              details[idx].billingRate.toString();
             serviceAndBillingDetails.billCurrency.value =
-              details[0].billingCurrency;
+              details[idx].billingCurrency;
             serviceAndBillingDetails.startDate.value =
-              details[0].startDate + timezoneOffset;
+              details[idx].startDate + timezoneOffset;
             serviceAndBillingDetails.endDate.value =
-              details[0].endDate + timezoneOffset;
-            serviceAndBillingDetails.minQuiz.value = "" + details[0].minNumber;
+              details[idx].endDate + timezoneOffset;
+            serviceAndBillingDetails.minQuiz.value = "" + details[idx].minNumber;
             set({
               serviceAndBillingDetails: serviceAndBillingDetails,
               contactDetails: contactDetails,
             });
-            contactDetails.firstName.value = details[0].firstName;
-            contactDetails.lastName.value = details[0].lastName;
-            contactDetails.firstAddress.value = details[0].address1;
-            contactDetails.city.value = details[0].city;
-            contactDetails.state.value = details[0].state;
-            contactDetails.zip.value = details[0].zip;
-            contactDetails.country.value = details[0].country;
-            contactDetails.secondAddress.value = details[0].address2 as string;
-            contactDetails.phone.value = details[0].billingPhone as string;
+            contactDetails.firstName.value = details[idx].firstName;
+            contactDetails.lastName.value = details[idx].lastName;
+            contactDetails.firstAddress.value = details[idx].address1;
+            contactDetails.city.value = details[idx].city;
+            contactDetails.state.value = details[idx].state;
+            contactDetails.zip.value = details[idx].zip;
+            contactDetails.country.value = details[idx].country;
+            contactDetails.secondAddress.value = details[idx].address2 as string;
+            contactDetails.phone.value = details[idx].billingPhone as string;
           }
         }
       },

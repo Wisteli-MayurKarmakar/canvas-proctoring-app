@@ -1,13 +1,16 @@
-import React, { useState } from "react";
+import React, { lazy, Suspense, useState } from "react";
+import LazyLoading from "../../../CommonUtilites/LazyLoadFallback";
 import { useAppStore } from "../../../store/AppSotre";
-import Enrollments from "../../Components/Enrollments";
-import Notifications from "../../Components/Notifications";
+// import Enrollments from "../../Components/Enrollments";
+// import Notifications from "../../Components/Notifications";
 
 const Student: React.FC = (): JSX.Element => {
   const [subOptionSelected, setSubOptionSelected] =
     useState<string>("Enrollments");
   const { courseDetails } = useAppStore((state) => state);
   const subMenus: string[] = ["Notifications", "Enrollments"];
+  const Enrollments = lazy(() => import("../../Components/Enrollments"));
+  const Notifications = lazy(() => import("../../Components/Notifications"));
 
   const handleSubOptionSelection = (option: string) => {
     setSubOptionSelected(option);
@@ -36,8 +39,10 @@ const Student: React.FC = (): JSX.Element => {
           );
         })}
       </div>
-      {subOptionSelected === "Enrollments" && <Enrollments />}
-      {subOptionSelected === "Notifications" && <Notifications />}
+      <Suspense fallback={<LazyLoading />}>
+        {subOptionSelected === "Enrollments" && <Enrollments />}
+        {subOptionSelected === "Notifications" && <Notifications />}
+      </Suspense>
     </div>
   );
 };

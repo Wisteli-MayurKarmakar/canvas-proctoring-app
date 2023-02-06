@@ -42,14 +42,8 @@ const App: React.FC<Props> = (props): JSX.Element => {
   // const enrollments = useCommonStudentDashboardStore(
   //   (state) => state.enrollments
   // );
-  const selectedAssignment = useAssignmentStore(
-    (state) => state.selectedAssignment
-  );
-  const selectedAssignmentConfigurations = useAssignmentStore(
-    (state) => state.selectedAssignmentConfigurations
-  );
-  const checkAssignmentSchedules = useAssignmentStore(
-    (state) => state.checkAssignmentSchedules
+  const {selectedAssignment, selectedAssignmentConfigurations, checkAssignmentSchedules} = useAssignmentStore(
+    (state) => state
   );
   const onTimeChange = (time: Moment | null) => {
     setTime(time);

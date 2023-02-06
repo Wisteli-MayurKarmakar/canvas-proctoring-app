@@ -1,5 +1,4 @@
-import { Moment } from "moment";
-import { type } from "os";
+import { Socket } from "socket.io-client";
 
 type AllDates = {
   due_at: string;
@@ -75,32 +74,6 @@ type defualtProctingSettings = {
   infoMsg: string;
   settings: QuizConfigurationWithOnlyProcOpt;
 };
-
-// type QuizConfig = {
-//   recordWebcam: boolean;
-//   recordScreen: boolean;
-//   recordAudio: boolean;
-//   chat: boolean;
-//   studentPicture: boolean;
-//   studentIdDl: boolean;
-//   roomScan: boolean;
-//   otp: boolean;
-//   calculatorAllowed: boolean;
-//   scratchPadAllowed: boolean;
-//   liveHelp: boolean;
-//   whitelistPages: boolean;
-//   disableCopyPaste: boolean;
-//   disablePrinting: boolean;
-//   multiplePerson: boolean;
-//   cellPhone: boolean;
-//   noPersonInRoom: boolean;
-//   speaking: boolean;
-//   postExamReview: boolean;
-//   examdLiveLaunch: boolean;
-//   instructorProctored: boolean;
-//   examdProctored: boolean;
-//   lockdownBrowser: boolean;
-// };
 
 type QuizConfiguration = {
   idInstructor?: string;
@@ -714,12 +687,37 @@ type SampleQuiz = {
   ];
 };
 
+type GetQuizSchedulePayload = {
+  scheduleId: string;
+  instituteId: number;
+  assignmentId: number;
+  quizId: string;
+  studentId: string;
+  courseId: string;
+  scheduleDate: string;
+  guid: string;
+  status: string;
+};
+
+type QuizSchedule = {
+  scheduleId: string;
+  instituteId: number;
+  assignmentId: number;
+  quizId: number;
+  studentId: number;
+  courseId: number;
+  guid: string;
+  scheduleDate: string;
+  status: number;
+};
+
 type QuizStore = {
   allQuizzes: Quiz[];
   selectedQuiz?: Quiz;
   sampleQuiz?: SampleQuiz[];
   isConfigAvailable: boolean;
   isAutomatingQuizSetup: boolean;
+  selectedQuizSchedule: QuizSchedule[];
   selectedQuizConfig: QuizConfiguration;
   defaultConfiguration: QuizConfigurationWithOnlyProcOpt;
   customizableQuizConfig: QuizConfigurationWithOnlyProcOpt;
@@ -786,6 +784,26 @@ type StudentReportAndJourneyDetails = {
   comments: string;
 };
 
+type ChatMessage = {
+  isStudent: boolean;
+  message: string;
+  timestamp: string;
+};
+
+type ChatStore = {
+  createConnection: (roomName: string, userName: string) => void;
+  studentDisconnected: boolean;
+  instructorDisconnected: boolean;
+  recievedMsg: ChatMessage[];
+  sentMsg: ChatMessage[];
+  socketInstance: Socket<ClientToServerEvents, ServerToClientEvents> | null;
+  sendMessage: (
+    roomName: string,
+    messageType: string,
+    msgToSend: ChatMessage
+  ) => void;
+};
+
 export type {
   AllDates,
   Quiz,
@@ -796,6 +814,8 @@ export type {
   NotificationType,
   PaymentsTableColumns,
   AccessDetails,
+  ChatMessage,
+  ChatStore,
   StudentReportAndJourneyDetails,
   IconMap,
   FullNameMap,
@@ -803,6 +823,8 @@ export type {
   StudentDetails,
   QuizConfiguration,
   QuizConfigurationWithOnlyProcOpt,
+  GetQuizSchedulePayload,
+  QuizSchedule,
   StudentJourneyStore,
   SaveLtiInsituteDataType,
   AdminTableDataTypes,

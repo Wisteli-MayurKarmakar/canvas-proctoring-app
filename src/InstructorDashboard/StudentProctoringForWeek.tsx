@@ -7,9 +7,9 @@ import LiveStreaming from "./Modals/LiveStreaming";
 
 type Student = {
   email: string;
-  name: string;
+  firstName: string;
   quizId: number;
-  schedule: string;
+  scheduleDate: string;
 };
 
 const StudentProctoringForWeek: React.FC = (): JSX.Element => {
@@ -61,10 +61,10 @@ const StudentProctoringForWeek: React.FC = (): JSX.Element => {
                   >
                     <div className="flex flex-col w-full h-full items-center justify-center gap-4 p-2">
                       <p className="text-lg text-center truncate w-full font-semibold">
-                        {student.name}
+                        {student.firstName}
                       </p>
                       <p className="text-sm text-center break-before-right font-semibold">
-                        {moment(student.schedule + "Z").format(
+                        {moment(student.scheduleDate + "Z").format(
                           "MM/DD/YYYY hh:mm a"
                         )}
                       </p>

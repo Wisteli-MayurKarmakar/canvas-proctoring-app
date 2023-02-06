@@ -2,7 +2,7 @@ import { Button, message, Modal } from "antd";
 import React, { useEffect, useState } from "react";
 import { Table } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import { useAppStore } from "../../store/AppSotre";
+import { getAccessRecordsByGuid, useAppStore } from "../../store/AppSotre";
 import axios from "axios";
 import { saveLtiStudentProfile, updateLtiAccessRecord } from "../../apiConfigs";
 import moment from "moment";
@@ -56,14 +56,10 @@ const AddInstructor: React.FC<Props> = ({ visible, close }): JSX.Element => {
   const [firstName, setFirstName] = useState<string>("");
   const [lastName, setLastName] = useState<string>("");
   const [email, setEmail] = useState<string>("");
-  const [baseAccess, setBaseAccess] = useState<boolean>(false);
-  const [reportReview, setReportReview] = useState<boolean>(false);
-  const [liveLaunch, setLiveLaunch] = useState<boolean>(false);
-  const [liveProctoring, setLiveProctoring] = useState<boolean>(false);
-  const [lockdownBrowser, setLockdownBrowser] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
-  const [status, setStatus] = useState<string>("Inactive");
+  const [id, setId] = useState<string>("");
+  const [status, setStatus] = useState<string>("Active");
   const [feildValidation, setFeildValidation] = useState<FeildValidation>({
     firstName: {
       name: "First Name",
@@ -87,19 +83,60 @@ const AddInstructor: React.FC<Props> = ({ visible, close }): JSX.Element => {
     (state) => state
   );
 
-  const handleLDBSelect = (value: boolean) => {
-    setLiveLaunch(false);
-    setLiveProctoring(false);
-    setReportReview(false);
-    setLockdownBrowser(value);
+  let isNumber = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (
+      !/[0-9]/.test(e.key) &&
+      !(e.key === "Backspace") &&
+      !(e.key === "Delete")
+    ) {
+      e.preventDefault();
+    }
+  };
+
+  const handleId = (event: any) => {
+    setId(event.target.value);
   };
 
   const columns: ColumnsType<ColumnDataType> = [
     {
       dataIndex: "",
+      title: "Id",
+      key: "id",
+      render: (_) => {
+        return (
+          <input
+            type="text"
+            disabled={isSaving}
+            value={id}
+            maxLength={5}
+            onKeyDown={(e) => isNumber(e)}
+            onChange={(e: any) => handleId(e)}
+            className="
+              form-control
+              block
+              w-full
+              px-3
+              py-1.5
+              text-base
+              font-normal
+              text-gray-700
+              bg-white bg-clip-padding
+              border border-solid border-gray-300
+              rounded
+              transition
+              ease-in-out
+              m-0
+              focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none
+            "
+            id="firstName"
+          />
+        );
+      },
+    },
+    {
+      dataIndex: "",
       title: "First Name",
       key: "firstName",
-      className: "!px-1",
       render: (_) => {
         return (
           <input
@@ -133,7 +170,6 @@ const AddInstructor: React.FC<Props> = ({ visible, close }): JSX.Element => {
       dataIndex: "",
       title: "Last Name",
       key: "lastName",
-      className: "!px-1",
       render: (_) => {
         return (
           <input
@@ -167,7 +203,6 @@ const AddInstructor: React.FC<Props> = ({ visible, close }): JSX.Element => {
       dataIndex: "",
       title: "Email",
       key: "email",
-      className: "!px-1",
       render: (_) => {
         return (
           <input
@@ -202,125 +237,8 @@ const AddInstructor: React.FC<Props> = ({ visible, close }): JSX.Element => {
       title: "Status",
       key: "status",
       width: "150px",
-      className: "!px-0",
       render: (_) => {
-        return (
-          <select
-            id="status"
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-            className="form-select appearance-none
-            block
-            w-full
-            px-3
-            py-1.5
-            text-base
-            font-normal
-            text-gray-700
-            bg-white bg-clip-padding bg-no-repeat
-            border border-solid border-gray-300
-            rounded
-            transition
-            ease-in-out
-            m-0
-            focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none"
-          >
-            <option value="inactive">
-              Inactive
-            </option>
-            <option value="active">Active</option>
-          </select>
-        );
-      },
-    },
-    {
-      dataIndex: "",
-      title: "Base Access",
-      key: "baseAccess",
-      render: (_) => {
-        return (
-          <input
-            id="default-checkbox"
-            checked={baseAccess}
-            disabled={isSaving}
-            onChange={(e) => setBaseAccess(e.target.checked)}
-            type="checkbox"
-            value=""
-            className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-          />
-        );
-      },
-    },
-    {
-      dataIndex: "",
-      title: "Report Review",
-      key: "reportReview",
-      render: (_) => {
-        return (
-          <input
-            id="default-checkbox"
-            checked={reportReview}
-            onChange={(e) => setReportReview(e.target.checked)}
-            disabled={lockdownBrowser || !baseAccess || isSaving}
-            type="checkbox"
-            value=""
-            className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-          />
-        );
-      },
-    },
-    {
-      dataIndex: "",
-      title: "Live Launch",
-      key: "liveLaunch",
-      render: (_) => {
-        return (
-          <input
-            id="default-checkbox"
-            checked={liveLaunch}
-            onChange={(e) => setLiveLaunch(e.target.checked)}
-            disabled={lockdownBrowser || !baseAccess || isSaving}
-            type="checkbox"
-            value=""
-            className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-          />
-        );
-      },
-    },
-    {
-      dataIndex: "",
-      title: "Live Proctoring",
-      key: "liveProctoring",
-      render: (_) => {
-        return (
-          <input
-            id="default-checkbox"
-            checked={liveProctoring}
-            onChange={(e) => setLiveProctoring(e.target.checked)}
-            disabled={lockdownBrowser || !baseAccess || isSaving}
-            type="checkbox"
-            value=""
-            className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-          />
-        );
-      },
-    },
-    {
-      dataIndex: "",
-      title: "Lockdown Browser",
-      key: "lockdownBrowser",
-      render: (_) => {
-        return (
-          <input
-            id="default-checkbox"
-            disabled={!baseAccess || isSaving}
-            checked={lockdownBrowser}
-            onChange={(e) => handleLDBSelect(e.target.checked)}
-            type="checkbox"
-            value=""
-            className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-          />
-        );
+        return <p>{status}</p>
       },
     },
   ];
@@ -391,6 +309,12 @@ const AddInstructor: React.FC<Props> = ({ visible, close }): JSX.Element => {
       if (response.status === 200) {
         message.success("Successfully added instructor");
         setIsSaving(false);
+        let records = await getAccessRecordsByGuid(
+          urlParamsData.guid as string
+        );
+        useAppStore.setState({
+          accessRecords: records,
+        });
       }
     } catch (e) {
       setIsSaving(false);
@@ -398,19 +322,23 @@ const AddInstructor: React.FC<Props> = ({ visible, close }): JSX.Element => {
   };
 
   const createAccessRecord = async () => {
+    if (id === "") {
+      message.error("Please enter an id");
+      return;
+    }
     if (userAccessDetails) {
       let payload = {
         guid: urlParamsData.guid,
-        userId: 1,
+        userId: id,
         instructorId: userAccessDetails.instructorId,
         instituteId: tokenData.instituteId,
         accessType: "TeacherEnrollment",
-        status: status === "Active" ? "1" : "N",
-        aiQuiz: baseAccess ? "Y" : "N",
-        aiWithReport: reportReview ? "Y" : "N",
-        liveLaunch: liveLaunch ? "Y" : "N",
-        liveProctor: liveProctoring ? "Y" : "N",
-        lockdownBrowser: lockdownBrowser ? "Y" : "N",
+        status: "Y",
+        aiQuiz: "N",
+        aiWithReport: "N",
+        liveLaunch: "N",
+        liveProctor: "N",
+        lockdownBrowser: "N",
       };
 
       try {
@@ -465,7 +393,7 @@ const AddInstructor: React.FC<Props> = ({ visible, close }): JSX.Element => {
             Incorrect/ not sufficient details entered.
           </small>
         )}
-        <Table columns={columns} dataSource={dataSource} pagination={false} />
+        <Table columns={columns} dataSource={dataSource} pagination={false} bordered/>
       </div>
       {isSaving && (
         <WaitingModal

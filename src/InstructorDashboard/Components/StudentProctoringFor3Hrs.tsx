@@ -9,9 +9,9 @@ type Props = {};
 
 type Student = {
   email: string;
-  name: string;
+  firstName: string;
   quizId: number;
-  schedule: string;
+  scheduleDate: string;
 };
 
 const StudentProctoringFor3Hrs: React.FC<Props> = (props): JSX.Element => {
@@ -59,20 +59,20 @@ const StudentProctoringFor3Hrs: React.FC<Props> = (props): JSX.Element => {
 
       response.data.forEach((item: Student) => {
         if (
-          moment(item.schedule + "Z").isSameOrAfter(timeAfOneHrs) &&
-          moment(item.schedule + "Z").isSameOrBefore(timeAfTwoHrs)
+          moment(item.scheduleDate + "Z").isSameOrAfter(timeAfOneHrs) &&
+          moment(item.scheduleDate + "Z").isSameOrBefore(timeAfTwoHrs)
         ) {
           firstBatchStu.push(item);
         }
 
         if (
-          moment(item.schedule + "Z").isSameOrAfter(timeAfTwoHrs) &&
-          moment(item.schedule + "Z").isSameOrBefore(timeAfThreeHrs)
+          moment(item.scheduleDate + "Z").isSameOrAfter(timeAfTwoHrs) &&
+          moment(item.scheduleDate + "Z").isSameOrBefore(timeAfThreeHrs)
         ) {
           secondBatchStu.push(item);
         }
 
-        if (moment(item.schedule + "Z").isSameOrAfter(timeAfThreeHrs)) {
+        if (moment(item.scheduleDate + "Z").isSameOrAfter(timeAfThreeHrs)) {
           thirdBatchStu.push(item);
         }
       });
@@ -129,10 +129,10 @@ const StudentProctoringFor3Hrs: React.FC<Props> = (props): JSX.Element => {
                         >
                           <div className="flex flex-col w-full h-full items-center justify-center gap-4 p-2">
                             <p className="text-lg text-center truncate w-full font-semibold">
-                              {student.name}
+                              {student.firstName}
                             </p>
                             <p className="text-sm text-center break-before-right font-semibold">
-                              {moment(student.schedule + "Z").format(
+                              {moment(student.scheduleDate + "Z").format(
                                 "MM/DD/YYYY hh:mm a"
                               )}
                             </p>
@@ -141,7 +141,7 @@ const StudentProctoringFor3Hrs: React.FC<Props> = (props): JSX.Element => {
                               onClick={() => showLiveStreamModal(student)}
                               className={`inline-block px-6 py-2.5 font-medium text-xs 
                       leading-tight rounded-full ${
-                        selectedStudent && selectedStudent.name === student.name
+                        selectedStudent && selectedStudent.firstName === student.firstName
                           ? "bg-blue-400 text-white"
                           : "bg-gray-300 text-black border border-blue-400  hover:bg-blue-400 hover:text-white transition duration-150 ease-in-out"
                       } 
@@ -175,10 +175,10 @@ const StudentProctoringFor3Hrs: React.FC<Props> = (props): JSX.Element => {
                           >
                             <div className="flex flex-col w-full h-full items-center justify-center gap-4 p-2">
                               <p className="text-lg text-center truncate w-full font-semibold">
-                                {student.name}
+                                {student.firstName}
                               </p>
                               <p className="text-sm text-center break-before-right font-semibold">
-                                {moment(student.schedule + "Z").format(
+                                {moment(student.scheduleDate + "Z").format(
                                   "MM/DD/YYYY hh:mm a"
                                 )}
                               </p>
@@ -187,7 +187,7 @@ const StudentProctoringFor3Hrs: React.FC<Props> = (props): JSX.Element => {
                                 onClick={() => showLiveStreamModal(student)}
                                 className={`inline-block px-6 py-2.5 font-medium text-xs 
                     leading-tight rounded-full ${
-                      selectedStudent && selectedStudent.name === student.name
+                      selectedStudent && selectedStudent.firstName === student.firstName
                         ? "bg-blue-400 text-white"
                         : "bg-gray-300 text-black border border-blue-400  hover:bg-blue-400 hover:text-white transition duration-150 ease-in-out"
                     } 
@@ -221,10 +221,10 @@ const StudentProctoringFor3Hrs: React.FC<Props> = (props): JSX.Element => {
                         >
                           <div className="flex flex-col w-full h-full items-center justify-center gap-4 p-2">
                             <p className="text-lg text-center truncate w-full font-semibold">
-                              {student.name}
+                              {student.firstName}
                             </p>
                             <p className="text-sm text-center break-before-right font-semibold">
-                              {moment(student.schedule + "Z").format(
+                              {moment(student.scheduleDate + "Z").format(
                                 "MM/DD/YYYY hh:mm a"
                               )}
                             </p>
@@ -233,7 +233,7 @@ const StudentProctoringFor3Hrs: React.FC<Props> = (props): JSX.Element => {
                               onClick={() => showLiveStreamModal(student)}
                               className={`inline-block px-6 py-2.5 font-medium text-xs 
                     leading-tight rounded-full ${
-                      selectedStudent && selectedStudent.name === student.name
+                      selectedStudent && selectedStudent.firstName === student.firstName
                         ? "bg-blue-400 text-white"
                         : "bg-gray-300 text-black border border-blue-400  hover:bg-blue-400 hover:text-white transition duration-150 ease-in-out"
                     } 

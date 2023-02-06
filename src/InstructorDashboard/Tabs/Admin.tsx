@@ -1,14 +1,19 @@
-import React, { useState } from "react";
-import Institutions from "../Components/Institutions";
-import Billing from "../Components/Billing";
-import Payments from "../Components/Payments";
-import Access from "../Components/Access";
+import React, { lazy, Suspense, useState } from "react";
+import LazyLoading from "../../CommonUtilites/LazyLoadFallback";
+// import Institutions from "../Components/Institutions";
+// import Billing from "../Components/Billing";
+// import Payments from "../Components/Payments";
+// import Access from "../Components/Access";
 
 const Admin: React.FC = (): JSX.Element => {
   const [subOptionSelected, setSubOptionSelected] =
     useState<string>("Payments");
 
   const subMenus: string[] = ["Institute", "Billing", "Access", "Payments"];
+  const Institutions = lazy(() => import("../Components/Institutions"));
+  const Billing = lazy(() => import("../Components/Billing"));
+  const Payments = lazy(() => import("../Components/Payments"));
+  const Access = lazy(() => import("../Components/Access"));
 
   const handleSubOptionSelection = (option: string) => {
     setSubOptionSelected(option);
@@ -34,10 +39,12 @@ const Admin: React.FC = (): JSX.Element => {
           );
         })}
       </div>
-      {subOptionSelected === "Institute" && <Institutions />}
-      {subOptionSelected === "Billing" && <Billing />}
-      {subOptionSelected === "Payments" && <Payments />}
-      {subOptionSelected === "Access" && <Access />}
+      <Suspense fallback={<LazyLoading />}>
+        {subOptionSelected === "Institute" && <Institutions />}
+        {subOptionSelected === "Billing" && <Billing />}
+        {subOptionSelected === "Payments" && <Payments />}
+        {subOptionSelected === "Access" && <Access />}
+      </Suspense>
     </div>
   );
 };

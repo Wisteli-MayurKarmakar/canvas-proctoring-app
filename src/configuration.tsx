@@ -71,6 +71,18 @@ interface Props {
   toolConsumerGuid: any;
 }
 
+type QuizSchedulePayload = {
+  scheduleId: string;
+  instituteId: number;
+  assignmentId: number;
+  quizId: number;
+  studentId: number;
+  courseId: number;
+  scheduleDate: string;
+  status: number;
+  guid: string;
+};
+
 const iconSize = "";
 
 const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
@@ -116,6 +128,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
     setAllQuizzes,
     isAutomatingQuizSetup,
     isConfigAvailable,
+    selectedQuizSchedule,
   } = useQuizStore((state) => state);
 
   const fullNameMap: FullNameMap = {
@@ -293,7 +306,6 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
       let response = await axios.get(
         `${autoCompleteSetup}${props.courseId}/${selectedQuiz.title}/${selectedQuiz.id}/${tokenData.lmsAccessToken}/${tokenData?.instituteId}`
       );
-      setIsSaving(!isSaving);
       setShowWaitingModal(false);
     } catch (e) {
       setShowWaitingModal(false);
@@ -390,7 +402,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
     }
 
     let config: QuizConfiguration = { ...selectedQuizConfig };
-    config.idInstructor = "";
+    config.idInstructor = urlParamsData.studentId as string;
     config.idLtiCanvasConfig = uuid();
     config.idUser = props.id;
     config.quizId = selectedQuiz.id;
@@ -437,6 +449,9 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
         }
         // setQuizConfig(config);
         message.success("Configurations saved successfully");
+        // useQuizStore.setState({
+        //   isConfigAvailable: true,
+        // });
         setConfigSaveStatus(true);
         if (isSaving) {
           setIsSaving(!isSaving);
@@ -500,6 +515,20 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
     prepareDefaultSettingsOptionsChecked();
   }, []);
 
+  const getQuizSchedule = (quizId: string) => {
+    let payload: QuizSchedulePayload = {
+      scheduleId: "",
+      instituteId: parseInt(tokenData.instituteId as string),
+      assignmentId: 0,
+      quizId: parseInt(urlParamsData.quizId as string),
+      studentId: parseInt(urlParamsData.studentId as string),
+      courseId: parseInt(urlParamsData.courseId as string),
+      scheduleDate: "",
+      status: 0,
+      guid: urlParamsData.guid as string,
+    };
+  };
+
   const handleSelectQuiz = (quiz: any) => {
     quizStoreState.setSelectedQuiz(quiz);
     setSelectedQuiz(quiz);
@@ -514,6 +543,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
     quizStat[quiz.title] = true;
     setQuizzesStat(quizStat);
     setIsReset(false);
+    getQuizSchedule(quiz.id);
   };
 
   const handleShowConfig = () => {
@@ -661,7 +691,9 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
     try {
       let payload = {
         quizId: "",
-        quizName: `Test Proctoring`,
+        quizName: `Test Proctoring - ${moment().format(
+          "MM.DD.YYYY hh:mm:ss a"
+        )}`,
         description: "",
         quizType: "practice_quiz",
         shuffleAnswers: "false",
@@ -670,8 +702,8 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
         timeLimit: 2,
         quizDates: [
           {
-            dueAt: moment().toISOString(),
-            unlockAt: moment().toISOString(),
+            dueAt: moment().add(2, "weeks").toISOString(),
+            unlockAt: moment().subtract(1, "days").toISOString(),
             lockAt: moment().add(1, "years").toISOString(),
           },
         ],
@@ -685,7 +717,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
       );
       if (response.status === 200) {
         setNewQuiz(response.data[0]);
-        let responseAddQuest = await addSampleQuestions(
+        await addSampleQuestions(
           response.data[response.data.length - 1].id,
           response.data[response.data.length - 1].title,
           tokenData.instituteId as string,
@@ -694,6 +726,8 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
           urlParamsData.guid as string,
           urlParamsData.userId as string
         );
+        // let courseId: string = urlParamsData.courseId as string;
+        // getQuizzesByCourseId(courseId);
         setIsCreatingQuiz(false);
       } else {
         setIsCreatingQuiz(false);
@@ -725,6 +759,20 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
     </Menu>
   );
 
+  let scheduleDate: string = "";
+  let quizId: string = "";
+
+  if (selectedQuizSchedule.length > 0) {
+    quizId =
+      selectedQuizSchedule[selectedQuizSchedule.length - 1].quizId.toString();
+    const timezoneOffset: string = `${Math.abs(moment().utcOffset())}Z`;
+    scheduleDate = moment(
+      `${
+        selectedQuizSchedule[selectedQuizSchedule.length - 1].scheduleDate
+      }.${timezoneOffset}`
+    ).format("MM.DD.YYYY HH:mm a");
+  }
+
   return (
     <>
       {courseDetails.name && (
@@ -754,6 +802,10 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
         <div className="inline-flex flex-wrap gap-4 justify-center h-full w-full max-h-72 overflow-y-scroll pt-4">
           {quizzes ? (
             quizzes.map((quiz: any, index: number) => {
+              let quizTileWidth: string = "w-36";
+              if (quiz.id === quizId) {
+                quizTileWidth = "w-40";
+              }
               return (
                 <div
                   style={{
@@ -761,16 +813,21 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
                   }}
                   key={index}
                   onClick={() => handleSelectQuiz(quiz)}
-                  className={`transition ease-in-out delay-50 hover:-translate-y-1 hover:scale-110 duration-200 
-                flex border box-border items-center justify-center w-36 h-32 bg-white shadow-md text-center ${
-                  quizzesStat[quiz.title]
-                    ? "hover:bg-blue-400 hover:text-white bg-blue-400 text-white"
-                    : "hover:bg-blue-400 hover:text-white text-black"
-                } rounded`}
+                  className={`flex flex-col w-full justify-center transition ease-in-out delay-50 hover:-translate-y-1 hover:scale-110 duration-200 
+                flex border box-border items-center justify-center ${quizTileWidth} h-32 bg-white shadow-md text-center ${
+                    quizzesStat[quiz.title]
+                      ? "hover:bg-blue-400 hover:text-white bg-blue-400 text-white"
+                      : "hover:bg-blue-400 hover:text-white text-black"
+                  } rounded`}
                 >
                   <p className="font-semibold text-center break-words w-full p-2">
                     {quiz.title}
                   </p>
+                  {selectedQuizSchedule.length > 0 && quiz.id === quizId && (
+                    <p className="font-semibold text-center text-sm w-full px-2">
+                      Schedule Date: {scheduleDate}
+                    </p>
+                  )}
                 </div>
               );
             })
@@ -1029,7 +1086,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
             {!isNotAllowed && (
               <div className="flex flex-row pt-4 gap-5 pb-4">
                 <button
-                  disabled={isSaving}
+                  // disabled={isSaving}
                   onClick={handleSubmit}
                   className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
                 >

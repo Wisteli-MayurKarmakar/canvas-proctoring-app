@@ -48,24 +48,25 @@ const QuizRules: React.FC<Props> = (props) => {
   if (selectedAssignmentConfigurations) {
     Object.keys(selectedAssignmentConfigurations).forEach((key: string) => {
       if (
-        key !== "idLtiCanvasConfig" &&
-        key !== "idUser" &&
-        key !== "toolConsumerInstanceGuid" &&
-        key !== "courseId" &&
-        key !== "quizId" &&
-        key !== "assignmentId" &&
-        key !== "whitelistPages" &&
-        key !== "moduleId" &&
-        key !== "timeLimit" &&
-        key !== "createDate" &&
-        key !== "createUser" &&
-        key !== "guid" &&
-        key !== "modifyDate" &&
-        key !== "modifyUser"
+        // key !== "idLtiCanvasConfig" &&
+        // key !== "idUser" &&
+        // key !== "toolConsumerInstanceGuid" &&
+        // key !== "courseId" &&
+        // key !== "quizId" &&
+        // key !== "assignmentId" &&
+        // key !== "whitelistPages" &&
+        // key !== "moduleId" &&
+        // key !== "timeLimit" &&
+        // key !== "createDate" &&
+        // key !== "createUser" &&
+        // key !== "guid" &&
+        // key !== "modifyDate" &&
+        // key !== "modifyUser" &&
+        typeof selectedAssignmentConfigurations[
+          key as keyof QuizConfiguration
+        ] === "boolean"
       ) {
-        if (
-          selectedAssignmentConfigurations[key as keyof QuizConfiguration]
-        ) {
+        if (selectedAssignmentConfigurations[key as keyof QuizConfiguration]) {
           allowedRules[key] = selectedAssignmentConfigurations[
             key as keyof AssignmentConfiguration
           ] as boolean;
@@ -147,15 +148,17 @@ const QuizRules: React.FC<Props> = (props) => {
           {allowedRules &&
             Object.keys(allowedRules).map((key: string, index: number) => {
               if (
-                key !== "idLtiCanvasConfig" &&
-                key !== "idUser" &&
-                key !== "toolConsumerInstanceGuid" &&
-                key !== "courseId" &&
-                key !== "quizId" &&
-                key !== "assignmentId" &&
-                key !== "whitelistPages" &&
-                key !== "moduleId" &&
-                key !== "timeLimit"
+                // key !== "idLtiCanvasConfig" &&
+                // key !== "idUser" &&
+                // key !== "toolConsumerInstanceGuid" &&
+                // key !== "courseId" &&
+                // key !== "quizId" &&
+                // key !== "assignmentId" &&
+                // key !== "whitelistPages" &&
+                // key !== "moduleId" &&
+                // key !== "timeLimit"
+                typeof allowedRules[key as keyof QuizConfiguration] ===
+                "boolean"
               ) {
                 if (allowedRules[key as keyof AssignmentConfiguration]) {
                   return (

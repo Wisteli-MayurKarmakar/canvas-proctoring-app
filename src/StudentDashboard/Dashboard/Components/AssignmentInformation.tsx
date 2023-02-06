@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { useAssignmentStore } from "../../../store/StudentDashboardStore";
 import { useAppStore } from "../../../store/AppSotre";
 import Timer from "../../../CommonUtilites/Timer";
@@ -17,6 +17,7 @@ const AssignmentsInfo: React.FC = (): JSX.Element | null => {
     isNewTabOpen,
     scheduleExpired,
     gotoQuiz,
+    instructorSchedulesAvailable,
   } = useAssignmentStore((state) => state);
 
   let assignmentInfo: JSX.Element | null = null;
@@ -52,6 +53,11 @@ const AssignmentsInfo: React.FC = (): JSX.Element | null => {
               assignment from the left hand side menu of canvas page or through
               the corresponding module.
             </span>
+            {instructorSchedulesAvailable && (
+              <span className="text-lg font-medium break-before-right text-center text-red-500">
+                This assignment is scheduled by your instructor and can't be reshceduled. Please contact your instructor.
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -134,11 +140,18 @@ const AssignmentsInfo: React.FC = (): JSX.Element | null => {
                           <p className="text-lg font-semibold text-center">
                             Assignment selected: {selectedAssignment.name}.
                           </p>
-                          <p className="text-lg font-semibold text-center">
-                            The schedule date/ time is expired. Please click{" "}
-                            <b>Reschedule</b> button to re-schedule the
-                            assignment. Thanks
-                          </p>
+                          {instructorSchedulesAvailable ? (
+                            <p className="text-lg font-semibold text-center">
+                              The schedule date/ time set by the instructor has
+                              expired. Please contact your instructor. Thanks
+                            </p>
+                          ) : (
+                            <p className="text-lg font-semibold text-center">
+                              The schedule date/ time is expired. Please click{" "}
+                              <b>Reschedule</b> button to re-schedule the
+                              assignment. Thanks
+                            </p>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -253,11 +266,23 @@ const AssignmentsInfo: React.FC = (): JSX.Element | null => {
                           <p className="text-lg font-semibold text-center">
                             Assignment selected: {selectedAssignment.name}.
                           </p>
-                          <p className="text-lg font-semibold text-center">
+                          {/* <p className="text-lg font-semibold text-center">
                             The schedule date/ time is expired. Please click{" "}
                             <b>Reschedule</b> button to re-schedule the
                             assignment. Thanks
-                          </p>
+                          </p> */}
+                          {instructorSchedulesAvailable ? (
+                            <p className="text-lg font-semibold text-center">
+                              The schedule date/ time set by the instructor has
+                              expired. Please contact your instructor. Thanks
+                            </p>
+                          ) : (
+                            <p className="text-lg font-semibold text-center">
+                              The schedule date/ time is expired. Please click{" "}
+                              <b>Reschedule</b> button to re-schedule the
+                              assignment. Thanks
+                            </p>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -365,7 +390,6 @@ const AssignmentsInfo: React.FC = (): JSX.Element | null => {
           if (selectedAssignment) {
             if (selectedAssignment.studentAuthed) {
               if (schedulesAvailable) {
-                console.log("here")
                 if (scheduleExpired) {
                   assignmentInfo = (
                     <div

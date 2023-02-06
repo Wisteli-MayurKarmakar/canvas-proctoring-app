@@ -16,6 +16,7 @@ import {
 import { useAppStore } from "../store/AppSotre";
 import moment from "moment";
 import { CheckCircleOutlined, CloseCircleOutlined } from "@ant-design/icons";
+import { QuizSchedule } from "../AppTypes";
 
 const Authentication: React.FC = (): JSX.Element => {
   let [quizzes, setQuizzes] = React.useState<Object | null>(null);
@@ -55,9 +56,11 @@ const Authentication: React.FC = (): JSX.Element => {
       title: `By Examd`,
       render: (row: any) => {
         if (row.examdLiveLaunch === "Y") {
-          return <CheckCircleOutlined style={{color: "green", fontSize: 20}}/>;
+          return (
+            <CheckCircleOutlined style={{ color: "green", fontSize: 20 }} />
+          );
         }
-        return <CloseCircleOutlined style={{color: "red", fontSize: 20}}/>;
+        return <CloseCircleOutlined style={{ color: "red", fontSize: 20 }} />;
       },
     },
     {
@@ -93,12 +96,22 @@ const Authentication: React.FC = (): JSX.Element => {
       title: `Schedule Date`,
       render: (row: any) => {
         if (assingmentSchedules) {
-          let timezoneOffset: string = `.${Math.abs(
-            moment().utcOffset()
-          ).toString()}Z`;
-          return moment(row.scheduleDate + timezoneOffset).format(
-            "MM-DD-YYYY hh:mm a"
-          );
+          let record = null;
+          assingmentSchedules.forEach((item: QuizSchedule) => {
+            const studentId: number = parseInt(row.id);
+            if (studentId === item.studentId) {
+              record = item;
+            }
+          });
+          if (record) {
+            let timezoneOffset: string = `.${Math.abs(
+              moment().utcOffset()
+            ).toString()}Z`;
+            return moment(record["scheduleDate"] + timezoneOffset).format(
+              "MM-DD-YYYY hh:mm a"
+            );
+          }
+          return "N/ A";
         }
         if (assingmentSchedules === false) {
           return "Not scheduled";

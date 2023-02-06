@@ -1,8 +1,9 @@
-import React, { useEffect } from "react";
+import React, { useEffect, lazy, Suspense } from "react";
 import axios from "axios";
 import DummyPage from "./dummyPage";
-import Quizzes from "./quizzes";
-import InstructorMenu from "./instructorMenu";
+import "antd/dist/antd.css"
+// import Quizzes from "./quizzes";
+// import InstructorMenu from "./instructorMenu";
 import { useAppStore } from "./store/AppSotre";
 import { useCommonStudentDashboardStore } from "./store/StudentDashboardStore";
 
@@ -30,11 +31,12 @@ function App() {
   const studentDashboardStore = useCommonStudentDashboardStore(
     (state) => state
   );
+  const InstructorDashboard = lazy(() => import("./instructorMenu"));
+  const StudentDashboard = lazy(() => import("./quizzes"));
   const { setLoggedInUserEnrollmentType, setEnrollments } =
     useCommonStudentDashboardStore((state) => state);
-  const { setUrlParamsData, setTokenData, canAccessApp } = useAppStore(
-    (state) => state
-  );
+  const { setUrlParamsData, setTokenData, canAccessApp, getAccessRecords } =
+    useAppStore((state) => state);
 
   let userName = "ca6a42188e970ab77fab0e34";
   let password = "e5aa447e19ee4180b5ba1364";
@@ -71,21 +73,6 @@ function App() {
     }
   }, [tokenData, urlParamsData]);
 
-  // const getAccessRecordsByGuid = async (
-  //   guid: string,
-  // ) => {
-  //   try {
-  //     let response = await axios.get(`${getLtiAccessByGuid}/${guid}`);
-
-  //     if (response.status === 200) {
-  //       return response.data;
-  //     }
-  //   } catch (err) {
-  //     return [];
-  //   }
-  //   return [];
-  // };
-
   const setUserId = async () => {
     let url_string = window.location.href;
     let url = new URL(url_string);
@@ -100,9 +87,6 @@ function App() {
     let newTab = url.searchParams.get("newTab");
     let isAuthed = url.searchParams.get("auth");
     let guid: string = "";
-
-    //use url -->
-    //http://localhost:3000/lti/config?studentId=43&assignmentId=366&loginId=ncghosh@gmail.com&courseId=24&userId=1&courseId=24&invokeUrl=https://canvas.examd.online/courses/24/external_content/success/external_tool_redirect&accountId=4&toolConsumerGuid=Examd
 
     if (!accId) {
       accId = "1";
@@ -148,6 +132,12 @@ function App() {
     );
   };
 
+  useEffect(() => {
+    if (urlParamsData.guid && urlParamsData.studentId) {
+      getAccessRecords(urlParamsData.guid, urlParamsData.studentId);
+    }
+  }, [urlParamsData.guid, urlParamsData.guid]);
+
   const getCanvasToken = async () => {
     if (!urlParamsData.invokeUrl) {
       return;
@@ -184,45 +174,84 @@ function App() {
     urlParamsData.invokeUrl &&
     tokenData.lmsAccessToken
   ) {
-    if (
-      studentDashboardStore.loggedInUserEnrollmentType === "TeacherEnrollment"
-    ) {
-      if (canAccessApp) {
-        return (
-          <InstructorMenu
-            auth={tokenData}
-            emailAsId={urlParamsData.userId}
-            id={urlParamsData.userId}
-            courseId={urlParamsData.courseId}
-            toolConsumerGuid={urlParamsData.guid}
-            studentId={urlParamsData.studentId}
-            invokeUrl={urlParamsData.invokeUrl}
-            accountId={urlParamsData.accountId}
-          />
-        );
-      }
-      return <UnauthorizedAccessPage />;
-    }
-    if (
-      studentDashboardStore.loggedInUserEnrollmentType === "StudentEnrollment"
-    ) {
-      return (
-        <Quizzes
-          courseId={urlParamsData.courseId}
-          authToken={tokenData.lmsAccessToken}
-          student={student}
-          assignmentId={assignmentId}
-          pass={password}
-          id={urlParamsData.userId}
-          isNewTab={isNewTab}
-          toolConsumerGuid={urlParamsData.guid}
-          isAuthed={authed}
-          studentId={urlParamsData.studentId}
-          accountId={urlParamsData.accountId}
-          invokeUrl={urlParamsData.invokeUrl}
-        />
-      );
-    }
+    return (
+      <Suspense fallback={<DummyPage />}>
+        {studentDashboardStore.loggedInUserEnrollmentType ===
+        "TeacherEnrollment" ? (
+          canAccessApp ? (
+            <InstructorDashboard
+              auth={tokenData}
+              emailAsId={urlParamsData.userId}
+              id={urlParamsData.userId}
+              courseId={urlParamsData.courseId}
+              toolConsumerGuid={urlParamsData.guid}
+              studentId={urlParamsData.studentId}
+              invokeUrl={urlParamsData.invokeUrl}
+              accountId={urlParamsData.accountId}
+            />
+          ) : (
+            <UnauthorizedAccessPage />
+          )
+        ) : (
+          studentDashboardStore.loggedInUserEnrollmentType ===
+            "StudentEnrollment" && (
+            <StudentDashboard
+              courseId={urlParamsData.courseId}
+              authToken={tokenData.lmsAccessToken}
+              student={student}
+              assignmentId={assignmentId}
+              pass={password}
+              id={urlParamsData.userId}
+              isNewTab={isNewTab}
+              toolConsumerGuid={urlParamsData.guid}
+              isAuthed={authed}
+              studentId={urlParamsData.studentId}
+              accountId={urlParamsData.accountId}
+              invokeUrl={urlParamsData.invokeUrl}
+            />
+          )
+        )}
+      </Suspense>
+    );
+    // if (
+    //   studentDashboardStore.loggedInUserEnrollmentType === "TeacherEnrollment"
+    // ) {
+    //   if (canAccessApp) {
+    //     return (
+    //       <InstructorMenu
+    //         auth={tokenData}
+    //         emailAsId={urlParamsData.userId}
+    //         id={urlParamsData.userId}
+    //         courseId={urlParamsData.courseId}
+    //         toolConsumerGuid={urlParamsData.guid}
+    //         studentId={urlParamsData.studentId}
+    //         invokeUrl={urlParamsData.invokeUrl}
+    //         accountId={urlParamsData.accountId}
+    //       />
+    //     );
+    //   }
+    //   return <UnauthorizedAccessPage />;
+    // }
+    // if (
+    //   studentDashboardStore.loggedInUserEnrollmentType === "StudentEnrollment"
+    // ) {
+    //   return (
+    //     <Quizzes
+    //       courseId={urlParamsData.courseId}
+    //       authToken={tokenData.lmsAccessToken}
+    //       student={student}
+    //       assignmentId={assignmentId}
+    //       pass={password}
+    //       id={urlParamsData.userId}
+    //       isNewTab={isNewTab}
+    //       toolConsumerGuid={urlParamsData.guid}
+    //       isAuthed={authed}
+    //       studentId={urlParamsData.studentId}
+    //       accountId={urlParamsData.accountId}
+    //       invokeUrl={urlParamsData.invokeUrl}
+    //     />
+    //   );
+    // }
   }
   return <DummyPage />;
 }

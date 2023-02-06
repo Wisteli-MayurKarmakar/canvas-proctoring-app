@@ -201,21 +201,58 @@ const AssignmentsContainer: React.FC<Props> = (props): JSX.Element => {
                       </div>
                     </Tooltip>
                   );
-                }
-                return (
-                  <Tooltip key={index} placement="top" title={"Not scheduled"}>
-                    <div className="flex flex-col gap-4" key={index}>
-                      <div
-                        className={`flex p-6 h-40 w-48 relative rounded-lg text-md shadow-lg border break-before-right
-                      font-semibold items-center justify-center text-center cursor-not-allowed bg-red-400 text-white`}
+                } else {
+                  if (moment(assignment.lock_at).isSameOrAfter(moment())) {
+                    return (
+                      <Tooltip
+                        key={index}
+                        placement="top"
+                        title={`${
+                          "Availale till - " +
+                          moment(assignment.lock_at).format(
+                            "MM/DD/YYYY HH:MM a"
+                          )
+                        }`}
                       >
-                        <p className="font-semibold text-center w-full">
-                          {assignment.name}
-                        </p>
+                        <div className="flex flex-col gap-4" key={index}>
+                          <div
+                            key={index}
+                            onClick={() => handleSelectAssignment(assignment)}
+                            className={`transition ease-in-out delay-50 hover:-translate-y-1 hover:scale-110 duration-200 break-before-right cursor-pointer
+                          flex border box-border items-center justify-center h-40 w-48 p-4 rounded-lg bg-white shadow-md text-center
+                          ${
+                            selectedAssignment?.id === assignment.id
+                              ? "hover:bg-blue-400 hover:text-white bg-blue-400 text-white"
+                              : "hover:bg-blue-400 hover:text-white text-black"
+                          }`}
+                          >
+                            <p className="font-semibold text-center w-full">
+                              {assignment.name}
+                            </p>
+                          </div>
+                        </div>
+                      </Tooltip>
+                    );
+                  }
+                  return (
+                    <Tooltip
+                      key={index}
+                      placement="top"
+                      title={"Not scheduled"}
+                    >
+                      <div className="flex flex-col gap-4" key={index}>
+                        <div
+                          className={`flex p-6 h-40 w-48 relative rounded-lg text-md shadow-lg border break-before-right
+                        font-semibold items-center justify-center text-center cursor-not-allowed bg-red-400 text-white`}
+                        >
+                          <p className="font-semibold text-center w-full">
+                            {assignment.name}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  </Tooltip>
-                );
+                    </Tooltip>
+                  );
+                }
               })
             ) : (
               <p className="text-center text-lg font-bold mx-auto">
@@ -227,7 +264,7 @@ const AssignmentsContainer: React.FC<Props> = (props): JSX.Element => {
           {showAuthModal &&
             selectedAssignment &&
             selectedAssignmentConfigurations &&
-            enrollments && (
+            enrollments && !scheduleExpired && (
               <AuthenticationModal
                 view={true}
                 quizTitle={selectedAssignment.name}

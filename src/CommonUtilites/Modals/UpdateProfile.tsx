@@ -286,10 +286,9 @@ const UpdateProfile: React.FC<Props> = (props): JSX.Element => {
     title = "Id Approval";
   }
 
-  const handleIdApproval = (flag: boolean) => {
+  const handleIdApproval = (flag: boolean, approvalType: string) => {
     let profileDetails = { ...userDetails };
     profileDetails.idApprovalStatus = flag ? 1 : 0;
-    // profileDetails.instituteId = tokenData.instituteId
     setApproved(flag);
     setUpdatingProfile(true);
     axios
@@ -297,7 +296,11 @@ const UpdateProfile: React.FC<Props> = (props): JSX.Element => {
         { ...profileDetails },
       ])
       .then((resp: any) => {
-        message.success("Profile updated successfully");
+        let statusText: string = "Student's id profile is approved";
+        if (approvalType === "denied") {
+          statusText = "Student's id profile is denied";
+        }
+        message.success(statusText);
         setUpdatingProfile(false);
       })
       .catch((err) => {
@@ -565,7 +568,7 @@ const UpdateProfile: React.FC<Props> = (props): JSX.Element => {
                     id="flexCheckDefault"
                     disabled={props.title === "idApproval" ? false : true}
                     checked={!approved ? true : false}
-                    onChange={() => handleIdApproval(false)}
+                    onChange={() => handleIdApproval(false, "denied")}
                   />
                   <label
                     className="form-check-label inline-block text-gray-800"
@@ -581,7 +584,7 @@ const UpdateProfile: React.FC<Props> = (props): JSX.Element => {
                     id="flexCheckChecked"
                     disabled={props.title === "idApproval" ? false : true}
                     checked={approved ? true : false}
-                    onChange={() => handleIdApproval(true)}
+                    onChange={() => handleIdApproval(true, "approved")}
                   />
                   <label
                     className="form-check-label inline-block text-gray-800"

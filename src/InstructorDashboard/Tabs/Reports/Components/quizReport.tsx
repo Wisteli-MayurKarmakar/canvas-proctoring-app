@@ -1,5 +1,5 @@
 import "antd/dist/antd.min.css";
-import { message, Row, Table, Tooltip } from "antd";
+import { message, Table, Tooltip } from "antd";
 import { FunctionComponent, useEffect, useState } from "react";
 import axios from "axios";
 import Report from "../../../../report";
@@ -49,7 +49,6 @@ const QuizReports: FunctionComponent = (): JSX.Element => {
   const [noQuiz, setNoQuiz] = useState<boolean>(false);
   let [selectedQuiz, setSelectedQuiz] = useState<any>(null);
   const { urlParamsData, tokenData } = useAppStore((state) => state);
-  const { getJourneyDetails } = useProcotorJourneyStore((state) => state);
   const { setAssignmentConfiguration } = useAssignmentStore((state) => state);
 
   const getCourseQuizesById = () => {
@@ -78,26 +77,6 @@ const QuizReports: FunctionComponent = (): JSX.Element => {
         console.log(err);
       });
   };
-
-  // const getStudentsByCourseId = () => {
-  //   axios
-  //     .get(
-  //       `${fetchAccountsByCourseAndEnrollemntType}/${urlParamsData.courseId}/student/${tokenData.instituteId}/${tokenData.lmsAccessToken}`
-  //     )
-  //     .then((res: any) => {
-  //       let data = res.data.map((item: any) => ({
-  //         ...item,
-  //         key: item.id,
-  //         user_id: item.id,
-  //         course_id: urlParamsData.courseId,
-  //       }));
-
-  //       setStudList(data);
-  //     })
-  //     .catch((err) => {
-  //       console.log(err);
-  //     });
-  // };
 
   const getQuizConfigs = async (id: string) => {
     let config = await axios.get(
@@ -218,8 +197,6 @@ const QuizReports: FunctionComponent = (): JSX.Element => {
     setMediaFileName(row.idReference);
     getExceptions(row.idReference);
     setShowRepModal(true);
-    // getJourneyDetails(row.idUser);
-    // getVideoRefId(selectedQuiz.id, selectedQuiz.due_at, row.idLtiVideoRef);
   };
 
   const handleRefreshTable = () => {
@@ -232,17 +209,17 @@ const QuizReports: FunctionComponent = (): JSX.Element => {
     {
       dataIndex: "firstName",
       key: "firstName",
-      title: `First Name`,
+      title: `Name`,
     },
-    {
-      dataIndex: "lastName",
-      key: "lastName",
-      title: `Last Name`,
-    },
+    // {
+    //   dataIndex: "lastName",
+    //   key: "lastName",
+    //   title: `Last Name`,
+    // },
     {
       dataIndex: "",
-      key: "scheduleDate",
-      title: `Schedule Date`,
+      key: "examDate",
+      title: `Exam Date`,
       render: (row: StudentReportAndJourneyDetails) => {
         if ("examDate" in row) {
           let offsetTime: string = Math.abs(moment().utcOffset()).toString();
@@ -288,10 +265,6 @@ const QuizReports: FunctionComponent = (): JSX.Element => {
             </div>
           );
         }
-        // if (selectedQuiz.quizId in studentResultsByQuiz) {
-        //   return "Not available";
-        // }
-        // return "Not available";
       },
     },
     {
@@ -402,6 +375,7 @@ const QuizReports: FunctionComponent = (): JSX.Element => {
                         Students violation messages and video report
                       </p>
                       <Table
+                        bordered
                         columns={studentColumns}
                         dataSource={studList}
                         pagination={
@@ -414,9 +388,15 @@ const QuizReports: FunctionComponent = (): JSX.Element => {
                   );
                 } else {
                   if (studList === false) {
-                    return <p className="text-center font-bold">No reports available</p>;
+                    return (
+                      <p className="text-center font-bold">
+                        No reports available
+                      </p>
+                    );
                   }
-                  return <p className="text-center font-bold">Getting students...</p>;
+                  return (
+                    <p className="text-center font-bold">Getting students...</p>
+                  );
                 }
               },
               rowExpandable: (record) => true,

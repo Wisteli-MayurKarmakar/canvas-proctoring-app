@@ -115,7 +115,21 @@
             "Authorization",
             ExamdAutoProctorJS.basicAuthToken
           );
-          xhr.onload = function () {};
+          // xhr.onreadystatechange = () => {
+          //   if (xhr.readyState == XMLHttpRequest.DONE) {
+          //     const parsedData = JSON.parse(xhr.responseText);
+          //     if (parsedData.data.violation !== 0) {
+          //       window.localStorage.setItem(
+          //         "violation",
+          //         JSON.stringify({
+          //           message: parsedData.data.messages,
+          //           timestamp: new Date().toISOString(),
+          //         })
+          //       );
+          //     }
+          //   }
+          // };
+          // xhr.onload = function () {};
           xhr.send(formData);
         },
 

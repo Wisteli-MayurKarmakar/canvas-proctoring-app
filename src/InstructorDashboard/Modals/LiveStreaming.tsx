@@ -1,6 +1,7 @@
-import { Button, Col, Divider, Modal, Row } from "antd";
+import { Button, Col, Modal, Row } from "antd";
 import React, { useEffect } from "react";
 import { getWebSocketUrl } from "../../APIs/apiservices";
+import ChatBox from "../../CommonUtilites/ChatBox";
 
 interface Props {
   view: boolean;
@@ -130,7 +131,8 @@ const LiveStreaming: React.FC<Props> = (props): JSX.Element => {
   return (
     <Modal
       visible={view}
-      onCancel={close}
+      // onCancel={close}
+      closable={false}
       footer={[
         <Button
           key="close"
@@ -144,7 +146,7 @@ const LiveStreaming: React.FC<Props> = (props): JSX.Element => {
       destroyOnClose={true}
       maskClosable={false}
       width={"60pc"}
-      title={<span>{props.quiz.title}</span>}
+      // title={<span>{props.quiz.title}</span>}
     >
       <div className="container mx-auto h-44 w-full">
         <div id="xmedia" className="hidden"></div>
@@ -217,23 +219,68 @@ const LiveStreaming: React.FC<Props> = (props): JSX.Element => {
           </Row>
         </fieldset>
       </div>
-      <div className="grid grid-cols-2 gap-4 h-60">
-        <video
-          src=""
-          controls
-          playsInline
-          ref={vdoDstRef}
-          autoPlay
-          style={{ height: 240 }}
-          className="rounded w-full h-full bg-black mt-4"
-        ></video>
-        <div
-          style={{ height: 240 }}
-          className="box-border w-full mt-4 rounded border-2 border-blue-500"
-        >
+      <div className="grid grid-cols-2 gap-4 h-full">
+        <div className="flex flex-col w-full justify-center gap-1">
           <p className="text-xl font-semibold text-center underline">
-            Violations
+            Student's video
           </p>
+          <video
+            src=""
+            controls
+            playsInline
+            ref={vdoDstRef}
+            autoPlay
+            style={{ height: 240 }}
+            className="rounded w-full h-full bg-black mt-4"
+          ></video>
+        </div>
+        {/* <div className="flex flex-col w-full justify-center gap-1">
+          <p className="text-xl font-semibold text-center underline">
+            Screen video
+          </p>
+          <video
+            src=""
+            controls
+            playsInline
+            ref={vdoDstRef}
+            autoPlay
+            style={{ height: 240 }}
+            className="rounded w-full h-full bg-black mt-4"
+          >
+          </video>
+        </div> */}
+        <div className="flex flex-col w-full justify-center gap-1">
+          <p className="text-xl font-semibold text-center underline">
+            Screen video
+          </p>
+          <div
+            style={{ height: 240 }}
+            className="box-border w-full mt-4 rounded border-2"
+          >
+            <p className="flex items-center justify-center h-full font-semibold text-lg">Coming soon...</p>
+          </div>
+        </div>
+        <div className="flex flex-col w-full justify-center gap-1">
+          <p className="text-xl font-semibold text-center underline">
+            Violations messages
+          </p>
+          <div
+            style={{ height: 240 }}
+            className="box-border w-full mt-4 rounded border-2"
+          ></div>
+        </div>
+        <div className="flex flex-col w-full justify-center gap-1">
+          <p className="text-xl font-semibold text-center underline">
+            Chat messages
+          </p>
+          <ChatBox
+            quiz={props.quiz}
+            student={props.student}
+            classStyle={
+              "flex flex-col items-center justify-center w-full h-60 border-2 rounded-md p-2 mt-4"
+            }
+            isStudent={false}
+          />
         </div>
       </div>
     </Modal>

@@ -58,6 +58,7 @@ export const useStudentWorflowControllerStore = create<WorkflowController>()(
                 });
               } else {
                 const currentTime: Moment = moment();
+                const assignmentSchedule = selectedAssignmentSchedules
                 const timezoneOffset: string = `.${Math.abs(
                   moment().utcOffset()
                 ).toString()}Z`;
