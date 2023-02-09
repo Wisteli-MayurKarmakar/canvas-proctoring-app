@@ -2,7 +2,12 @@ import { message } from "antd";
 import axios from "axios";
 import React, { useEffect } from "react";
 import { useWebCamStore } from "../../store/globalStore";
-import { aiMatch, viewCanvasProfile, downloadDL } from "../../apiConfigs"
+import {
+  aiMatch,
+  viewCanvasProfile,
+  downloadDL,
+  getLtiStudentProfileDetails,
+} from "../../apiConfigs";
 
 interface Props {
   authConfigs: any;
@@ -36,8 +41,27 @@ const StudentIdDlVerification: React.FC<Props> = (props): JSX.Element => {
   let canvasRef: any = React.useRef<any>();
   const imgWidth: number = 320;
   let imgHeight: number = 0;
-  const isPicReq = props.authConfigs.studentPicture;
-  const idIdProofReq = props.authConfigs.studentIdDl;
+
+  // let idApproved: boolean = false;
+
+  // const getUserProfileDetails = () => {
+  //   axios
+  //     .post(`${getLtiStudentProfileDetails}${props.guid}/${props.userId}`, {
+  //       headers: {
+  //         Authorization: `Bearer ${props.authToken}`,
+  //       },
+  //     })
+  //     .then((resp) => {
+  //       const approved: boolean =
+  //         resp.data.idApprovalStatus === 0 ? false : true;
+  //       idApproved = approved;
+  //     })
+  //     .catch((error) => {
+  //       message.error("Unable to retrieve user details");
+  //     });
+  // };
+
+  // getUserProfileDetails();
 
   function convertBase64toBlob(
     b64Data: string,
@@ -85,17 +109,13 @@ const StudentIdDlVerification: React.FC<Props> = (props): JSX.Element => {
     );
     formData.append("imaget", snapshotBlob, props.studentId + "2.jpg");
     formData.append("name", props.studentId);
-    let response = await axios.post(
-      `${aiMatch}`,
-      formData,
-      {
-        headers: {
-          Accept: "*/*",
-          "Content-Type": "multipart/form-data",
-          Authorization: `Basic ${btoa("TIxApZe7MCosW6:pU1URzjGkY8QVC")}`,
-        },
-      }
-    );
+    let response = await axios.post(`${aiMatch}`, formData, {
+      headers: {
+        Accept: "*/*",
+        "Content-Type": "multipart/form-data",
+        Authorization: `Basic ${btoa("TIxApZe7MCosW6:pU1URzjGkY8QVC")}`,
+      },
+    });
     if (response.data.data) {
       setPictureAuthed(true);
       return true;
@@ -121,7 +141,7 @@ const StudentIdDlVerification: React.FC<Props> = (props): JSX.Element => {
             await f();
             resolve(true);
             return;
-          } catch (e) { }
+          } catch (e) {}
           await delay(delayBetweenRetries);
         }
         reject("failed to connect to");
@@ -360,6 +380,20 @@ const StudentIdDlVerification: React.FC<Props> = (props): JSX.Element => {
       }
     };
   }, []);
+
+  // if (!idApproved) {
+  //   return (
+  //     <div className="flex items-center justify-center">
+  //       <p className="text-lg text-center font-semibold">
+  //         Instructor had denied you Id approval status and you can't proceed
+  //         further with authentication.
+  //       </p>
+  //       <p className="text-lg text-center font-semibold">
+  //         Please contact the instructor.
+  //       </p>
+  //     </div>
+  //   );
+  // }
 
   return (
     <>

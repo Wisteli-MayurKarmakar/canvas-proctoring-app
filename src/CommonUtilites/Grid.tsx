@@ -38,7 +38,7 @@ const Grid: React.FunctionComponent<Props> = (props): JSX.Element => {
                     props.enableAuth &&
                     props.enableAuth.step === "LIVE_AUTH" &&
                     props.enableAuth.studId === row.id &&
-                    props.studentAuthStatus === false
+                    !row.authed
                       ? false
                       : true
                   }
@@ -50,9 +50,7 @@ const Grid: React.FunctionComponent<Props> = (props): JSX.Element => {
                     )
                   }
                 >
-                  {props.studentAuthStatus === false
-                    ? "Authenticate"
-                    : "Authenticated"}
+                  {!row.authed ? "Authenticate" : "Authenticated"}
                 </Button>
                 <Button type="link" disabled={true}>
                   Contacts

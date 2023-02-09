@@ -1,25 +1,37 @@
-import { Button, Col, Modal, Row } from "antd";
-import React, { useEffect } from "react";
+import { Button, Col, Modal, Row, Timeline } from "antd";
+import React, { useEffect, useState } from "react";
 import { getWebSocketUrl } from "../../APIs/apiservices";
 import ChatBox from "../../CommonUtilites/ChatBox";
+import { useAppStore } from "../../store/AppSotre";
+import { QuizConfiguration } from "../../AppTypes";
+import moment from "moment";
 
 interface Props {
   view: boolean;
   close: () => void;
   quiz: any;
   student: any;
+  quizConfig?: QuizConfiguration;
 }
+
+type Violations = {
+  message: string[];
+  timestamp: string;
+};
 
 const LiveStreaming: React.FC<Props> = (props): JSX.Element => {
   let { view, close } = props;
   const room: string =
     "rm_" + props.student.course_id + "_" + props.quiz.id + "rtc";
   const user: string = "chat_" + props.student.user_id;
-  var answer: any = null;
-  var peerConnection = React.useRef<any>(null);
+  let answer: any = null;
+  let peerConnection = React.useRef<any>(null);
   const vdoDstRef: any = React.useRef<any>(null);
-  var destVideo: any = null;
+  let destVideo: any = null;
   const socket = getWebSocketUrl();
+  const socketViolations = getWebSocketUrl();
+  const { urlParamsData } = useAppStore((state) => state);
+  const [violations, setViolations] = useState<Violations[]>([]);
 
   const TURN_SERVER_URL = "turn:examd.us:3478?transport=tcp";
   const TURN_SERVER_USERNAME = "webRtcUser";
@@ -31,9 +43,6 @@ const LiveStreaming: React.FC<Props> = (props): JSX.Element => {
         username: TURN_SERVER_USERNAME,
         credential: TURN_SERVER_CREDENTIAL,
       },
-      // {
-      //   urls: ["stun:stun1.1.google.com:19302", "stun:stun2.1.google.com:19302"],
-      // }
     ],
   };
 
@@ -42,7 +51,6 @@ const LiveStreaming: React.FC<Props> = (props): JSX.Element => {
 
     destVideo = new MediaStream();
     vdoDstRef.current.srcObject = destVideo;
-
     peerConnection.current.ontrack = (event: any) => {
       event.streams[0].getTracks().forEach((track: any) => {
         destVideo.addTrack(track, event.streams[0]);
@@ -124,8 +132,32 @@ const LiveStreaming: React.FC<Props> = (props): JSX.Element => {
     createOffer();
   };
 
+  const listenToViolations = () => {
+    const roomName: string = `vl_${urlParamsData.courseId}_${props.student.user_id}_${props?.quizConfig?.idInstructor}_${props.quiz.id}`;
+    const userName: string = urlParamsData.userId as string;
+
+    if (!socketViolations.connected) {
+      socketViolations.connect();
+      socketViolations.emit("validate", {
+        evt: "chat",
+        room: roomName,
+        user: userName,
+      });
+    }
+
+    socketViolations.on("chat", (data: any) => {
+      if (data.type === "chat") {
+        let msg = JSON.parse(data.message);
+        if (msg.msgType === "VIOLATION_MSG") {
+          setViolations((prevViolations) => [...prevViolations, msg.msg]);
+        }
+      }
+    });
+  };
+
   useEffect(() => {
     connectSocket();
+    listenToViolations();
   }, []);
 
   return (
@@ -253,21 +285,43 @@ const LiveStreaming: React.FC<Props> = (props): JSX.Element => {
           <p className="text-xl font-semibold text-center underline">
             Screen video
           </p>
-          <div
-            style={{ height: 240 }}
-            className="box-border w-full mt-4 rounded border-2"
-          >
-            <p className="flex items-center justify-center h-full font-semibold text-lg">Coming soon...</p>
+          <div className="flex items-center justify-center h-[240px] border-2 mt-4 rounded">
+            <p className="text-center font-semibold">Coming soon...</p>
           </div>
         </div>
         <div className="flex flex-col w-full justify-center gap-1">
           <p className="text-xl font-semibold text-center underline">
             Violations messages
           </p>
-          <div
-            style={{ height: 240 }}
-            className="box-border w-full mt-4 rounded border-2"
-          ></div>
+          <div className="flex items-center justify-center mx-auto box-border w-full rounded border-2 py-2 h-[240px] mt-4">
+            {violations.length > 0 ? (
+              <Timeline
+                style={{
+                  // maxHeight: "80%",
+                  height: 240,
+                  overflowY: "scroll",
+                  position: "relative",
+                  padding: 5,
+                  width: "100%",
+                  scrollbarWidth: "thin",
+                }}
+                mode="right"
+              >
+                {violations.map((violation: Violations, idx: number) => {
+                  const label: string = moment(violation.timestamp).format(
+                    "MM/DD/YYYY HH:mm:ss a"
+                  );
+                  return (
+                    <Timeline.Item key={idx} label={label}>
+                      {violation.message.join(", ")}
+                    </Timeline.Item>
+                  );
+                })}
+              </Timeline>
+            ) : (
+              <p className="text-center font-semibold">No violations...</p>
+            )}
+          </div>
         </div>
         <div className="flex flex-col w-full justify-center gap-1">
           <p className="text-xl font-semibold text-center underline">

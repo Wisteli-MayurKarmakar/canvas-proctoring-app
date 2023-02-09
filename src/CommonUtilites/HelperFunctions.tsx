@@ -1,10 +1,11 @@
-import axios from "axios";
+import axios, { AxiosError, AxiosResponse } from "axios";
 import moment from "moment";
 import {
   createSampleQuiz,
   addSampleQuestion,
   saveLtiCanvasConfig,
   autoCompleteSetup,
+  uploadAuthImage,
 } from "../apiConfigs";
 import { QuizConfiguration } from "../AppTypes";
 import { useAppStore } from "../store/AppSotre";
@@ -107,6 +108,29 @@ const handleAutoCompleteSetup = async (
       isAutomatingQuizSetup: false,
     });
   }
+};
+
+export const uploadLiveImage = (blob: Blob) => {
+  const urlParamsData = useAppStore.getState().urlParamsData;
+  const tokenData = useAppStore.getState().tokenData;
+  const url = `${uploadAuthImage}/${urlParamsData.guid}/${urlParamsData.studentId}`;
+  const file = new File([blob], "authPic.png", {
+    lastModified: new Date().getTime(),
+    type: blob.type,
+  });
+  let formData = new FormData();
+  formData.append("file", file);
+  formData.append("name", "authPic");
+  axios
+    .post(url, formData, {
+      headers: {
+        Accept: "*/*",
+        "Content-Type": "multipart/form-data",
+        Authorization: `Bearer ${tokenData.lmsAccessToken}`,
+        "Content-Disposition":
+          "form-data; name=file; filename=authPic.png",
+      },
+    })
 };
 
 export const addSampleQuestions = async (

@@ -17,9 +17,10 @@ import { useAppStore } from "../store/AppSotre";
 import moment from "moment";
 import { CheckCircleOutlined, CloseCircleOutlined } from "@ant-design/icons";
 import { QuizSchedule } from "../AppTypes";
+import NoQuiz from "../CommonUtilites/NoQuiz";
 
 const Authentication: React.FC = (): JSX.Element => {
-  let [quizzes, setQuizzes] = React.useState<Object | null>(null);
+  let [quizzes, setQuizzes] = React.useState<any>(null);
   const [enrollments, setEnrollments] = React.useState<any>(null);
   const [showAuthModal, setShowAuthModal] = React.useState<boolean>(false);
   const [authForQuizId, setAuthForQuizId] = React.useState<any>(null);
@@ -207,20 +208,25 @@ const Authentication: React.FC = (): JSX.Element => {
         `${getCanvasAssignmentDetails}/${tokenData.instituteId}/${urlParamsData.guid}/${urlParamsData.courseId}/${tokenData.lmsAccessToken}`
       )
       .then((response) => {
-        let assignments = response.data.filter((assignment: any) => {
-          if (assignment.id !== 0) {
-            if (
-              assignment.instructorProctored === "Y" ||
-              assignment.examdLiveLaunch === "Y"
-            ) {
-              assignment.key = assignment.id;
-              return assignment;
+        if (response.data.length === 0) {
+          setQuizzes("0");
+          setIsRefreshing(false);
+        } else {
+          let assignments = response.data.filter((assignment: any) => {
+            if (assignment.id !== 0) {
+              if (
+                assignment.instructorProctored === "Y" ||
+                assignment.examdLiveLaunch === "Y"
+              ) {
+                assignment.key = assignment.id;
+                return assignment;
+              }
             }
-          }
-        });
-        // setQuizzes(response.data);
-        setQuizzes(assignments);
-        setIsRefreshing(false);
+          });
+          // setQuizzes(response.data);
+          setQuizzes(assignments);
+          setIsRefreshing(false);
+        }
       })
       .catch((error) => {
         console.log(error);
@@ -243,6 +249,7 @@ const Authentication: React.FC = (): JSX.Element => {
             key: enrollment.id,
             user_id: enrollment.id,
             course_id: urlParamsData.courseId,
+            authed: false,
           };
         });
 
@@ -370,6 +377,14 @@ const Authentication: React.FC = (): JSX.Element => {
   };
 
   const getStudentAuthStat = (data: any) => {
+    let students = [...enrollments]
+    if (authForQuizId === data.quizId) {
+      students.forEach((student) => {
+        if (student.id === data.studentId) {
+          student.authed = true;
+        }
+      })
+    }
     if (
       data.courseId === urlParamsData.courseId &&
       data.assignmentId === authForQuizId &&
@@ -377,6 +392,7 @@ const Authentication: React.FC = (): JSX.Element => {
     ) {
       setStudentAuthed(true);
     }
+    setEnrollments([...students])
   };
 
   const handleRefreshTable = () => {
@@ -394,6 +410,17 @@ const Authentication: React.FC = (): JSX.Element => {
   let courseName: string = "";
   if (courseDetails) {
     courseName = courseDetails.name;
+  }
+
+  if (quizzes === "0") {
+    return (
+      <>
+        <h2 className="text-center text-2xl underline">
+          Course Name - {courseName}
+        </h2>
+        <NoQuiz />
+      </>
+    );
   }
 
   return (

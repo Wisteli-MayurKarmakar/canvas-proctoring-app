@@ -27,11 +27,24 @@ import {
 import { useAssignmentStore } from "./store/StudentDashboardStore";
 import { useStudentJourneyStore } from "./store/StudentProctorJourneyStore";
 import { ConsumptionDetails } from "./AppTypes";
+import { uploadLiveImage } from "./CommonUtilites/HelperFunctions";
+import {
+  openChannels,
+  initLibrary,
+  setCredentials,
+  getDefaultAudioVideoSync,
+  startVideoRecording,
+  startScreenRecording,
+  stopRecording,
+  randomExamId,
+} from "./CommonUtilites/ProctoringUtilities";
+import { useViolationStore } from "./store/ViolationStore";
 
 declare global {
   interface Window {
     $?: any;
     ExamdAutoProctorJS: any;
+    sstream: any;
   }
 }
 
@@ -80,9 +93,9 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
   let [quizEnded, setQuizEnded] = React.useState<boolean>(false);
   let startTime = useStudentStore((state) => state.currentTime);
   const user = "chat_" + props.studentId;
-  var peerConnection: any = null;
-  var stream: any = null;
-  var offer: any = null;
+  let peerConnection: any = null;
+  let stream: any = null;
+  let offer: any = null;
   const assignmentStore = useAssignmentStore((state) => state);
   const setAssignmentSubmitted = useAssignmentStore(
     (state) => state.setAssignmentSubmitted
@@ -90,12 +103,13 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
   const { getJourneyDetails, setJourneyDetails } = useStudentJourneyStore(
     (state) => state
   );
-  const selectedAssignment = useAssignmentStore(
-    (state) => state.selectedAssignment
-  );
-  const { createConnection, sendAssgnStatus, assgnStatRequesting } =
+  const { selectedAssignment, selectedAssignmentConfigurations } =
+    useAssignmentStore((state) => state);
+  const { setStudentId, messages } = useViolationStore((state) => state);
+  const { createConnection, sendAssgnStatus, sendViolationMessages } =
     useSocketStore((state) => state);
   const { urlParamsData, tokenData } = useAppStore((state) => state);
+  const roomName: string = `${urlParamsData.guid}_${urlParamsData.courseId}_assgn_status`;
   const TURN_SERVER_URL = "turn:examd.us:3478?transport=tcp";
   const TURN_SERVER_USERNAME = "webRtcUser";
   const TURN_SERVER_CREDENTIAL = "C0pp$r567";
@@ -106,25 +120,19 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
         username: TURN_SERVER_USERNAME,
         credential: TURN_SERVER_CREDENTIAL,
       },
-      // {
-      //   urls: ["stun:stun1.1.google.com:19302", "stun:stun2.1.google.com:19302"],
-      // }
     ],
   };
 
-  useEffect(() => {
-    if (assgnStatRequesting) {
-      const assignmentId = assignmentStore.selectedAssignment?.id.toString();
-      const assignmentName = assignmentStore.selectedAssignment?.name;
-      const msgType: string = "ASSGN_PROC_START";
-      if (assignmentId && assignmentName) {
-        sendAssgnStatus(assignmentId, assignmentName, msgType);
-      }
-    }
-  }, [assgnStatRequesting]);
-
-  // if (assgnStatRequesting) {
-  // }
+  // useEffect(() => {
+  //   if (assgnStatRequesting) {
+  //     const assignmentId = assignmentStore.selectedAssignment?.id.toString();
+  //     const assignmentName = assignmentStore.selectedAssignment?.name;
+  //     const msgType: string = "ASSGN_PROC_START";
+  //     if (assignmentId && assignmentName) {
+  //       sendAssgnStatus(assignmentId, assignmentName, msgType);
+  //     }
+  //   }
+  // }, [assgnStatRequesting]);
 
   const setConfigByQuizCourseGuid = async () => {
     if (props.assignment) {
@@ -215,18 +223,6 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
       return;
     }
     startProctoring();
-    const roomName: string = `${urlParamsData.guid}_${urlParamsData.courseId}_assgn_status`;
-    const userName: string = `${urlParamsData.studentId}_instr_assgn_status`;
-    const msgType: string = "ASSGN_PROC_START";
-    if (
-      urlParamsData.assignmentId &&
-      assignmentStore.selectedAssignment?.name
-    ) {
-      createConnection(roomName, userName, msgType, {
-        assignmentId: urlParamsData.assignmentId,
-        assingmentName: assignmentStore.selectedAssignment.name,
-      });
-    }
   };
 
   const sendMsgViaSocket = (msgType: any, data: any) => {
@@ -241,14 +237,20 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
     });
   };
 
-  const openChannels = async (
+  useEffect(() => {
+    if (messages) {
+      sendViolationMessages("VIOLATION_MSG", messages);
+      messages.message.forEach((msg: string) => {
+        message.warning(msg);
+      });
+    }
+  }, [messages]);
+
+  const openStreamChannels = async (
     video: boolean,
     screen: boolean
   ): Promise<boolean> => {
-    let res: {
-      status: number;
-      message: string;
-    } = await window.ExamdAutoProctorJS.openChannels(
+    let res: any = await openChannels(
       props.quizConfig.recordWebcam || video,
       true,
       props.quizConfig.recordScreen || screen,
@@ -299,6 +301,19 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
     let response = await axios.post(`${saveLtiConsumptions}`, { ...payload });
   };
 
+  const convertDataUrl2Blob = (dataURL: string) => {
+    let arr: any = dataURL.split(",");
+    let mime = arr[0].match(/:(.*?);/)[1];
+    let bstr = atob(arr[1]);
+    let n = bstr.length;
+    let u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    const blob = new Blob([u8arr], { type: mime });
+    uploadLiveImage(blob);
+  };
+
   const startProctoring = async () => {
     if (
       assignmentStore.selectedAssignmentConfigurations &&
@@ -339,22 +354,22 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
     setAlertUser(true);
     setShowProctoringAlert(true);
 
-    await window.ExamdAutoProctorJS.initLibrary()
+    await initLibrary()
       .then((resp: any) => {
         setAssignedId(resp.assignedId);
       })
       .catch((error: any) => {});
 
-    window.ExamdAutoProctorJS.setCredentials(props.username, props.pass);
+    setCredentials(props.username, props.pass);
 
-    await window.ExamdAutoProctorJS.getDefaultAudioVideoSync();
+    await getDefaultAudioVideoSync();
 
     let video = assignmentStore.selectedAssignmentConfigurations?.recordWebcam;
     let screen = assignmentStore.selectedAssignmentConfigurations?.recordScreen;
     let channelsOpened: boolean = false;
 
     while (!channelsOpened && (video || screen)) {
-      let res: boolean = await openChannels(
+      let res: boolean = await openStreamChannels(
         video as boolean,
         screen as boolean
       );
@@ -375,7 +390,13 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
 
     if (video) {
       try {
-        await window.ExamdAutoProctorJS.startVideoRecording();
+        await startVideoRecording();
+        const video: any = $("#xvideo")[0];
+        let canvas: any = $("#xcanvas")[0];
+        let ctx = canvas.getContext("2d");
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const dataURL = canvas.toDataURL("image/png");
+        convertDataUrl2Blob(dataURL);
       } catch (e) {
         console.log("Error starting video recording");
       }
@@ -384,7 +405,11 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
     // Starts Screen recording
     if (screen) {
       try {
-        await window.ExamdAutoProctorJS.startScreenRecording();
+        await startScreenRecording();
+        // const sStream = sstream;
+        // console.log(stream);
+        // screenVid.current.srcObject = sStream;
+        // console.log(screenVid.current);
       } catch (e) {
         console.log("Error starting screen recording");
       }
@@ -402,11 +427,7 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
         stream.getTracks().forEach((track: any) => {});
       }
     }
-    saveLTIPrctoringRef(
-      window.ExamdAutoProctorJS.randomExamId,
-      startTime,
-      startTime
-    );
+    saveLTIPrctoringRef(randomExamId as string, startTime, startTime);
   };
 
   const handleEndExam = async () => {
@@ -416,36 +437,31 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
     );
     if (response.data.length > 0) {
       if (startTime.isAfter(moment.utc(response.data[0]["started_at"]))) {
-        saveLTIPrctoringRef(
-          window.ExamdAutoProctorJS.randomExamId,
-          startTime,
-          endTime
-        );
+        saveLTIPrctoringRef(randomExamId as string, startTime, endTime);
         window.close();
         return;
       }
 
       if (!("finished_at" in response.data[0])) {
-        saveLTIPrctoringRef(
-          window.ExamdAutoProctorJS.randomExamId,
-          startTime,
-          endTime
-        );
+        saveLTIPrctoringRef(randomExamId as string, startTime, endTime);
         clearInterval(checkSubmissionInterval);
         setShowCloseProcPrompt(true);
       }
     } else {
-      saveLTIPrctoringRef(
-        window.ExamdAutoProctorJS.randomExamId,
-        startTime,
-        endTime
+      sendAssgnStatus(
+        props.quizId,
+        props.studentId,
+        "ASSGN_PROC_END",
+        roomName
       );
+      saveLTIPrctoringRef(randomExamId as string, startTime, endTime);
       window.close();
       return;
     }
   };
 
   const createPeerConnection = async () => {
+    if (!urlParamsData.newTab) return;
     if (!peerConnection) {
       peerConnection = new RTCPeerConnection(PC_CONFIG);
     }
@@ -460,6 +476,11 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
       stream.getTracks().forEach((track: any) => {
         peerConnection.addTrack(track, stream);
       });
+
+      // const screenStream = screenVid.current.captureStream();
+      // screenStream.getTracks().forEach((track: any) => {
+      //   peerConnection.addTrack(track, screenStream);
+      // });
     }
 
     peerConnection.onicecandidate = async (event: any) => {
@@ -546,15 +567,11 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
         let currentTime = moment();
         let quizFinishTime = moment.utc(response.data[0]["finished_at"]);
         if (currentTime.isAfter(quizFinishTime)) {
-          saveLTIPrctoringRef(
-            window.ExamdAutoProctorJS.randomExamId,
-            startTime,
-            endTime
-          );
+          saveLTIPrctoringRef(randomExamId as string, startTime, endTime);
           setQuizEnded(true);
           setShowCloseProcPrompt(true);
           setJourneyDetails("quizSubmitted");
-          await window.ExamdAutoProctorJS.stopRecording();
+          await stopRecording();
           clearInterval(checkSubmissionInterval);
         }
       }
@@ -573,6 +590,7 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
         completeQuizSubmission();
         closeTab();
       });
+      setStudentId(props.studentId);
     }
     if (onSeb === "true") {
       setOnSeb(true);
@@ -584,6 +602,21 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
       }, 10000);
       startProctoring();
     }
+
+    if (urlParamsData.newTab) {
+      const userName: string = `${urlParamsData.studentId}_instr_assgn_status`;
+      const msgType: string = "ASSGN_PROC_START";
+      if (
+        urlParamsData.assignmentId &&
+        assignmentStore.selectedAssignment?.name
+      ) {
+        createConnection(roomName, userName, msgType, {
+          quizId: selectedAssignmentConfigurations?.quizId as string,
+          studentId: urlParamsData.studentId as string,
+        });
+      }
+    }
+
     return () => {
       clearInterval(checkSubmissionInterval);
     };
@@ -637,7 +670,7 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
   const closeTab = () => {
     if (onSeb) {
       setExamStarted(false);
-      window.ExamdAutoProctorJS.stopRecording();
+      stopRecording();
       window.open("https://www.google.com/");
       return;
     }
@@ -655,11 +688,17 @@ const VideoAndScreenRec: FunctionComponent<Props> = (props): JSX.Element => {
 
   const handleProctoringEnd = async () => {
     if (quizEnded) {
+      sendAssgnStatus(
+        props.quizId,
+        props.studentId,
+        "ASSGN_PROC_END",
+        roomName
+      );
       closeTab();
       return;
     }
 
-    await window.ExamdAutoProctorJS.stopRecording();
+    await stopRecording();
     completeQuizSubmission();
     closeTab();
   };

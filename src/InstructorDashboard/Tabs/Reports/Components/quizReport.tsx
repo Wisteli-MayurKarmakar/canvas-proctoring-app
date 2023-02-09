@@ -8,22 +8,18 @@ import {
   getLtiCanvasConfigByGuidCourseIdQuizId,
   viewCanvasProfile,
   getExceptions as getExceptionsUrl,
-  // getLtiCVideoRef,
-  // getLtiProctorJourney,
   getCanvasQuizDetails,
   getLtiCanvasVideoCombRef,
   saveLtiVideoRef,
 } from "../../../../apiConfigs";
 import { useAppStore } from "../../../../store/AppSotre";
 import moment from "moment";
-import { useProcotorJourneyStore } from "../../../../store/ProctorJourneyStore";
 import {
-  // StudentQuizReport,
+
   StudentReportAndJourneyDetails,
 } from "../../../../AppTypes";
 import {
   useAssignmentStore,
-  // useCommonStudentDashboardStore,
 } from "../../../../store/StudentDashboardStore";
 import NoQuiz from "../../../../CommonUtilites/NoQuiz";
 import { InfoCircleFilled } from "@ant-design/icons";
@@ -35,8 +31,6 @@ const QuizReports: FunctionComponent = (): JSX.Element => {
   let [exceptions, setExceptions] = useState<any>(null);
   let [currentRow, setCurrentRow] = useState<any>([]);
   let [profilePic, setProfilePic] = useState<any>(null);
-  // const [studentResultsByQuiz, setStudentResultsByQuiz] =
-  //   useState<StudentQuizReport | null>(null);
   let [selectedQuizConfig, setSelectedQuizConfig] = useState<{
     [key: string]: boolean;
   }>({});
@@ -59,6 +53,7 @@ const QuizReports: FunctionComponent = (): JSX.Element => {
       .then((res: any) => {
         if (res.data.length === 0) {
           setNoQuiz(true);
+          setIsRefreshing(false);
           return;
         }
         let quizzes: any = [];

@@ -6,15 +6,17 @@ import {
   ClientToServerEvents,
   ServerToClientEvents,
   Assignment,
+  ViolationMessage,
 } from "../AppTypes";
 import {
   useAssignmentStore,
   useCommonStudentDashboardStore,
 } from "./StudentDashboardStore";
+import { useAppStore } from "./AppSotre";
 
 type DataToSend = {
-  assingmentName: string;
-  assignmentId: string;
+  quizId: string;
+  studentId: string;
 };
 
 type AssignmentDetails = {
@@ -28,11 +30,14 @@ interface IncomingMessage {
 }
 
 type SocketStore = {
-  roomName: string | null;
+  roomName: string;
   active: boolean;
-  messagesIncoming: IncomingMessage | null;
-  assgnStatRequesting: boolean;
-  messagesOutgoing: string[] | null;
+  // messagesIncoming: IncomingMessage | null;
+  // assgnStatRequesting: boolean;
+  assignmentId: string;
+  quizzesLive: string[];
+  studentsLive: string[];
+  // messagesOutgoing: string[] | null;
   socketInstance: Socket<ClientToServerEvents, ServerToClientEvents> | null;
   createConnection: (
     roomName: string,
@@ -41,20 +46,25 @@ type SocketStore = {
     dataToSend: DataToSend
   ) => void;
   sendAssgnStatus: (
-    assignmentId: string,
-    assignmentName: string,
-    messageType: string
+    quizId: string,
+    studentId: string,
+    messageType: string,
+    roomName: string
   ) => void;
+  sendViolationMessages: (messageType: string, msg: ViolationMessage) => void;
 };
 
 export const useSocketStore = create<SocketStore>()(
   devtools(
     (set, get) => ({
-      roomName: null,
-      messagesIncoming: null,
-      messagesOutgoing: null,
+      roomName: "",
+      // messagesIncoming: null,
+      // messagesOutgoing: null,
+      assignmentId: "",
+      quizzesLive: [],
+      studentsLive: [],
       socketInstance: null,
-      assgnStatRequesting: false,
+      // assgnStatRequesting: false,
       active: false,
       createConnection: (
         roomName: string,
@@ -82,8 +92,8 @@ export const useSocketStore = create<SocketStore>()(
           text: JSON.stringify({
             msgType: messageType,
             msg: {
-              assignmentId: dataToSend.assignmentId,
-              assignmentName: dataToSend.assingmentName,
+              quizId: dataToSend.quizId,
+              studentId: dataToSend.studentId,
             },
           }),
         });
@@ -92,7 +102,10 @@ export const useSocketStore = create<SocketStore>()(
           if (data.type === "chat") {
             let msg: {
               msgType: string;
-              msg: { assignmentId: string; assignmentName: string, studentId: string};
+              msg: {
+                quizId: string;
+                studentId: string;
+              };
             } = JSON.parse(data.message);
 
             let loggedInUserType =
@@ -101,39 +114,57 @@ export const useSocketStore = create<SocketStore>()(
 
             if (loggedInUserType === "TeacherEnrollment") {
               if (msg.msgType === "ASSGN_PROC_START") {
-                let incomingMsgs: IncomingMessage = {
-                  ...get().messagesIncoming,
-                };
-                incomingMsgs[msg.msg.assignmentId] = {
-                  assignmentName: msg.msg.assignmentName,
-                  active: true,
-                  studentId: msg.msg.studentId
-                };
+                let activeQuizzes = [...get().quizzesLive];
+                let activeStudents = [...get().studentsLive];
+                activeQuizzes.push(msg.msg.quizId);
+                activeStudents.push(msg.msg.studentId);
+                // incomingMsgs[msg.msg.assignmentId] = {
+                //   assignmentName: msg.msg.assignmentName,
+                //   active: true,
+                //   studentId: msg.msg.studentId,
+                // };
+                // let activeStudents = [...get().studentsActive];
+                // if (get().assignmentId === msg.msg.assignmentId) {
+                //   activeStudents.push(msg.msg.studentId);
+                // }
                 set({
-                  messagesIncoming: incomingMsgs,
+                  quizzesLive: activeQuizzes,
+                  studentsLive: activeStudents,
                 });
               }
               if (msg.msgType === "ASSGN_PROC_END") {
-                let incomingMsgs: IncomingMessage = {
-                  ...get().messagesIncoming,
-                };
-                incomingMsgs[msg.msg.assignmentId] = {
-                  assignmentName: msg.msg.assignmentName,
-                  active: false,
-                };
+                let studentId = msg.msg.studentId;
+                let activeStudents = [...get().studentsLive];
+                let idx = activeStudents.indexOf(studentId);
+                activeStudents.splice(idx, 1);
                 set({
-                  messagesIncoming: incomingMsgs,
+                  studentsLive: activeStudents,
                 });
+                // let incomingMsgs: IncomingMessage = {
+                //   ...get().messagesIncoming,
+                // };
+                // incomingMsgs[msg.msg.assignmentId] = {
+                //   assignmentName: msg.msg.assignmentName,
+                //   active: false,
+                // };
+                // let activeStudents = [...get().studentsActive];
+                // let idx = activeStudents.indexOf(msg.msg.studentId);
+                // if (idx !== -1) {
+                //   activeStudents.splice(idx, 1);
+                // }
+                // set({
+                //   messagesIncoming: incomingMsgs,
+                //   studentsActive: activeStudents,
+                // });
               }
             } else {
               if (msg.msgType === "ASSGN_STAT_REQ") {
-                let assignment: Assignment = useAssignmentStore.getState()
-                  .selectedAssignment as any;
-                if (msg.msg.assignmentId === assignment.id.toString()) {
-                  set({
-                    assgnStatRequesting: true,
-                  });
-                }
+                get().sendAssgnStatus(
+                  dataToSend.quizId,
+                  dataToSend.studentId,
+                  "ASSGN_PROC_START",
+                  roomName
+                );
               }
             }
           }
@@ -144,24 +175,38 @@ export const useSocketStore = create<SocketStore>()(
         });
       },
       sendAssgnStatus: (
-        assignmentId: string,
-        assignmentName: string,
-        messageType: string
+        quizId: string,
+        studentId: string,
+        messageType: string,
+        roomName: string
       ) => {
         let conn: Socket<ClientToServerEvents, ServerToClientEvents> | null =
           get().socketInstance;
-        let roomName: string | null = get().roomName;
-        if (conn && roomName) {
+        if (conn) {
           conn.emit("chat", {
             evt: "chat",
             room: roomName,
             text: JSON.stringify({
               msgType: messageType,
               msg: {
-                assignmentId: assignmentId,
-                assignmentName: assignmentName,
-                studentId: useCommonStudentDashboardStore.getState().enrollments?.user.id
+                quizId: quizId,
+                studentId: studentId,
               },
+            }),
+          });
+        }
+      },
+      sendViolationMessages: (messageType: string, msg: ViolationMessage) => {
+        let conn: Socket<ClientToServerEvents, ServerToClientEvents> | null =
+          get().socketInstance;
+        let roomName: string = get().roomName;
+        if (conn && roomName) {
+          conn.emit("chat", {
+            evt: "chat",
+            room: roomName,
+            text: JSON.stringify({
+              msgType: messageType,
+              msg: msg,
             }),
           });
         }

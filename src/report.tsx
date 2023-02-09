@@ -1,7 +1,11 @@
 import { message, Modal, Timeline } from "antd";
-import React, { SyntheticEvent, useState } from "react";
+import axios, { AxiosError, AxiosResponse } from "axios";
+import React, { useState, useEffect } from "react";
 
-import { getMedia } from "./apiConfigs";
+import {
+  getMedia,
+  downloadAuthImage as downloadAuthImageUrl,
+} from "./apiConfigs";
 import { StudentReportAndJourneyDetails } from "./AppTypes";
 import { useAppStore } from "./store/AppSotre";
 import { useProcotorJourneyStore } from "./store/ProctorJourneyStore";
@@ -40,17 +44,19 @@ const Report: React.FC<Props> = ({
   const tokenData = useAppStore((state) => state.tokenData);
   const { setJourneyDetails } = useProcotorJourneyStore((state) => state);
   const [comment, setComment] = useState<string>(data.comments);
+  const [authImage, setAuthImage] = useState<string>("");
   const [result, setResult] = useState<string>(
     data.passFail === "N" ? "" : data.passFail
   );
 
   const handleReportResult = () => {
     if (comment.length === 0) {
-      message.error("Please write a comment.");
+      message.error("Please enter a comment before saving the report");
       return;
+    } else {
+      updateReport(result, comment);
+      setJourneyDetails(result, studentId, quizId);
     }
-    updateReport(result, comment);
-    setJourneyDetails(result, studentId, quizId);
   };
 
   const handleClose = () => {
@@ -75,6 +81,41 @@ const Report: React.FC<Props> = ({
       </p>
     );
   }
+
+  const downloadAuthImage = () => {
+    const url = `${downloadAuthImageUrl}/${guid}/${studentId}`;
+
+    axios
+      .get(url, {
+        responseType: "arraybuffer",
+      })
+      .then((response: AxiosResponse) => {
+        if (
+          response.headers["content-type"] === "image/jpeg" ||
+          response.headers["content-type"] === "image/png" ||
+          response.headers["content-type"] === "image/svg" ||
+          response.headers["content-type"] === "image/webp" ||
+          response.headers["content-type"] === "image/jpg"
+        ) {
+          const blob = new Blob([response.data], {
+            type: response.headers["content-type"],
+          });
+
+          setAuthImage(URL.createObjectURL(blob));
+        }
+      })
+      .catch((error: AxiosError) => {
+        setAuthImage("0");
+        message.error("Failed to fetch authentication image");
+      });
+  };
+
+  useEffect(() => {
+    downloadAuthImage();
+    if (!data.comments) {
+      setComment("");
+    }
+  }, []);
 
   return (
     <Modal
@@ -104,10 +145,22 @@ const Report: React.FC<Props> = ({
           </p>
           <div className="flex flex-row pl-3 gap-56 mx-auto">
             <div className="flex flex-col h-full">
-              <div className="flex box-border h-56 justify-center items-center w-56 p-4 border-4 rounded">
-                <p className="text-lg text-center font-semibold">
-                  Not available
-                </p>
+              <div className="box-border h-56 w-56 p-4 border-4 rounded">
+                {authImage.length > 1 ? (
+                  <img
+                    src={authImage}
+                    alt="Not available"
+                    className="h-full w-full rounded"
+                  />
+                ) : authImage === "0" ? (
+                  <p className="flex items-center justify-center text-center font-semibold">
+                    Not available
+                  </p>
+                ) : (
+                  <p className="flex items-center justify-center text-center font-semibold">
+                    Please wait...
+                  </p>
+                )}
               </div>
               <p className="text-sm text-center h-full w-full font-semibold">
                 Picture taken during exam

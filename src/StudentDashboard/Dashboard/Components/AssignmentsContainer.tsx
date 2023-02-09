@@ -33,6 +33,7 @@ const AssignmentsContainer: React.FC<Props> = (props): JSX.Element => {
     selectedAssignment,
     assignmentSubmitted,
     instructorSchedulesAvailable,
+    isProctoredAssignment,
   } = useAssignmentStore((state) => state);
   const { tokenData, urlParamsData } = useAppStore((state) => state);
   let [showDateTimePicker, setShowDateTimePicker] = useState<boolean>(false);
@@ -148,6 +149,18 @@ const AssignmentsContainer: React.FC<Props> = (props): JSX.Element => {
             {assignments.length > 0 ? (
               assignments.map((assignment: any, index: number) => {
                 if (selectedAssignmentSchedules) {
+                  let assignmentSchedule: string = "";
+
+                  if (
+                    assignment.id === selectedAssignmentSchedules.assignmentId
+                  ) {
+                    const timezoneOffset: string = `.${Math.abs(
+                      moment().utcOffset()
+                    ).toString()}Z`;
+                    assignmentSchedule = `${moment(
+                      selectedAssignmentSchedules.scheduleDate + timezoneOffset
+                    ).format("MM/DD/YYYY hh:mm a")}`;
+                  }
                   if (moment(assignment.lock_at).isSameOrAfter(moment())) {
                     return (
                       <Tooltip
@@ -165,7 +178,7 @@ const AssignmentsContainer: React.FC<Props> = (props): JSX.Element => {
                             key={index}
                             onClick={() => handleSelectAssignment(assignment)}
                             className={`transition ease-in-out delay-50 hover:-translate-y-1 hover:scale-110 duration-200 break-before-right cursor-pointer
-                          flex border box-border items-center justify-center h-40 w-48 p-4 rounded-lg bg-white shadow-md text-center
+                          flex flex-col border box-border items-center justify-center h-40 w-48 p-4 rounded-lg bg-white shadow-md text-center gap-3
                           ${
                             selectedAssignment?.id === assignment.id
                               ? "hover:bg-blue-400 hover:text-white bg-blue-400 text-white"
@@ -175,6 +188,16 @@ const AssignmentsContainer: React.FC<Props> = (props): JSX.Element => {
                             <p className="font-semibold text-center w-full">
                               {assignment.name}
                             </p>
+                            {assignmentSchedule && (
+                              <div className="flex flex-col w-full justify-center">
+                                <p className="text-center font-semibold">
+                                  Schedule date:
+                                </p>
+                                <p className="text-center font-semibold">
+                                  {assignmentSchedule}
+                                </p>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </Tooltip>
@@ -185,7 +208,7 @@ const AssignmentsContainer: React.FC<Props> = (props): JSX.Element => {
                       key={index}
                       placement="top"
                       title={`${
-                        "Availability expired - " +
+                        "Assignment expired - " +
                         moment(assignment.lock_at).format("MM/DD/YYYY HH:MM a")
                       }`}
                     >
@@ -260,11 +283,33 @@ const AssignmentsContainer: React.FC<Props> = (props): JSX.Element => {
               </p>
             )}
           </div>
-
           {showAuthModal &&
             selectedAssignment &&
             selectedAssignmentConfigurations &&
-            enrollments && !scheduleExpired && (
+            enrollments &&
+            !isProctoredAssignment && (
+              <AuthenticationModal
+                view={true}
+                quizTitle={selectedAssignment.name}
+                close={() => setShowAuthModal(false)}
+                quizId={selectedAssignmentConfigurations.quizId}
+                quizConfig={selectedAssignmentConfigurations}
+                userId={urlParamsData.userId as any}
+                studentId={urlParamsData.studentId as any}
+                courseId={urlParamsData.courseId as any}
+                guid={urlParamsData.guid as any}
+                authToken={tokenData.lmsAccessToken}
+                userName={enrollments.user.name}
+                authComplete={handleStudentAuthentication}
+                student={enrollments}
+              />
+            )}
+          {showAuthModal &&
+            selectedAssignment &&
+            selectedAssignmentConfigurations &&
+            enrollments &&
+            !scheduleExpired &&
+            isProctoredAssignment && (
               <AuthenticationModal
                 view={true}
                 quizTitle={selectedAssignment.name}

@@ -178,7 +178,8 @@ const AuthenticateUser: React.FC<Props> = (props): JSX.Element => {
       props.updateStudentAuthStatus({
         courseId: urlParamsData.courseId,
         assignmentId: selectedAssignment?.id,
-        studentId: props.studentId,
+        studentId: props.selectedRow.id,
+        quizId: props.quizId
       });
       setIsAuthenticated(true);
       peerDataChannel.current.send(

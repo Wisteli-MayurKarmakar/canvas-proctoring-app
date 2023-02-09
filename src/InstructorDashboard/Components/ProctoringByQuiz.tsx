@@ -1,4 +1,4 @@
-import { Badge, Button, message, Table } from "antd";
+import { Badge, Button, Table } from "antd";
 import axios from "axios";
 import moment from "moment";
 import React, { useEffect } from "react";
@@ -15,6 +15,7 @@ import { QuizConfiguration, QuizTypeProctoringByQuiz } from "../../AppTypes";
 import { useSocketStore } from "../../store/SocketStore";
 import NoQuiz from "../../CommonUtilites/NoQuiz";
 import { CheckCircleOutlined, CloseCircleOutlined } from "@ant-design/icons";
+import { useQuizStore } from "../../store/QuizStore";
 
 type QuizStatus = {
   [key: string]: { ongoing: boolean };
@@ -33,12 +34,14 @@ const ProcotoringByQuiz: React.FC = (): JSX.Element => {
   let [selectedStudent, setSelectedStudent] = React.useState<any>(null);
   const [enrollmentLiveStatus, setEnrollmentLiveStatus] =
     React.useState<any>(null);
+  const setQuiz = useQuizStore((state) => state.setSelectedQuiz);
+  const selectedQuizz = useQuizStore((state) => state.selectedQuiz);
   const { urlParamsData, tokenData } = useAppStore((state) => state);
   const [socketRoom, setSocketRoom] = React.useState<any>(null);
   const socketUser: string = "chat_" + urlParamsData.userId;
   const [quizzesStatus, setQuizzesStatus] = React.useState<QuizStatus>({});
   const socket = getWebSocketUrl();
-  const { createConnection, messagesIncoming } = useSocketStore(
+  const { createConnection, quizzesLive, studentsLive } = useSocketStore(
     (state) => state
   );
   const [selectedQzConfig, setSelectedQzConfig] =
@@ -79,15 +82,6 @@ const ProcotoringByQuiz: React.FC = (): JSX.Element => {
           }
 
           return "N/ A";
-          // if (selectedQuizSchedules) {
-          //   return moment(selectedQuizSchedules.scheduleDate).format(
-          //     "MM-DD-YYYY hh:mm a"
-          //   );
-          // }
-          // if (selectedQuizSchedules === false) {
-          //   return "Not Scheduled";
-          // }
-          // return "Getting schedules...";
         }
         return "Please select a quiz";
       },
@@ -113,16 +107,18 @@ const ProcotoringByQuiz: React.FC = (): JSX.Element => {
       key: "action",
       title: "Action",
       render: (row: any) => {
+        let disabled = true;
+        if (studentsLive.length > 0) {
+          studentsLive.forEach((id: string) => {
+            if (id === row["user_id"]) {
+              disabled = false;
+            }
+          });
+        }
         return (
           <Button
             type="link"
-            disabled={
-              // quizzesStatus[selectedQuiz.assignment_id as keyof QuizStatus]
-              //   .ongoing
-              //   ? false
-              //   : true
-              selectedQuiz ? false : true
-            }
+            disabled={disabled}
             onClick={() => showLiveStreamModal(row)}
           >
             Live Stream
@@ -174,6 +170,7 @@ const ProcotoringByQuiz: React.FC = (): JSX.Element => {
           user_id: enrollment.id,
           course_id: urlParamsData.courseId,
           key: enrollment.id,
+          isActive: false,
         }));
         setEnrollmentLiveStatus(temp);
         setEnrollments(enrollments);
@@ -242,7 +239,6 @@ const ProcotoringByQuiz: React.FC = (): JSX.Element => {
   };
 
   const getQuizConfiguration = async (quiz: any) => {
-    console.log("quiz", quiz);
     const guid: string = useAppStore.getState().urlParamsData.guid as any;
     const courseId: string = useAppStore.getState().urlParamsData
       .courseId as any;
@@ -277,6 +273,9 @@ const ProcotoringByQuiz: React.FC = (): JSX.Element => {
       getQuizSchedules(quizz.quizId, quizz.id);
       temp[quizz.id.toString()] = true;
       setQzSelectTrack(temp);
+      useSocketStore.setState({
+        assignmentId: quizz.assignment_id,
+      });
       socket.disconnect();
     }
   };
@@ -286,24 +285,13 @@ const ProcotoringByQuiz: React.FC = (): JSX.Element => {
     setShowLiveStream(!showLiveStream);
   };
 
-  useEffect(() => {
-    if (messagesIncoming) {
-      let data = { ...quizzesStatus };
-      Object.keys(messagesIncoming).forEach((key: string) => {
-        if (key in data) {
-          data[key].ongoing = true;
-        }
-      });
-      setQuizzesStatus(data);
-    }
-  }, [messagesIncoming]);
-
   return (
     <div className="flex items-center flex-col justify-center w-full h-full gap-4">
       {quizzes ? (
         <div className="flex flex-row flex-wrap gap-6 justify-center h-5/6 w-full xl:h-full max-h-96 overflow-y-scroll">
           {quizzes.map((quizz: any, index: number) => {
-            if (quizzesStatus[quizz.id].ongoing) {
+            let idx: number = quizzesLive.indexOf(quizz.quizId);
+            if (idx !== -1) {
               return (
                 <Badge.Ribbon
                   text="Proctoring started"
@@ -388,7 +376,7 @@ const ProcotoringByQuiz: React.FC = (): JSX.Element => {
         </div>
       )}
       <div className="flex flex-row flex-wrap w-full gap-8 h-full items-center justify-center">
-        {enrollments && quizzes && (
+        {enrollments && quizzes && selectedQuiz && selectedQzConfig && (
           <Table
             dataSource={enrollments}
             columns={studentCols}
@@ -397,14 +385,18 @@ const ProcotoringByQuiz: React.FC = (): JSX.Element => {
         )}
       </div>
 
-      {showLiveStream && selectedStudent && selectedQuiz && (
-        <LiveSreaming
-          view={showLiveStream}
-          close={() => setShowLiveStream(false)}
-          quiz={selectedQuiz}
-          student={selectedStudent}
-        />
-      )}
+      {showLiveStream &&
+        selectedStudent &&
+        selectedQuiz &&
+        selectedQzConfig && (
+          <LiveSreaming
+            view={showLiveStream}
+            close={() => setShowLiveStream(false)}
+            quiz={selectedQuiz}
+            student={selectedStudent}
+            quizConfig={selectedQzConfig}
+          />
+        )}
     </div>
   );
 };

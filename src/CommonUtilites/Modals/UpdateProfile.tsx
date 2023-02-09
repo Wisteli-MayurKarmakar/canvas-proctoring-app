@@ -526,6 +526,7 @@ const UpdateProfile: React.FC<Props> = (props): JSX.Element => {
                         <ul className="mt-1.5 ml-4 text-blue-700 list-disc list-inside">
                           <li> ID must not be expired.</li>
                           <li>ID must have the Photo of the candidate.</li>
+                          <li>Upload Driver's license (if you do not have driver's license, upload  either Aadhar Card, Pan Card, Voter Card or Student ID card)</li>
                         </ul>
                       </div>
                     </div>

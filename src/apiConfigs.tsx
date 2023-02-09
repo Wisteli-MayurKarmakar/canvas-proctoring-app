@@ -69,6 +69,8 @@ const recoverQuiz: string = `${baseApiUrl}/recoverQuiz`;
 const updateLtiAccessRecord: string = `${baseApiUrl}/lti-access`;
 const createSampleQuiz: string = `${baseApiUrl}/createQuiz`
 const deleteQuizConfig: string = `${baseApiUrl}/deleteQuiz`
+const uploadAuthImage: string = `${baseApiUrl}/uploadAuthPicImage`
+const downloadAuthImage: string = `${baseApiUrl}/downloadAuthPicImage`
 // const getLtiAccessByGuid: string = `http://canvaslmsdev.eba-9ambmmcn.us-east-1.elasticbeanstalk.com/canvaslms/api/v1/lti-access-guid`
 // const ltiEmailNotificationTypes: string =
 //   "http://canvaslmsdev.eba-9ambmmcn.us-east-1.elasticbeanstalk.com/canvaslms/api/v1/lti-email-notification-types";
@@ -89,6 +91,8 @@ const getLtiCanvasVideoCombRef: string = `${baseApiUrl}/getLtiCanvasVideoCombRef
 
 export {
   getEndPoints,
+  uploadAuthImage,
+  downloadAuthImage,
   createSampleQuiz,
   getLtiCanvasVideoCombRef,
   deleteQuizConfig,

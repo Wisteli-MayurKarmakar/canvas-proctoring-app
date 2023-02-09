@@ -88,7 +88,7 @@ const iconSize = "";
 const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
   const [quizzesStat, setQuizzesStat] = useState<any>();
   const [quizzes, setQuizzes] = useState<any>(null);
-  const [selectedQuiz, setSelectedQuiz] = useState<any>(null);
+  const [quiz, setQuiz] = useState<any>(null);
   const [showWaitingModal, setShowWaitingModal] = useState<boolean>(false);
   const [showConfigurations, setShowConfigurations] = useState<boolean>(false);
   const [configSaveStatus, setConfigSaveStatus] = useState<boolean>(false);
@@ -108,6 +108,8 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
   );
 
   const {
+    setSelectedQuiz,
+    selectedQuiz,
     customizableQuizConfig,
     isLockdown,
     isProcExamd,
@@ -258,9 +260,9 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
     </p>
   );
 
-  const deleteQuizConfigMsg: JSX.Element = selectedQuiz && (
+  const deleteQuizConfigMsg: JSX.Element = quiz && (
     <p className="text-center font-semibold text-lg">
-      Deleting {selectedQuiz["title"]} configuration. Please wait...
+      Deleting {quiz["title"]} configuration. Please wait...
     </p>
   );
 
@@ -304,7 +306,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
   const handleAutoCompleteSetup = async () => {
     try {
       let response = await axios.get(
-        `${autoCompleteSetup}${props.courseId}/${selectedQuiz.title}/${selectedQuiz.id}/${tokenData.lmsAccessToken}/${tokenData?.instituteId}`
+        `${autoCompleteSetup}${props.courseId}/${quiz.title}/${quiz.id}/${tokenData.lmsAccessToken}/${tokenData?.instituteId}`
       );
       setShowWaitingModal(false);
     } catch (e) {
@@ -313,7 +315,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
   };
 
   const handleSubmit = () => {
-    if (!selectedQuiz) {
+    if (!quiz) {
       alert("Please select a quiz");
       return;
     }
@@ -405,7 +407,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
     config.idInstructor = urlParamsData.studentId as string;
     config.idLtiCanvasConfig = uuid();
     config.idUser = props.id;
-    config.quizId = selectedQuiz.id;
+    config.quizId = quiz.id;
     config.guid = props.toolConsumerGuid;
     config.courseId = props.courseId;
     config.assignmentId = 0;
@@ -432,6 +434,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
     config.studentPicture = customizableQuizConfig.studentPicture;
     config.whitelistPages = customizableQuizConfig.whitelistPages;
     config.instructorProctored = customizableQuizConfig.instructorProctored;
+    config.timeLimit = selectedQuiz?.time_limit as number;
     config.status = "0";
 
     if (configAvailable) {
@@ -449,9 +452,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
         }
         // setQuizConfig(config);
         message.success("Configurations saved successfully");
-        // useQuizStore.setState({
-        //   isConfigAvailable: true,
-        // });
+        setSelectedQuiz(quiz);
         setConfigSaveStatus(true);
         if (isSaving) {
           setIsSaving(!isSaving);
@@ -530,8 +531,8 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
   };
 
   const handleSelectQuiz = (quiz: any) => {
-    quizStoreState.setSelectedQuiz(quiz);
     setSelectedQuiz(quiz);
+    setQuiz(quiz);
     setNewQuiz(quiz);
     setShowConfigurations(false);
     let quizStat: any = { ...quizzesStat };
@@ -547,7 +548,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
   };
 
   const handleShowConfig = () => {
-    if (selectedQuiz) {
+    if (quiz) {
       if (showConfigurations) {
         setShowConfigurations(false);
         useQuizStore.setState({
@@ -566,13 +567,13 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
   };
 
   const handleRepairModule = async () => {
-    if (!selectedQuiz) {
+    if (!quiz) {
       message.error("Please select a quiz");
       return;
     }
     setRecoveringQuiz(true);
     let response = await axios.post(
-      `${recoverQuiz}/${tokenData.instituteId}/${urlParamsData.courseId}/${selectedQuiz.id}/${selectedQuiz.title}/${tokenData.lmsAccessToken}`
+      `${recoverQuiz}/${tokenData.instituteId}/${urlParamsData.courseId}/${quiz.id}/${quiz.title}/${tokenData.lmsAccessToken}`
     );
 
     if (response.status === 200) {
@@ -674,7 +675,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
     setIsDeletingConfig(true);
     try {
       let response = await axios.post(
-        `${deleteQuizConfig}/${tokenData.instituteId}/${urlParamsData.guid}/${selectedQuiz.id}/${tokenData.lmsAccessToken}`
+        `${deleteQuizConfig}/${tokenData.instituteId}/${urlParamsData.guid}/${quiz.id}/${tokenData.lmsAccessToken}`
       );
       if (response.status === 200) {
         setIsDeletingConfig(false);
@@ -700,11 +701,11 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
         questionCount: "2",
         allowedAttempts: "true",
         timeLimit: 2,
-        quizDates: [
+        "all_dates": [
           {
-            dueAt: moment().add(2, "weeks").toISOString(),
-            unlockAt: moment().subtract(1, "days").toISOString(),
-            lockAt: moment().add(1, "years").toISOString(),
+            "due_at": moment().add(2, "weeks").toISOString(),
+            "unlock_at": moment().subtract(1, "days").toISOString(),
+            "lock_at": moment().add(1, "years").toISOString(),
           },
         ],
         oneQuestionAtATime: "true",
@@ -726,8 +727,8 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
           urlParamsData.guid as string,
           urlParamsData.userId as string
         );
-        // let courseId: string = urlParamsData.courseId as string;
-        // getQuizzesByCourseId(courseId);
+        let courseId: string = urlParamsData.courseId as string;
+        getQuizzesByCourseId(courseId);
         setIsCreatingQuiz(false);
       } else {
         setIsCreatingQuiz(false);
@@ -740,14 +741,10 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
 
   const otherActions = (
     <Menu>
-      <Menu.Item key={0} onClick={handleRepairModule} disabled={!selectedQuiz}>
+      <Menu.Item key={0} onClick={handleRepairModule} disabled={!quiz}>
         Repair Proctoring Module
       </Menu.Item>
-      <Menu.Item
-        key={1}
-        onClick={handleDeleteQuizConfig}
-        disabled={!selectedQuiz}
-      >
+      <Menu.Item key={1} onClick={handleDeleteQuizConfig} disabled={!quiz}>
         Delete Customization
       </Menu.Item>
       <Menu.Item key={2} onClick={handleCreateSampleQuiz}>
@@ -814,7 +811,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
                   key={index}
                   onClick={() => handleSelectQuiz(quiz)}
                   className={`flex flex-col w-full justify-center transition ease-in-out delay-50 hover:-translate-y-1 hover:scale-110 duration-200 
-                flex border box-border items-center justify-center ${quizTileWidth} h-32 bg-white shadow-md text-center ${
+                 border box-border items-center  ${quizTileWidth} h-32 bg-white shadow-md text-center ${
                     quizzesStat[quiz.title]
                       ? "hover:bg-blue-400 hover:text-white bg-blue-400 text-white"
                       : "hover:bg-blue-400 hover:text-white text-black"
@@ -923,7 +920,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
             </div>
           </div>
         </div>
-        {selectedQuiz && !isNotAllowed ? (
+        {quiz && !isNotAllowed ? (
           <div className="flex flex-row h-full w-full items-center justify-center gap-8">
             <div className="flex flex-row h-full items-center gap-2">
               <p
@@ -944,7 +941,7 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
                 <InfoCircleFilled style={{ color: "rgb(96 165 250)" }} />
               </Tooltip>
             </div>
-            {selectedQuiz && isConfigAvailable && (
+            {quiz && isConfigAvailable && (
               <button
                 type="button"
                 onClick={() => setScheduleQuiz(true)}
@@ -976,14 +973,28 @@ const Configuration: React.FunctionComponent<Props> = (props): JSX.Element => {
             </Dropdown>
           </div>
         )}
-        {showConfigurations && selectedQuiz && (
+        {showConfigurations && quiz && (
           <div className="container mx-auto mt-2">
-            <p className="font-bold font-serif text-xl underline">
-              {selectedQuiz && selectedQuiz.title + ":    "}Configuration
+            <p className="font-bold text-xl underline">
+              {quiz && quiz.title + ":    "}Configuration
             </p>
+            <div className="flex items-center mt-4">
+              <label
+                htmlFor="checked-checkbox"
+                className="mr-2 font-medium text-black"
+              >
+                Set as default quiz
+              </label>
+              <input
+                id="checked-checkbox"
+                type="checkbox"
+                value=""
+                className="w-4 h-4 text-blue-600 mt-1 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+              />
+            </div>
             {!isNotAllowed ? (
               <div
-                className="mt-4 container overflow-y-scroll"
+                className="mt-2 container overflow-y-scroll"
                 style={{ height: "76vh" }}
               >
                 {configuration.length > 0 && (

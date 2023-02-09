@@ -804,10 +804,27 @@ type ChatStore = {
   ) => void;
 };
 
+type ViolationMessage = {
+  message: string[];
+  timestamp: string;
+}
+
+type AssessmentViolationStore = {
+  studentId: string;
+  count: number;
+  roomName: string;
+  userName: string;
+  messages?: ViolationMessage;
+  setStudentId: (studentId: string) => void;
+  setMessages: (messages: ViolationMessage) => void;
+};
+
 export type {
   AllDates,
   Quiz,
   AppStore,
+  ViolationMessage,
+  AssessmentViolationStore,
   ConfigurationWithStatus,
   ConfigurationOptionsWithStatus,
   ConsumptionTableColumns,
